@@ -193,7 +193,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     // Derived from total - active to avoid the Supabase 1000-row default cap
     // on per-status server queries. Accurate when no cancelled/upgraded rows exist.
     compute: (_items, total, serverData) => {
-      const active = typeof serverData["active"] === "number" ? serverData["active"] : 0
+      const active = serverData && typeof serverData["active"] === "number" ? serverData["active"] : 0
       return Math.max(0, total - active)
     },
   },
