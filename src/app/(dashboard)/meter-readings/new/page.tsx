@@ -8,13 +8,16 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  ArrowLeft, Gauge, Loader2, Building2, Home, Calculator,
+  IndianRupee, Users, Zap, Droplets, Plus, FileText,
+} from "lucide-react"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredSelect } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/validation"
 import { showWarning } from "@/lib/toast-helpers"
-import { formatCurrency, formatDate, formatNumber} from "@/lib/format"
+import { formatCurrency, formatDate, formatNumber } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -23,6 +26,12 @@ import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
 import { createMeterReadingWithCharges } from "@/lib/services/meter-charges"
+import {
+  WorkflowStepper,
+  WorkflowStepCard,
+  WorkflowHeader,
+  WorkflowStepDef,
+} from "@/components/ui/workflow"
 
 interface ChargeType {
   id: string
@@ -55,11 +64,31 @@ interface Meter {
   }
 }
 
+const WORKFLOW_STEPS: WorkflowStepDef[] = [
+  { id: 1, label: "Select Meter", icon: Gauge },
+  { id: 2, label: "Enter Reading", icon: Calculator },
+  { id: 3, label: "Confirm & Save", icon: FileText },
+]
+
+function MeterTypeIcon({ type, className }: { type: string; className?: string }) {
+  if (type === "electricity") return <Zap className={className ?? "h-4 w-4 text-warning"} />
+  if (type === "water") return <Droplets className={className ?? "h-4 w-4 text-info"} />
+  return <Gauge className={className ?? "h-4 w-4 text-warning"} />
+}
+
+function meterUnit(type: string) {
+  if (type === "electricity") return "kWh"
+  if (type === "water") return "L"
+  if (type === "gas") return "m³"
+  return "units"
+}
+
 function NewMeterReadingContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/meter-readings" })
   const { isFeatureEnabled } = useFeatures()
   const [loadingData, setLoadingData] = useState(true)
   const [loadingLastReading, setLoadingLastReading] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
 
   // Data
   const [meters, setMeters] = useState<Meter[]>([])
@@ -235,6 +264,7 @@ function NewMeterReadingContent() {
           if (meterForRoom) {
             setSelectedMeter(meterForRoom)
             setFormData(prev => ({ ...prev, meter_id: meterForRoom.id }))
+            setCurrentStep(2)
           }
         }
       }
@@ -330,6 +360,23 @@ function NewMeterReadingContent() {
     return meterTypeToCharge[selectedMeter.meter_type]?.includes(ct.name)
   }) : null
 
+  // Step completion rules
+  const step1Complete = !!selectedMeter
+  const step2Complete = !!(formData.reading_date && formData.reading_value)
+
+  // Callable submit (not bound to FormEvent)
+  const doSubmit = () => {
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent<HTMLFormElement>)
+  }
+
+  // Charge preview values
+  const chargeTotal = calculatedUnits !== null && selectedChargeType?.calculation_config?.rate_per_unit
+    ? calculatedUnits * selectedChargeType.calculation_config.rate_per_unit
+    : null
+  const chargePerPerson = chargeTotal !== null && roomTenants.length > 1 && selectedChargeType?.calculation_config?.split_by === "occupants"
+    ? chargeTotal / roomTenants.length
+    : null
+
   if (loadingData) {
     return <PageSkeleton variant="form" />
   }
@@ -371,263 +418,345 @@ function NewMeterReadingContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Record Meter Reading</h1>
-          <p className="text-muted-foreground">Select a meter and enter the current reading</p>
-        </div>
-      </div>
+      <WorkflowHeader
+        title="Record Meter Reading"
+        subtitle="Select a meter and enter the current reading"
+        icon={Gauge}
+        onBack={() => window.history.back()}
+        backLabel="Meter Readings"
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Meter Selection */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Gauge className="h-5 w-5 text-primary" />
+      <WorkflowStepper steps={WORKFLOW_STEPS} currentStep={currentStep} />
+
+      {/* Step 1: Select Meter */}
+      <WorkflowStepCard
+        stepNum={1}
+        title="Select Meter"
+        description="Choose the meter to record a reading for"
+        icon={Gauge}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(1)}
+        completedSummary={
+          selectedMeter
+            ? `${selectedMeter.meter_number} · ${selectedMeter.property?.name} / Room ${selectedMeter.current_assignment.room_number}`
+            : undefined
+        }
+      >
+        <div className="space-y-4">
+          <FormField label="Meter" required error={errors.meter_id}>
+            <Select
+              id="meter_id"
+              value={formData.meter_id as string}
+              onChange={(e) => handleMeterSelect(e.target.value)}
+              required
+              disabled={saving}
+              placeholder="Select a meter"
+              options={meters.map((meter) => ({
+                value: meter.id,
+                label: `${meter.meter_number} (${meter.meter_type}) - ${meter.property?.name} / Room ${meter.current_assignment.room_number}`,
+              }))}
+            />
+          </FormField>
+
+          {/* Meter info card */}
+          {selectedMeter && (
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+              <div className="flex items-center gap-2">
+                <MeterTypeIcon type={selectedMeter.meter_type} />
+                <span className="font-medium">{selectedMeter.meter_number}</span>
+                <span className="text-sm text-muted-foreground capitalize">({selectedMeter.meter_type})</span>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium capitalize">
+                  {selectedMeter.status}
+                </span>
               </div>
-              <div>
-                <CardTitle>Select Meter</CardTitle>
-                <CardDescription>Choose a meter to record reading</CardDescription>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div className="flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  {selectedMeter.property?.name}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Home className="h-3 w-3" />
+                  Room {selectedMeter.current_assignment.room_number}
+                </div>
+                {lastReading && (
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3" />
+                    Last reading: {formatNumber(lastReading.reading_value)}{" "}
+                    {lastReading.reading_date === "Assignment Start"
+                      ? "(assignment start)"
+                      : `on ${formatDate(lastReading.reading_date)}`}
+                  </div>
+                )}
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField label="Meter" required error={errors.meter_id}>
-              <Select
-                id="meter_id"
-                value={formData.meter_id as string}
-                onChange={(e) => handleMeterSelect(e.target.value)}
+          )}
+
+          {step1Complete && (
+            <Button
+              className="w-full"
+              onClick={() => setCurrentStep(2)}
+            >
+              Continue
+            </Button>
+          )}
+        </div>
+      </WorkflowStepCard>
+
+      {/* Step 2: Enter Reading */}
+      <WorkflowStepCard
+        stepNum={2}
+        title="Enter Reading"
+        description="Record the reading date and current meter value"
+        icon={Calculator}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(2)}
+        completedSummary={
+          step2Complete
+            ? `${formatDate(formData.reading_date as string)} · Reading: ${formatNumber(parseFloat(formData.reading_value as string))}${calculatedUnits !== null ? ` · ${formatNumber(calculatedUnits)} ${selectedMeter ? meterUnit(selectedMeter.meter_type) : "units"}` : ""}`
+            : undefined
+        }
+      >
+        <div className="space-y-4">
+          <FormField label="Reading Date" required>
+            <Input
+              id="reading_date"
+              name="reading_date"
+              type="date"
+              value={formData.reading_date as string}
+              onChange={handleChange}
+              required
+              disabled={saving}
+            />
+          </FormField>
+
+          {/* Previous reading — readonly context */}
+          {loadingLastReading ? (
+            <div className="p-3 bg-muted rounded-lg flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Loading previous reading...</span>
+            </div>
+          ) : lastReading ? (
+            <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
+              <p className="text-sm text-info">
+                <strong>Previous Reading:</strong> {formatNumber(lastReading.reading_value)}
+                {lastReading.reading_date === "Assignment Start"
+                  ? " (Assignment Start)"
+                  : ` on ${formatDate(lastReading.reading_date)}`}
+              </p>
+            </div>
+          ) : null}
+
+          <FormField
+            label="Current Reading"
+            required
+            error={errors.reading_value}
+            tooltip="Enter the number shown on the meter dial right now. Units consumed = current reading minus previous reading."
+          >
+            <div className="relative">
+              <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="reading_value"
+                name="reading_value"
+                type="number"
+                min={lastReading?.reading_value || 0}
+                step="0.01"
+                placeholder="e.g., 12345"
+                value={formData.reading_value as string}
+                onChange={handleChange}
                 required
                 disabled={saving}
-                placeholder="Select a meter"
-                options={meters.map((meter) => ({
-                  value: meter.id,
-                  label: `${meter.meter_number} (${meter.meter_type}) - ${meter.property?.name} / Room ${meter.current_assignment.room_number}`,
-                }))}
+                className="pl-9"
               />
-            </FormField>
+            </div>
+          </FormField>
 
-            {/* Show selected meter details */}
-            {selectedMeter && (
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                <div className="flex items-center gap-2">
-                  {selectedMeter.meter_type === "electricity" && <Zap className="h-4 w-4 text-warning" />}
-                  {selectedMeter.meter_type === "water" && <Droplets className="h-4 w-4 text-info" />}
-                  {selectedMeter.meter_type === "gas" && <Gauge className="h-4 w-4 text-warning" />}
-                  <span className="font-medium">{selectedMeter.meter_number}</span>
-                  <span className="text-sm text-muted-foreground capitalize">({selectedMeter.meter_type})</span>
-                </div>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <div className="flex items-center gap-1">
-                    <Building2 className="h-3 w-3" />
-                    {selectedMeter.property?.name}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Home className="h-3 w-3" />
-                    Room {selectedMeter.current_assignment.room_number}
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Reading Entry - only show if meter selected */}
-        {selectedMeter && (
-          <Card>
-            <CardHeader>
+          {/* Units consumed preview */}
+          {calculatedUnits !== null && (
+            <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-warning/10 rounded-lg">
-                  <Gauge className="h-5 w-5 text-warning" />
+                <div className="p-2 bg-success/20 rounded-lg">
+                  <Calculator className="h-5 w-5 text-success" />
                 </div>
                 <div>
-                  <CardTitle>Meter Reading</CardTitle>
-                  <CardDescription>Record the current meter value</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField label="Reading Date" required>
-                <Input
-                  id="reading_date"
-                  name="reading_date"
-                  type="date"
-                  value={formData.reading_date as string}
-                  onChange={handleChange}
-                  required
-                  disabled={saving}
-                />
-              </FormField>
-
-              {/* Previous Reading Info */}
-              {loadingLastReading ? (
-                <div className="p-3 bg-muted rounded-lg flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Loading previous reading...</span>
-                </div>
-              ) : lastReading ? (
-                <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
-                  <p className="text-sm text-info">
-                    <strong>Previous Reading:</strong> {formatNumber(lastReading.reading_value)}
-                    {lastReading.reading_date === "Assignment Start"
-                      ? " (Assignment Start)"
-                      : ` on ${formatDate(lastReading.reading_date)}`}
+                  <p className="text-sm text-success">Units Consumed</p>
+                  <p className="text-2xl font-bold text-success">
+                    {formatNumber(calculatedUnits)} {selectedMeter ? meterUnit(selectedMeter.meter_type) : "units"}
                   </p>
                 </div>
-              ) : null}
+              </div>
+            </div>
+          )}
 
-              <FormField label="Current Reading" required error={errors.reading_value} tooltip="Enter the number shown on the meter dial right now. Units consumed = current reading minus previous reading."  >
-                <div className="relative">
-                  <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="reading_value"
-                    name="reading_value"
-                    type="number"
-                    min={lastReading?.reading_value || 0}
-                    step="0.01"
-                    placeholder="e.g., 12345"
-                    value={formData.reading_value as string}
-                    onChange={handleChange}
-                    required
-                    disabled={saving}
-                    className="pl-9"
-                  />
-                </div>
-              </FormField>
+          {/* Charge preview */}
+          {calculatedUnits !== null && calculatedUnits > 0 && (
+            <div className="space-y-3 pt-3 border-t">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="generateCharge"
+                  checked={generateCharge}
+                  onChange={(e) => setGenerateCharge(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                  disabled={saving}
+                />
+                <Label htmlFor="generateCharge" className="font-medium cursor-pointer">
+                  Generate charges for tenants automatically
+                </Label>
+              </div>
 
-              {/* Calculated Units */}
-              {calculatedUnits !== null && (
-                <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-success/20 rounded-lg">
-                      <Calculator className="h-5 w-5 text-success" />
+              {generateCharge && (
+                <div className="p-4 bg-info/10 border border-info/20 rounded-lg space-y-3">
+                  {roomTenants.length === 0 ? (
+                    <div className="flex items-center gap-2 text-warning">
+                      <Users className="h-4 w-4" />
+                      <p className="text-sm">No active tenants in this room. Charges will not be generated.</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-success">Units Consumed</p>
-                      <p className="text-2xl font-bold text-success">
-                        {formatNumber(calculatedUnits)} {selectedMeter.meter_type === "electricity" ? "kWh" : selectedMeter.meter_type === "water" ? "L" : selectedMeter.meter_type === "gas" ? "m\u00B3" : "units"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-info">
+                        <Users className="h-4 w-4" />
+                        <p className="text-sm font-medium">
+                          {roomTenants.length} tenant{roomTenants.length > 1 ? "s" : ""} in this room
+                        </p>
+                      </div>
+                      <div className="text-sm text-info/80">
+                        {roomTenants.map((t, i) => (
+                          <span key={t.id}>
+                            {t.name}{i < roomTenants.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </div>
 
-              {/* Charge Generation Section */}
-              {calculatedUnits !== null && calculatedUnits > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="generateCharge"
-                      checked={generateCharge}
-                      onChange={(e) => setGenerateCharge(e.target.checked)}
-                      className="h-4 w-4 rounded border-border"
-                      disabled={saving}
-                    />
-                    <Label htmlFor="generateCharge" className="font-medium cursor-pointer">
-                      Generate charges for tenants automatically
-                    </Label>
-                  </div>
-
-                  {generateCharge && (
-                    <div className="p-4 bg-info/10 border border-info/20 rounded-lg space-y-3">
-                      {roomTenants.length === 0 ? (
-                        <div className="flex items-center gap-2 text-warning">
-                          <Users className="h-4 w-4" />
-                          <p className="text-sm">No active tenants in this room. Charges will not be generated.</p>
+                      {selectedChargeType?.calculation_config?.rate_per_unit ? (
+                        <div className="pt-2 border-t border-info/20">
+                          <div className="flex items-center gap-2 text-info">
+                            <IndianRupee className="h-4 w-4" />
+                            <div className="text-sm">
+                              <p>
+                                <span className="font-medium">Rate:</span> {formatCurrency(selectedChargeType.calculation_config.rate_per_unit)}/unit
+                              </p>
+                              <p>
+                                <span className="font-medium">Total Amount:</span> {chargeTotal !== null ? formatCurrency(chargeTotal) : "—"}
+                              </p>
+                              {chargePerPerson !== null && (
+                                <p>
+                                  <span className="font-medium">Per Person:</span> {formatCurrency(chargePerPerson)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <>
-                          <div className="flex items-center gap-2 text-info">
-                            <Users className="h-4 w-4" />
-                            <p className="text-sm font-medium">
-                              {roomTenants.length} tenant{roomTenants.length > 1 ? "s" : ""} in this room
-                            </p>
-                          </div>
-                          <div className="text-sm text-info/80">
-                            {roomTenants.map((t, i) => (
-                              <span key={t.id}>
-                                {t.name}{i < roomTenants.length - 1 ? ", " : ""}
-                              </span>
-                            ))}
-                          </div>
-
-                          {selectedChargeType?.calculation_config?.rate_per_unit ? (
-                            <div className="pt-2 border-t border-info/20">
-                              <div className="flex items-center gap-2 text-info">
-                                <IndianRupee className="h-4 w-4" />
-                                <div className="text-sm">
-                                  <p>
-                                    <span className="font-medium">Rate:</span> {formatCurrency(selectedChargeType.calculation_config.rate_per_unit)}/unit
-                                  </p>
-                                  <p>
-                                    <span className="font-medium">Total Amount:</span> {formatCurrency(calculatedUnits * selectedChargeType.calculation_config.rate_per_unit)}
-                                  </p>
-                                  {roomTenants.length > 1 && selectedChargeType.calculation_config.split_by === "occupants" && (
-                                    <p>
-                                      <span className="font-medium">Per Person:</span> {formatCurrency((calculatedUnits * selectedChargeType.calculation_config.rate_per_unit) / roomTenants.length)}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-warning pt-2 border-t border-info/20">
-                              <IndianRupee className="h-4 w-4" />
-                              <p className="text-sm">No rate configured for {selectedMeter.meter_type}. Please update charge type settings.</p>
-                            </div>
-                          )}
-                        </>
+                        <div className="flex items-center gap-2 text-warning pt-2 border-t border-info/20">
+                          <IndianRupee className="h-4 w-4" />
+                          <p className="text-sm">No rate configured for {selectedMeter?.meter_type}. Please update charge type settings.</p>
+                        </div>
                       )}
-                    </div>
+                    </>
                   )}
                 </div>
               )}
+            </div>
+          )}
 
-              <FormField label="Notes">
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  placeholder="Any additional notes..."
-                  value={formData.notes as string}
-                  onChange={handleChange}
-                  disabled={saving}
-                  className="min-h-[80px]"
-                />
-              </FormField>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="flex justify-end gap-4">
-          <Link href="/meter-readings">
-            <Button type="button" variant="outline" disabled={saving}>
-              Cancel
+          {step2Complete && (
+            <Button
+              className="w-full"
+              onClick={() => setCurrentStep(3)}
+            >
+              Continue
             </Button>
-          </Link>
-          <Button type="submit" disabled={saving || !formData.meter_id}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Recording...
-              </>
-            ) : (
-              <>
-                <Gauge className="mr-2 h-4 w-4" />
-                Record Reading
-              </>
-            )}
-          </Button>
+          )}
         </div>
-      </form>
+      </WorkflowStepCard>
+
+      {/* Step 3: Confirm & Save */}
+      <WorkflowStepCard
+        stepNum={3}
+        title="Confirm & Save"
+        description="Review the reading details and save"
+        icon={FileText}
+        currentStep={currentStep}
+      >
+        <div className="space-y-5">
+          {/* Summary */}
+          <div className="rounded-lg border divide-y text-sm">
+            <div className="flex justify-between px-4 py-2.5">
+              <span className="text-muted-foreground">Meter</span>
+              <span className="font-medium">{selectedMeter?.meter_number} ({selectedMeter?.meter_type})</span>
+            </div>
+            <div className="flex justify-between px-4 py-2.5">
+              <span className="text-muted-foreground">Property / Room</span>
+              <span className="font-medium">{selectedMeter?.property?.name} / Room {selectedMeter?.current_assignment.room_number}</span>
+            </div>
+            <div className="flex justify-between px-4 py-2.5">
+              <span className="text-muted-foreground">Reading Date</span>
+              <span className="font-medium">{formData.reading_date ? formatDate(formData.reading_date as string) : "—"}</span>
+            </div>
+            <div className="flex justify-between px-4 py-2.5">
+              <span className="text-muted-foreground">Previous Reading</span>
+              <span className="font-medium">{lastReading ? formatNumber(lastReading.reading_value) : "—"}</span>
+            </div>
+            <div className="flex justify-between px-4 py-2.5">
+              <span className="text-muted-foreground">Current Reading</span>
+              <span className="font-medium">{formData.reading_value ? formatNumber(parseFloat(formData.reading_value as string)) : "—"}</span>
+            </div>
+            {calculatedUnits !== null && (
+              <div className="flex justify-between px-4 py-2.5 bg-success/5">
+                <span className="text-muted-foreground">Units Consumed</span>
+                <span className="font-semibold text-success">
+                  {formatNumber(calculatedUnits)} {selectedMeter ? meterUnit(selectedMeter.meter_type) : "units"}
+                </span>
+              </div>
+            )}
+            {chargeTotal !== null && generateCharge && (
+              <div className="flex justify-between px-4 py-2.5 bg-info/5">
+                <span className="text-muted-foreground">Charge</span>
+                <span className="font-semibold text-info">{formatCurrency(chargeTotal)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Notes */}
+          <FormField label="Notes">
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional notes..."
+              value={formData.notes as string}
+              onChange={handleChange}
+              disabled={saving}
+              className="min-h-[80px]"
+            />
+          </FormField>
+
+          {/* Submit */}
+          <div className="flex gap-3">
+            <Link href="/meter-readings" className="flex-1">
+              <Button type="button" variant="outline" disabled={saving} className="w-full">
+                Cancel
+              </Button>
+            </Link>
+            <Button
+              className="flex-1"
+              onClick={doSubmit}
+              disabled={saving || !formData.meter_id || !step2Complete}
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                <>
+                  <Gauge className="mr-2 h-4 w-4" />
+                  Save Reading
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </WorkflowStepCard>
     </div>
   )
 }
