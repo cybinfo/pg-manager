@@ -186,7 +186,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Total Subscriptions", icon: Receipt }),
   createStatusMetric("active", "Active", Users),
-  createStatusMetric("expired", "Expired", AlertTriangle),
+  {
+    id: "expired",
+    label: "Expired",
+    icon: AlertTriangle,
+    // Derived from total - active to avoid the Supabase 1000-row default cap
+    // on per-status server queries. Accurate when no cancelled/upgraded rows exist.
+    compute: (_items, total, serverData) => {
+      const active = typeof serverData["active"] === "number" ? serverData["active"] : 0
+      return Math.max(0, total - active)
+    },
+  },
   createSumMetric("final_amount", "total_revenue", "Total Revenue", CreditCard),
 ]
 
