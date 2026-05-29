@@ -148,7 +148,7 @@ export default function LibrarySectionDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_sections.edit" hide>
+            <PermissionGate permission="library_sections.delete" hide>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

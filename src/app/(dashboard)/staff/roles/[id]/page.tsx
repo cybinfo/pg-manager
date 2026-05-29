@@ -24,6 +24,7 @@ import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-gro
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
 import { DetailSection, DetailPageTemplate, InfoBanner } from "@/components/ui"
+import { PermissionGate } from "@/components/auth"
 
 interface Role {
   id: string
@@ -288,15 +289,17 @@ export default function EditRolePage() {
           </div>
         </div>
         {!isSystemRole && (
-          <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
-            onClick={handleDelete}
-            disabled={saving || userCount > 0}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete Role
-          </Button>
+          <PermissionGate permission="staff.delete" hide>
+            <Button
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={handleDelete}
+              disabled={saving || userCount > 0}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Role
+            </Button>
+          </PermissionGate>
         )}
       </div>
 

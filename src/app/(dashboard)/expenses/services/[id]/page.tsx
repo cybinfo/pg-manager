@@ -32,7 +32,6 @@ import {
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
-import { EmptyState } from "@/components/ui/empty-state"
 
 import type { ServicePayment } from "@/types/expense-enhanced.types"
 
@@ -70,15 +69,9 @@ export default function ServicePaymentDetailPage({
 
   if (!payment) {
     return (
-      <div className="container py-6">
-        <EmptyState
-          title="Payment not found"
-          description="The service payment you're looking for doesn't exist or has been deleted."
-          action={{
-            label: "Back to Services",
-            href: "/expenses/services",
-          }}
-        />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
       </div>
     )
   }

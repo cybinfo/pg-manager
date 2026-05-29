@@ -72,6 +72,7 @@ import {
 } from "@/types/meters.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { withCreatedBy } from "@/lib/audit"
 import { logger } from "@/lib/logger"
 
 // ============================================
@@ -162,15 +163,17 @@ export default function MeterDetailPage() {
 
     const supabase = createClient()
 
-    const { error } = await supabase.from("meter_assignments").insert({
-      owner_id: user?.id,
-      meter_id: meter.id,
-      room_id: assignForm.room_id,
-      start_date: assignForm.start_date,
-      start_reading: parseFloat(assignForm.start_reading) || 0,
-      reason: assignForm.reason,
-      notes: assignForm.notes || null,
-    })
+    const { error } = await supabase.from("meter_assignments").insert(
+      withCreatedBy({
+        owner_id: user?.id,
+        meter_id: meter.id,
+        room_id: assignForm.room_id,
+        start_date: assignForm.start_date,
+        start_reading: parseFloat(assignForm.start_reading) || 0,
+        reason: assignForm.reason,
+        notes: assignForm.notes || null,
+      }, user?.id ?? "")
+    )
 
     if (error) {
       showError("Failed to assign meter")
