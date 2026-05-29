@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getTodayISO } from "@/lib/date-helpers"
+import { DatePicker } from "@/components/ui/date-picker"
 import { labelsToOptions, PAYMENT_METHODS } from "@/lib/status"
 import { logger } from "@/lib/logger"
 
@@ -117,12 +118,10 @@ export function BillPaymentForm({
           </div>
           <div>
             <Label htmlFor="payment_date">Payment Date *</Label>
-            <Input
+            <DatePicker
               id="payment_date"
-              type="date"
               value={paymentData.payment_date}
-              onChange={(e) => setPaymentData({ ...paymentData, payment_date: e.target.value })}
-              required
+              onChange={(val) => setPaymentData({ ...paymentData, payment_date: val })}
             />
           </div>
           <div>

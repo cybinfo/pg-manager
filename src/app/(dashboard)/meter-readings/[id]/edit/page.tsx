@@ -16,6 +16,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
 import type { ValidatorResult } from "@/lib/validation"
+import { DatePicker } from "@/components/ui/date-picker"
 
 export default function EditMeterReadingPage() {
   return (
@@ -189,13 +190,10 @@ function EditMeterReadingContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField label="Reading Date" required>
-              <Input
+              <DatePicker
                 id="reading_date"
-                name="reading_date"
-                type="date"
                 value={formData.reading_date as string}
-                onChange={handleChange}
-                required
+                onChange={(val) => handleChange({ target: { name: "reading_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
                 disabled={saving}
               />
             </FormField>

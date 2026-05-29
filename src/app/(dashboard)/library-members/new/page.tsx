@@ -38,6 +38,7 @@ import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { useFeatures } from "@/lib/features/use-features"
 import { GENDER_OPTIONS, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
+import { DatePicker } from "@/components/ui/date-picker"
 import { createLibraryMember } from "@/lib/workflows/library-member.workflow"
 import type { LibraryOption, LibraryPlanOption } from "@/types/library.types"
 
@@ -442,12 +443,10 @@ function NewLibraryMemberContent() {
               />
             </FormField>
             <FormField label="Date of Birth" htmlFor="date_of_birth">
-              <Input
+              <DatePicker
                 id="date_of_birth"
-                name="date_of_birth"
-                type="date"
                 value={formData.date_of_birth}
-                onChange={handleChange}
+                onChange={(val) => setFormData((prev) => ({ ...prev, date_of_birth: val }))}
                 disabled={saving}
               />
             </FormField>
@@ -557,13 +556,10 @@ function NewLibraryMemberContent() {
           {/* Start date & duration */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Start Date" htmlFor="start_date" required>
-              <Input
+              <DatePicker
                 id="start_date"
-                name="start_date"
-                type="date"
                 value={formData.start_date}
-                onChange={handleStartDateChange}
-                required
+                onChange={(val) => setFormData((prev) => ({ ...prev, start_date: val }))}
                 disabled={saving}
               />
             </FormField>

@@ -30,6 +30,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { logger } from "@/lib/logger"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { PropertyOption } from "@/types/properties.types"
 import {
   WorkflowStepper,
@@ -603,13 +604,10 @@ export default function NewTenantPage() {
             </div>
 
             <FormField label="Check-in Date" required>
-              <Input
+              <DatePicker
                 id="check_in_date"
-                name="check_in_date"
-                type="date"
                 value={formData.check_in_date}
-                onChange={handleChange}
-                required
+                onChange={(val) => setFormData((prev) => ({ ...prev, check_in_date: val }))}
                 disabled={loading}
               />
             </FormField>

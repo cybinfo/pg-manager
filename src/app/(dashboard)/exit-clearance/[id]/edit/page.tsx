@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { ArrowLeft, DoorOpen, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredDate } from "@/lib/validation"
@@ -55,6 +56,7 @@ function EditExitClearanceContent({
     record,
     errors,
     validateField,
+    setField,
   } = useFormEditPage({
     table: "exit_clearance",
     id,
@@ -150,13 +152,10 @@ function EditExitClearanceContent({
             </div>
 
             <FormField label="Clearance Date" htmlFor="clearance_date" required error={errors.clearance_date}>
-              <Input
+              <DatePicker
                 id="clearance_date"
-                name="clearance_date"
-                type="date"
                 value={formData.clearance_date as string}
-                onChange={handleChange}
-                onBlur={() => validateField("clearance_date")}
+                onChange={(val) => setField("clearance_date", val)}
                 disabled={saving}
               />
             </FormField>

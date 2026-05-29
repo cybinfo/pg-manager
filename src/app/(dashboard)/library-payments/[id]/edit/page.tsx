@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredAmount, requiredDate } from "@/lib/validation"
+import { DatePicker } from "@/components/ui/date-picker"
 import { PageLoading } from "@/components/ui/loading"
 import {
   LIBRARY_PAYMENT_METHOD_OPTIONS,
@@ -49,6 +50,7 @@ function EditLibraryPaymentContent({
   const {
     formData,
     handleChange,
+    setField,
     handleSubmit,
     loading,
     saving,
@@ -138,12 +140,10 @@ function EditLibraryPaymentContent({
             {/* Payment Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
-                <Input
+                <DatePicker
                   id="payment_date"
-                  name="payment_date"
-                  type="date"
                   value={formData.payment_date as string}
-                  onChange={handleChange}
+                  onChange={(val) => setField("payment_date", val)}
                   disabled={saving}
                 />
               </FormField>

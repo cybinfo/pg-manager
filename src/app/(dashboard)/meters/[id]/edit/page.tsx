@@ -29,6 +29,7 @@ import {
   Save,
   Loader2,
 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { PermissionGuard } from "@/components/auth"
 import {
   MeterType,
@@ -257,11 +258,10 @@ export default function EditMeterPage() {
             </div>
 
             <FormField label="Installation Date">
-              <Input
+              <DatePicker
                 id="installation_date"
-                type="date"
                 value={formData.installation_date as string}
-                onChange={(e) => updateField("installation_date", e.target.value)}
+                onChange={(val) => updateField("installation_date", val)}
               />
             </FormField>
 

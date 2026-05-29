@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { Search, X, Calendar, Filter, RefreshCw } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -309,22 +310,22 @@ function DateRangePicker({
           <label className="block text-xs font-medium text-muted-foreground mb-1">
             From
           </label>
-          <Input
-            type="date"
+          <DatePicker
             value={localFrom}
-            onChange={e => setLocalFrom(e.target.value)}
-            max={localTo || undefined}
+            onChange={(val) => setLocalFrom(val)}
+            placeholder="Start date"
+            maxDate={localTo || undefined}
           />
         </div>
         <div className="flex-1">
           <label className="block text-xs font-medium text-muted-foreground mb-1">
             To
           </label>
-          <Input
-            type="date"
+          <DatePicker
             value={localTo}
-            onChange={e => setLocalTo(e.target.value)}
-            min={localFrom || undefined}
+            onChange={(val) => setLocalTo(val)}
+            placeholder="End date"
+            minDate={localFrom || undefined}
           />
         </div>
       </div>

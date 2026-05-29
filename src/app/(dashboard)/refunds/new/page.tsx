@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { FormField, Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { PageSkeleton } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
@@ -369,11 +370,10 @@ export default function NewRefundPage() {
                   label="Refund Date"
                   hint="Leave empty to mark as pending. Enter a date to mark as completed."
                 >
-                  <Input
+                  <DatePicker
                     id="refund_date"
-                    type="date"
                     value={formData.refund_date}
-                    onChange={(e) => setFormData({ ...formData, refund_date: e.target.value })}
+                    onChange={(val) => setFormData((prev) => ({ ...prev, refund_date: val }))}
                   />
                 </FormField>
 

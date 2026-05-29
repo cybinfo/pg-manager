@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   WorkflowStepper,
   WorkflowStepCard,
@@ -327,12 +328,12 @@ export default function NewServicePaymentPage() {
               </FormField>
 
               <FormField label="Service Date" required>
-                <Input
-                  type="date"
+                <DatePicker
                   value={formData.service_date}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, service_date: e.target.value }))
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, service_date: val }))
                   }
+                  placeholder="Pick a date"
                 />
               </FormField>
 

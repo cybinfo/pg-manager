@@ -8,6 +8,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, NOTICE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Label } from "@/components/ui/label"
 import { Select, FormField } from "@/components/ui/form-components"
 import {
@@ -453,12 +454,10 @@ export default function NoticeDetailPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Expires On" htmlFor="expires_at">
-              <Input
+              <DatePicker
                 id="expires_at"
-                name="expires_at"
-                type="date"
                 value={formData.expires_at}
-                onChange={handleChange}
+                onChange={(val) => setFormData((prev) => ({ ...prev, expires_at: val }))}
                 disabled={saving}
               />
             </FormField>

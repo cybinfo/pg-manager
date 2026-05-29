@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
+import { DatePicker } from "@/components/ui/date-picker"
 
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, EXPENSE_BILL_STATUS_OPTIONS as STATUS_OPTIONS } from "@/lib/status"
 import type { BillPayment, Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
@@ -363,22 +364,22 @@ export default function EditBillPaymentPage({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Bill Date">
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={formData.bill_date || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, bill_date: e.target.value }))
+                        onChange={(val) =>
+                          setFormData((prev) => ({ ...prev, bill_date: val }))
                         }
+                        placeholder="Pick a date"
                       />
                     </FormField>
 
                     <FormField label="Due Date">
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={formData.due_date || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, due_date: e.target.value }))
+                        onChange={(val) =>
+                          setFormData((prev) => ({ ...prev, due_date: val }))
                         }
+                        placeholder="Pick a date"
                       />
                     </FormField>
                   </div>
@@ -536,12 +537,12 @@ export default function EditBillPaymentPage({
                     </FormField>
 
                     <FormField label="Payment Date">
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={formData.payment_date || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, payment_date: e.target.value }))
+                        onChange={(val) =>
+                          setFormData((prev) => ({ ...prev, payment_date: val }))
                         }
+                        placeholder="Pick a date"
                       />
                     </FormField>
                   </div>

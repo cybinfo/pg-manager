@@ -47,6 +47,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { applyExitClearanceCompletion } from "@/lib/workflows/exit.workflow"
 import Link from "next/link"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 
 // ─── Step definitions ────────────────────────────────────────────────────────
 
@@ -477,10 +478,9 @@ export default function ExitClearanceDetailPage() {
 
           <div className="space-y-1.5">
             <Label>Actual Exit Date <span className="text-destructive">*</span></Label>
-            <Input
-              type="date"
+            <DatePicker
               value={formData.actual_exit_date}
-              onChange={(e) => setFormData({ ...formData, actual_exit_date: e.target.value })}
+              onChange={(val) => setFormData({ ...formData, actual_exit_date: val })}
               disabled={isCleared}
             />
             <p className="text-xs text-muted-foreground">The actual date the tenant vacated the room</p>

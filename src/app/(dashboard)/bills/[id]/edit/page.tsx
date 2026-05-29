@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, FileText, Loader2 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
@@ -50,6 +51,7 @@ function EditBillContent({
 
   const {
     formData,
+    setFormData,
     handleChange,
     handleSubmit,
     loading,
@@ -140,13 +142,10 @@ function EditBillContent({
                 />
               </FormField>
               <FormField label="Due Date" htmlFor="due_date" required error={errors.due_date}>
-                <Input
+                <DatePicker
                   id="due_date"
-                  name="due_date"
-                  type="date"
                   value={formData.due_date as string}
-                  onChange={handleChange}
-                  onBlur={() => validateField("due_date")}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, due_date: val }))}
                   disabled={saving}
                 />
               </FormField>
@@ -155,22 +154,18 @@ function EditBillContent({
             {/* Billing Period */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Period Start" htmlFor="billing_period_start">
-                <Input
+                <DatePicker
                   id="billing_period_start"
-                  name="billing_period_start"
-                  type="date"
                   value={formData.billing_period_start as string}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, billing_period_start: val }))}
                   disabled={saving}
                 />
               </FormField>
               <FormField label="Period End" htmlFor="billing_period_end">
-                <Input
+                <DatePicker
                   id="billing_period_end"
-                  name="billing_period_end"
-                  type="date"
                   value={formData.billing_period_end as string}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, billing_period_end: val }))}
                   disabled={saving}
                 />
               </FormField>

@@ -18,6 +18,7 @@ import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PAYMENT_METHODS } from "@/lib/status/billing"
+import { DatePicker } from "@/components/ui/date-picker"
 import { recordBulkPayments, BulkPaymentInput } from "@/lib/workflows/payment.workflow"
 
 // ============================================
@@ -221,11 +222,10 @@ function BulkPaymentForm() {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FormField label="Payment Date" htmlFor="payment_date">
-                  <Input
+                  <DatePicker
                     id="payment_date"
-                    type="date"
                     value={paymentDate}
-                    onChange={(e) => setPaymentDate(e.target.value)}
+                    onChange={(val) => setPaymentDate(val)}
                     disabled={submitting}
                   />
                 </FormField>

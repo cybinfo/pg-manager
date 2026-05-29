@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
 import {
   DetailHero,
@@ -328,10 +329,9 @@ export default function RefundDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Refund Date</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={formData.refund_date}
-                      onChange={(e) => setFormData({ ...formData, refund_date: e.target.value })}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, refund_date: val }))}
                     />
                   </div>
                 </div>

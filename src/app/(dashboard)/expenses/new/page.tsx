@@ -24,6 +24,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
+import { DatePicker } from "@/components/ui/date-picker"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
 
@@ -51,6 +52,7 @@ function NewExpenseContent() {
   const {
     formData,
     handleChange,
+    setField,
     handleSubmit,
     saving,
     router,
@@ -231,12 +233,11 @@ function NewExpenseContent() {
               </FormField>
 
               <FormField label="Date" htmlFor="expense_date" required error={errors.expense_date}>
-                <Input
+                <DatePicker
                   id="expense_date"
-                  name="expense_date"
-                  type="date"
                   value={formData.expense_date as string}
-                  onChange={handleChange}
+                  onChange={(val) => setField("expense_date", val)}
+                  placeholder="Pick a date"
                 />
               </FormField>
             </div>

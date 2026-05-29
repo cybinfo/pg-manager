@@ -28,6 +28,7 @@ import {
   Textarea,
 } from "@/components/ui"
 import { Select, FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -254,11 +255,10 @@ function RecordPaymentForm({
           />
         </FormField>
         <FormField label="Payment Date" htmlFor="pay-date" required>
-          <Input
+          <DatePicker
             id="pay-date"
-            type="date"
             value={formData.payment_date}
-            onChange={(e) => setFormData((prev) => ({ ...prev, payment_date: e.target.value }))}
+            onChange={(val) => setFormData((prev) => ({ ...prev, payment_date: val }))}
             disabled={saving}
           />
         </FormField>

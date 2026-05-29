@@ -38,6 +38,7 @@ import { useFormValidation } from "@/lib/hooks/useFormValidation"
 import { requiredSelect, requiredDate } from "@/lib/validation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { LibraryPlanOption } from "@/types/library.types"
 import { renewLibraryMembership } from "@/lib/services/library-members"
 
@@ -434,13 +435,13 @@ export default function RenewLibraryMemberPage({
                 required
                 error={errors.start_date as string | undefined}
               >
-                <Input
+                <DatePicker
                   id="start_date"
-                  name="start_date"
-                  type="date"
                   value={formData.start_date}
-                  onChange={handleStartDateChange}
-                  onBlur={() => validateField("start_date")}
+                  onChange={(val) => {
+                    setFormData((prev) => ({ ...prev, start_date: val }))
+                    validateField("start_date")
+                  }}
                   disabled={loading}
                 />
               </FormField>

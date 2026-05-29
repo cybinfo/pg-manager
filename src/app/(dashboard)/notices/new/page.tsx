@@ -26,6 +26,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useFeatures } from "@/lib/features/use-features"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { PropertyOption } from "@/types/properties.types"
 
 interface LibraryItem {
@@ -496,14 +497,12 @@ function NewNoticeContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Expires On" htmlFor="expires_at" hint="Leave empty for no expiration">
-                <Input
+                <DatePicker
                   id="expires_at"
-                  name="expires_at"
-                  type="date"
                   value={formData.expires_at as string}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, expires_at: val }))}
                   disabled={saving}
-                  min={getTodayISO()}
+                  placeholder="Pick a date"
                 />
               </FormField>
 

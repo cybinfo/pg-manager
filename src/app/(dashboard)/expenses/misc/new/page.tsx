@@ -23,6 +23,7 @@ import {
   Textarea,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
+import { DatePicker } from "@/components/ui/date-picker"
 
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
@@ -199,13 +200,12 @@ function NewMiscTransactionContent() {
       <FormSection title="Transaction Details">
         <FormGrid cols={2}>
           <FormField label="Date" required error={errors.transaction_date}>
-            <Input
-              type="date"
+            <DatePicker
               value={formData.transaction_date}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, transaction_date: e.target.value }))
+              onChange={(val) =>
+                setFormData((prev) => ({ ...prev, transaction_date: val }))
               }
-              onBlur={() => validateField("transaction_date")}
+              placeholder="Pick a date"
             />
           </FormField>
 

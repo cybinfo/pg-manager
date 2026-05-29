@@ -23,6 +23,7 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
+import { DatePicker } from "@/components/ui/date-picker"
 
 import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, UNIT_OPTIONS } from "@/lib/status"
 import type { Product, DailySpend, Vendor } from "@/types/expense-enhanced.types"
@@ -302,15 +303,15 @@ export default function EditDailySpendPage({
               <CardContent className="space-y-6">
                 {/* Date */}
                 <FormField label="Date" required>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={formData.spend_date}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setFormData((prev) => ({
                         ...prev,
-                        spend_date: e.target.value,
+                        spend_date: val,
                       }))
                     }
+                    placeholder="Pick a date"
                   />
                 </FormField>
 

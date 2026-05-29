@@ -29,6 +29,7 @@ import { PermissionGuard } from "@/components/auth"
 import { cn } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { DatePicker } from "@/components/ui/date-picker"
 import { getTodayISO, parseMonthIndex } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
 import { calculateProRataAmount, getProRataBreakdown } from "@/lib/billing/pro-rata"
@@ -547,11 +548,9 @@ function NewBillContent() {
                   : "Using calendar month (1st of month)"
               }
             >
-              <Input
-                type="date"
+              <DatePicker
                 value={formData.bill_date}
-                onChange={(e) => setFormData({ ...formData, bill_date: e.target.value })}
-                required
+                onChange={(val) => setFormData({ ...formData, bill_date: val })}
               />
             </FormField>
           </div>
@@ -617,10 +616,9 @@ function NewBillContent() {
               {proRata.enabled && (
                 <div className="space-y-3">
                   <FormField label="Tenant Join Date" required>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={proRata.joinDate}
-                      onChange={(e) => setProRata((p) => ({ ...p, joinDate: e.target.value }))}
+                      onChange={(val) => setProRata((p) => ({ ...p, joinDate: val }))}
                     />
                   </FormField>
                   {proRataAmount !== null && (

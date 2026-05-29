@@ -32,6 +32,7 @@ import {
   WorkflowHeader,
   WorkflowStepDef,
 } from "@/components/ui/workflow"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface ChargeType {
   id: string
@@ -518,13 +519,10 @@ function NewMeterReadingContent() {
       >
         <div className="space-y-4">
           <FormField label="Reading Date" required>
-            <Input
+            <DatePicker
               id="reading_date"
-              name="reading_date"
-              type="date"
               value={formData.reading_date as string}
-              onChange={handleChange}
-              required
+              onChange={(val) => setFormData((prev) => ({ ...prev, reading_date: val }))}
               disabled={saving}
             />
           </FormField>

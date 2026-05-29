@@ -61,6 +61,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Label } from "@/components/ui/label"
 import { MemberHoursCard, MemberQRCode } from "@/components/library"
 import { formatDate, formatTime } from "@/lib/format"
@@ -875,13 +876,12 @@ export default function LibraryMemberDetailPage() {
           </AlertDialogHeader>
           <div className="py-4">
             <Label htmlFor="left_date">Left Date</Label>
-            <Input
+            <DatePicker
               id="left_date"
-              type="date"
               value={markLeftDate}
-              onChange={(e) => setMarkLeftDate(e.target.value)}
+              onChange={(val) => setMarkLeftDate(val)}
               disabled={markLeftLoading}
-              className="mt-2"
+              placeholder="Pick a date"
             />
           </div>
           <AlertDialogFooter>

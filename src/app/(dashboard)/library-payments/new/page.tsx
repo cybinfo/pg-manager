@@ -19,6 +19,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
+import { DatePicker } from "@/components/ui/date-picker"
 import { getTodayISO } from "@/lib/date-helpers"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_TYPE_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
@@ -257,12 +258,10 @@ function NewLibraryPaymentContent() {
             {/* Payment Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
-                <Input
+                <DatePicker
                   id="payment_date"
-                  name="payment_date"
-                  type="date"
                   value={formData.payment_date as string}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, payment_date: val }))}
                   disabled={saving}
                 />
               </FormField>

@@ -17,6 +17,7 @@ import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Lock, Loader2, Users } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
@@ -313,25 +314,19 @@ export default function AssignLockerPage({
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Start Date" htmlFor="start_date" required>
-                <Input
+                <DatePicker
                   id="start_date"
-                  name="start_date"
-                  type="date"
                   value={formData.start_date}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, start_date: e.target.value }))}
-                  required
+                  onChange={(val) => setFormData((prev) => ({ ...prev, start_date: val }))}
                   disabled={loading}
                 />
               </FormField>
               <FormField label="End Date" htmlFor="end_date" hint="Leave empty for ongoing assignment">
-                <Input
+                <DatePicker
                   id="end_date"
-                  name="end_date"
-                  type="date"
                   value={formData.end_date}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, end_date: e.target.value }))}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, end_date: val }))}
                   disabled={loading}
-                  min={formData.start_date}
                 />
               </FormField>
             </div>

@@ -4,6 +4,7 @@ import * as React from "react"
 import { Plus, X, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Popover,
   PopoverContent,
@@ -292,10 +293,9 @@ function FilterValueInput({
   // Date input
   if (filterType === "date") {
     return (
-      <Input
-        type="date"
+      <DatePicker
         value={value === null || value === undefined ? "" : String(value)}
-        onChange={(e) => onChange(e.target.value || null)}
+        onChange={(val) => onChange(val || null)}
         className="h-8 text-sm flex-1 min-w-[120px]"
       />
     )

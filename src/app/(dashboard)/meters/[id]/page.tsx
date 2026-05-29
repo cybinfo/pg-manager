@@ -28,6 +28,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import {
   Dialog,
@@ -582,10 +583,9 @@ export default function MeterDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>Start Date *</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={assignForm.start_date}
-                onChange={(e) => setAssignForm({ ...assignForm, start_date: e.target.value })}
+                onChange={(val) => setAssignForm({ ...assignForm, start_date: val })}
               />
             </div>
             <div className="space-y-2">
@@ -642,10 +642,9 @@ export default function MeterDetailPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>End Date *</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={endForm.end_date}
-                onChange={(e) => setEndForm({ ...endForm, end_date: e.target.value })}
+                onChange={(val) => setEndForm({ ...endForm, end_date: val })}
               />
             </div>
             <div className="space-y-2">

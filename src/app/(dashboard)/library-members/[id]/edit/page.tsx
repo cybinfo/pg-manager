@@ -24,6 +24,7 @@ import { TIME_SLOTS } from "@/types/library.types"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import { DatePicker } from "@/components/ui/date-picker"
 import { ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
 import { LIBRARY_MEMBER_STATUS_OPTIONS } from "@/lib/status"
 
@@ -285,12 +286,10 @@ function EditLibraryMemberContent({
 
             {/* Left Date */}
             <FormField label="Left Date" hint="Set when member explicitly leaves. Clear when they renew.">
-              <Input
+              <DatePicker
                 id="left_date"
-                name="left_date"
-                type="date"
                 value={formData.left_date as string}
-                onChange={handleChange}
+                onChange={(val) => setFormData((prev) => ({ ...prev, left_date: val }))}
                 disabled={saving}
               />
             </FormField>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { Calendar, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 
 export interface DateRange {
@@ -247,22 +248,20 @@ export function DateRangePicker({ value, onChange, className, presets }: DateRan
                       <label className="text-xs font-medium text-muted-foreground">
                         From
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={customFrom}
-                        onChange={(e) => setCustomFrom(e.target.value)}
-                        className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                        onChange={(val) => setCustomFrom(val)}
+                        placeholder="Start date"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-muted-foreground">
                         To
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={customTo}
-                        onChange={(e) => setCustomTo(e.target.value)}
-                        className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                        onChange={(val) => setCustomTo(val)}
+                        placeholder="End date"
                       />
                     </div>
                   </div>

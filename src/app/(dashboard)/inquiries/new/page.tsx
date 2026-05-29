@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredPhone, requiredSelect } from "@/lib/validation"
 import { ArrowLeft, Inbox, Loader2 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { PermissionGuard } from "@/components/auth"
 import { defaultConfigurableRoomTypes, ConfigurableRoomType } from "@/types/rooms.types"
 import type { PropertyOption } from "@/types/properties.types"
@@ -40,6 +41,7 @@ function NewInquiryContent() {
     handleSubmit,
     saving,
     errors,
+    setField,
   } = useFormPage({
     table: "website_inquiries",
     initialData: {
@@ -206,12 +208,10 @@ function NewInquiryContent() {
                 />
               </FormField>
               <FormField label="Expected Move-in">
-                <Input
+                <DatePicker
                   id="expected_move_in"
-                  name="expected_move_in"
-                  type="date"
                   value={formData.expected_move_in as string}
-                  onChange={handleChange}
+                  onChange={(val) => setField("expected_move_in", val)}
                   disabled={saving}
                 />
               </FormField>

@@ -22,6 +22,7 @@ import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
+import { DatePicker } from "@/components/ui/date-picker"
 import { VendorSelector } from "@/components/expenses/vendor-selector"
 import { getTodayISO } from "@/lib/date-helpers"
 import { ProductSelector } from "@/components/expenses/product-selector"
@@ -297,10 +298,10 @@ export default function NewDailySpendPage() {
                 {/* Header Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField label="Date" required>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={spendDate}
-                      onChange={(e) => setSpendDate(e.target.value)}
+                      onChange={(val) => setSpendDate(val)}
+                      placeholder="Pick a date"
                     />
                   </FormField>
 

@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Lock, Loader2, Check, Package, AlertCircle } from "lucide-react"
@@ -360,25 +361,20 @@ export default function AssignLockerToMemberPage({
                 {/* Dates */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField label="Start Date" htmlFor="start_date" required>
-                    <Input
+                    <DatePicker
                       id="start_date"
-                      name="start_date"
-                      type="date"
                       value={formData.start_date}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, start_date: e.target.value }))}
-                      required
+                      onChange={(val) => setFormData((prev) => ({ ...prev, start_date: val }))}
                       disabled={loading}
                     />
                   </FormField>
                   <FormField label="End Date (Optional)" htmlFor="end_date" hint="Leave empty for ongoing assignment">
-                    <Input
+                    <DatePicker
                       id="end_date"
-                      name="end_date"
-                      type="date"
                       value={formData.end_date}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, end_date: e.target.value }))}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, end_date: val }))}
                       disabled={loading}
-                      min={formData.start_date}
+                      placeholder="Pick a date"
                     />
                   </FormField>
                 </div>

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { ArrowLeft, Megaphone, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
@@ -52,6 +53,7 @@ function EditNoticeContent({
     record,
     errors,
     validateField,
+    setField,
   } = useFormEditPage({
     table: "notices",
     id,
@@ -199,13 +201,12 @@ function EditNoticeContent({
 
             {/* Expiry Date */}
             <FormField label="Expires On" htmlFor="expires_at" hint="Leave empty for no expiry">
-              <Input
+              <DatePicker
                 id="expires_at"
-                name="expires_at"
-                type="date"
                 value={formData.expires_at as string}
-                onChange={handleChange}
+                onChange={(val) => setField("expires_at", val)}
                 disabled={saving}
+                placeholder="No expiry"
               />
             </FormField>
           </CardContent>

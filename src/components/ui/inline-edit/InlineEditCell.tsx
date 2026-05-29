@@ -13,6 +13,7 @@ import { Loader2, Check, X, Pencil } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import type {
   EditType,
   EditValidation,
@@ -211,19 +212,9 @@ export function InlineEditCell({
           className={cn("h-8 text-sm", error && "border-destructive")}
         />
       ) : editType === "date" ? (
-        <Input
-          ref={inputRef}
-          type="date"
+        <DatePicker
           value={tempValue ? String(tempValue).split("T")[0] : ""}
-          onChange={(e) => setTempValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={() => {
-            setTimeout(() => {
-              if (document.activeElement !== inputRef.current) {
-                handleSave()
-              }
-            }, 150)
-          }}
+          onChange={(val) => setTempValue(val)}
           disabled={saving}
           className={cn("h-8 text-sm w-36", error && "border-destructive")}
         />

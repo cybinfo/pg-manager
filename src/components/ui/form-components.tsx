@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronDown, LucideIcon, Mail, Calendar, Search } from "lucide-react"
+import { ChevronDown, LucideIcon, Mail, Search } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 
 // ============================================
@@ -193,18 +194,32 @@ export function EmailInput({
 // Date Input
 // ============================================
 export function DateInput({
+  value,
+  onChange,
+  disabled,
+  id,
+  placeholder,
   className,
-  ...props
 }: React.InputHTMLAttributes<HTMLInputElement>) {
+  const handleChange = (val: string) => {
+    if (onChange) {
+      // Synthesise a minimal ChangeEvent so callers don't need to change
+      const syntheticEvent = {
+        target: { value: val },
+      } as React.ChangeEvent<HTMLInputElement>
+      onChange(syntheticEvent)
+    }
+  }
+
   return (
-    <div className="relative">
-      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-      <Input
-        type="date"
-        className={cn("pl-10", className)}
-        {...props}
-      />
-    </div>
+    <DatePicker
+      value={typeof value === "string" ? value : ""}
+      onChange={handleChange}
+      placeholder={placeholder as string | undefined}
+      disabled={!!disabled}
+      id={id as string | undefined}
+      className={className}
+    />
   )
 }
 

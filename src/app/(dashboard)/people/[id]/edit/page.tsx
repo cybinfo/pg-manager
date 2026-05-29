@@ -38,6 +38,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { FormField, Select, EmailInput } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   PersonFormData,
   EmergencyContact,
@@ -405,11 +406,10 @@ export default function EditPersonPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Date of Birth">
-                <Input
+                <DatePicker
                   id="dob"
-                  type="date"
                   value={formData.date_of_birth}
-                  onChange={(e) => updateField("date_of_birth", e.target.value)}
+                  onChange={(val) => updateField("date_of_birth", val)}
                 />
               </FormField>
               <FormField label="Gender">

@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
+import { DatePicker } from "@/components/ui/date-picker"
 import { PermissionGuard } from "@/components/auth"
 import {
   MeterType,
@@ -332,11 +333,10 @@ export default function NewMeterPage() {
             </div>
 
             <FormField label="Installation Date">
-              <Input
+              <DatePicker
                 id="installation_date"
-                type="date"
                 value={formData.installation_date as string}
-                onChange={(e) => updateField("installation_date", e.target.value)}
+                onChange={(val) => updateField("installation_date", val)}
               />
             </FormField>
 

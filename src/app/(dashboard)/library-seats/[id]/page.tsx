@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { formatDate } from "@/lib/format"
@@ -401,10 +402,9 @@ export default function LibrarySeatDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">Date</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={newReservation.reserved_date}
-                      onChange={(e) => setNewReservation((p) => ({ ...p, reserved_date: e.target.value }))}
+                      onChange={(val) => setNewReservation((p) => ({ ...p, reserved_date: val }))}
                       disabled={reservationLoading}
                     />
                   </div>

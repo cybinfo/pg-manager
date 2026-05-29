@@ -29,6 +29,7 @@ import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
 import { cn } from "@/lib/utils"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface Tenant {
   id: string
@@ -538,13 +539,10 @@ function NewPaymentForm() {
               />
             </FormField>
             <FormField label="Payment Date" required>
-              <Input
+              <DatePicker
                 id="payment_date"
-                name="payment_date"
-                type="date"
                 value={formData.payment_date}
-                onChange={handleChange}
-                required
+                onChange={(val) => setFormData((prev) => ({ ...prev, payment_date: val }))}
                 disabled={loading}
               />
             </FormField>

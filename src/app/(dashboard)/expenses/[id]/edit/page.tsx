@@ -21,6 +21,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
+import { DatePicker } from "@/components/ui/date-picker"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
 
@@ -266,13 +267,11 @@ function EditExpenseContent() {
               </FormField>
 
               <FormField label="Date" required>
-                <Input
+                <DatePicker
                   id="expense_date"
-                  name="expense_date"
-                  type="date"
                   value={formData.expense_date}
-                  onChange={handleChange}
-                  required
+                  onChange={(val) => setFormData((prev) => ({ ...prev, expense_date: val }))}
+                  placeholder="Pick a date"
                 />
               </FormField>
             </div>

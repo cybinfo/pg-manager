@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { ArrowLeft, Wallet, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredAmount } from "@/lib/validation"
@@ -53,6 +54,7 @@ function EditRefundContent({
 
   const {
     formData,
+    setFormData,
     handleChange,
     handleSubmit,
     loading,
@@ -193,12 +195,10 @@ function EditRefundContent({
             {/* Date & Reference */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Refund Date" htmlFor="refund_date">
-                <Input
+                <DatePicker
                   id="refund_date"
-                  name="refund_date"
-                  type="date"
                   value={formData.refund_date as string}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, refund_date: val }))}
                   disabled={saving}
                 />
               </FormField>

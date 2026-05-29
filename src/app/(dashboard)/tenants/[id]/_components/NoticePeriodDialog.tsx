@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Loader2, Bell } from "lucide-react"
 import { getTodayISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
@@ -53,31 +54,26 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Notice Given Date" htmlFor="notice_date" required hint="When did/will the tenant give notice?">
-              <Input
+              <DatePicker
                 id="notice_date"
-                type="date"
                 value={noticeData.notice_date}
-                onChange={(e) => {
-                  const newNoticeDate = e.target.value
-                  const exitDate = new Date(newNoticeDate)
+                onChange={(val) => {
+                  const exitDate = new Date(val)
                   exitDate.setDate(exitDate.getDate() + 30)
                   setNoticeData({
                     ...noticeData,
-                    notice_date: newNoticeDate,
+                    notice_date: val,
                     expected_exit_date: exitDate.toISOString().split("T")[0]
                   })
                 }}
-                required
               />
             </FormField>
 
             <FormField label="Expected Exit Date" htmlFor="expected_exit_date" required hint="Last day of stay">
-              <Input
+              <DatePicker
                 id="expected_exit_date"
-                type="date"
                 value={noticeData.expected_exit_date}
-                onChange={(e) => setNoticeData({ ...noticeData, expected_exit_date: e.target.value })}
-                required
+                onChange={(val) => setNoticeData({ ...noticeData, expected_exit_date: val })}
               />
             </FormField>
           </div>

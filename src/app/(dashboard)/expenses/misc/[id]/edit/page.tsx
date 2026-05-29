@@ -22,6 +22,7 @@ import {
   Textarea,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
+import { DatePicker } from "@/components/ui/date-picker"
 import { EmptyState } from "@/components/ui/empty-state"
 
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
@@ -262,12 +263,12 @@ function EditMiscTransactionContent({
       <FormSection title="Transaction Details">
         <FormGrid cols={2}>
           <FormField label="Date" required>
-            <Input
-              type="date"
+            <DatePicker
               value={formData.transaction_date}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, transaction_date: e.target.value }))
+              onChange={(val) =>
+                setFormData((prev) => ({ ...prev, transaction_date: val }))
               }
+              placeholder="Pick a date"
             />
           </FormField>
 

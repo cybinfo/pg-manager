@@ -1,8 +1,9 @@
 "use client"
 
-import { X, Filter, Calendar } from "lucide-react"
+import { X, Filter } from "lucide-react"
 import { Button } from "./button"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 
 export interface FilterOption {
@@ -64,41 +65,29 @@ export function ListPageFilters({
             )}
 
             {filter.type === "date" && (
-              <div className="relative">
-                <input
-                  type="date"
-                  value={values[filter.id] || ""}
-                  onChange={(e) => onChange(filter.id, e.target.value)}
-                  className="h-9 px-3 pl-9 rounded-md border border-input bg-card text-sm min-w-[150px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                  aria-label={filter.label}
-                />
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              </div>
+              <DatePicker
+                value={values[filter.id] || ""}
+                onChange={(val) => onChange(filter.id, val)}
+                placeholder={filter.placeholder || filter.label}
+                className="h-9 min-w-[150px]"
+              />
             )}
 
             {filter.type === "date-range" && (
               <div className="flex items-center gap-2">
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={values[`${filter.id}_from`] || ""}
-                    onChange={(e) => onChange(`${filter.id}_from`, e.target.value)}
-                    className="h-9 px-3 pl-9 rounded-md border border-input bg-card text-sm w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                    aria-label={`${filter.label} from`}
-                  />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
+                <DatePicker
+                  value={values[`${filter.id}_from`] || ""}
+                  onChange={(val) => onChange(`${filter.id}_from`, val)}
+                  placeholder="From"
+                  className="h-9 w-[160px]"
+                />
                 <span className="text-muted-foreground text-sm">to</span>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={values[`${filter.id}_to`] || ""}
-                    onChange={(e) => onChange(`${filter.id}_to`, e.target.value)}
-                    className="h-9 px-3 pl-9 rounded-md border border-input bg-card text-sm w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                    aria-label={`${filter.label} to`}
-                  />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
+                <DatePicker
+                  value={values[`${filter.id}_to`] || ""}
+                  onChange={(val) => onChange(`${filter.id}_to`, val)}
+                  placeholder="To"
+                  className="h-9 w-[160px]"
+                />
               </div>
             )}
           </div>

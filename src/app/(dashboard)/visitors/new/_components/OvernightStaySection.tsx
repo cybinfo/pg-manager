@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Moon, IndianRupee, Calendar, FileText } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { formatCurrency } from "@/lib/format"
-import { getTodayISO } from "@/lib/date-helpers"
 
 interface OvernightStaySectionProps {
   formData: {
@@ -93,19 +93,12 @@ export function OvernightStaySection({
             </div>
 
             <FormField label="Expected Checkout Date" htmlFor="expected_checkout_date" hint="Auto-calculated if not specified based on number of nights">
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="expected_checkout_date"
-                  name="expected_checkout_date"
-                  type="date"
-                  value={formData.expected_checkout_date}
-                  onChange={onChange}
-                  disabled={loading}
-                  className="pl-9"
-                  min={getTodayISO()}
-                />
-              </div>
+              <DatePicker
+                id="expected_checkout_date"
+                value={formData.expected_checkout_date}
+                onChange={(val) => onChange({ target: { name: "expected_checkout_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
+                disabled={loading}
+              />
             </FormField>
 
             {totalCharge > 0 && formData.visitor_type === "tenant_visitor" && formData.tenant_id && (

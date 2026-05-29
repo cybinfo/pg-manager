@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
+import { DatePicker } from "@/components/ui/date-picker"
 
 import { getNowISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
@@ -359,12 +360,12 @@ export default function EditServicePaymentPage({
                   <h3 className="text-sm font-medium text-muted-foreground">Service Details</h3>
 
                   <FormField label="Service Date" required>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={formData.service_date}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, service_date: e.target.value }))
+                      onChange={(val) =>
+                        setFormData((prev) => ({ ...prev, service_date: val }))
                       }
+                      placeholder="Pick a date"
                     />
                   </FormField>
 
@@ -508,12 +509,12 @@ export default function EditServicePaymentPage({
                     </FormField>
 
                     <FormField label="Payment Date">
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={formData.payment_date || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, payment_date: e.target.value }))
+                        onChange={(val) =>
+                          setFormData((prev) => ({ ...prev, payment_date: val }))
                         }
+                        placeholder="Pick a date"
                       />
                     </FormField>
                   </div>

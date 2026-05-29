@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { requiredDate, requiredAmount } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
@@ -62,6 +63,7 @@ function EditSubscriptionContent({
     record,
     errors,
     validateField,
+    setField,
   } = useFormEditPage({
     table: "library_memberships",
     id,
@@ -150,24 +152,18 @@ function EditSubscriptionContent({
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Start Date" htmlFor="start_date" required error={errors.start_date}>
-                <Input
+                <DatePicker
                   id="start_date"
-                  name="start_date"
-                  type="date"
                   value={formData.start_date as string}
-                  onChange={handleChange}
-                  onBlur={() => validateField("start_date")}
+                  onChange={(val) => { setField("start_date", val); validateField("start_date") }}
                   disabled={saving}
                 />
               </FormField>
               <FormField label="End Date" htmlFor="end_date" required error={errors.end_date}>
-                <Input
+                <DatePicker
                   id="end_date"
-                  name="end_date"
-                  type="date"
                   value={formData.end_date as string}
-                  onChange={handleChange}
-                  onBlur={() => validateField("end_date")}
+                  onChange={(val) => { setField("end_date", val); validateField("end_date") }}
                   disabled={saving}
                 />
               </FormField>

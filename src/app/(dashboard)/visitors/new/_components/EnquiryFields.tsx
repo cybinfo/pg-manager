@@ -1,12 +1,11 @@
 "use client"
 
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Search, Calendar } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import { FormField, Select } from "@/components/ui/form-components"
 import { EnquirySource, ENQUIRY_SOURCE_LABELS } from "@/types/visitors.types"
-import { getTodayISO } from "@/lib/date-helpers"
 
 interface Room {
   id: string
@@ -57,14 +56,11 @@ export function EnquiryFields({ formData, onChange, onRoomsInterestedChange, fil
               <Calendar className="h-4 w-4 inline mr-1" />
               Follow-up Date
             </Label>
-            <Input
+            <DatePicker
               id="follow_up_date"
-              name="follow_up_date"
-              type="date"
               value={formData.follow_up_date}
-              onChange={onChange}
+              onChange={(val) => onChange({ target: { name: "follow_up_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
               disabled={loading}
-              min={getTodayISO()}
             />
           </div>
         </div>

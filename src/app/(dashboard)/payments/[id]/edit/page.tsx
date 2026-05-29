@@ -21,6 +21,7 @@ import { requiredAmount, requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
+import { DatePicker } from "@/components/ui/date-picker"
 
 export default function EditPaymentPage({
   params,
@@ -141,13 +142,13 @@ function EditPaymentContent({
                 />
               </FormField>
               <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
-                <Input
+                <DatePicker
                   id="payment_date"
-                  name="payment_date"
-                  type="date"
                   value={formData.payment_date as string}
-                  onChange={handleChange}
-                  onBlur={() => validateField("payment_date")}
+                  onChange={(val) => {
+                    handleChange({ target: { name: "payment_date", value: val } } as React.ChangeEvent<HTMLInputElement>)
+                    validateField("payment_date")
+                  }}
                   disabled={saving}
                 />
               </FormField>

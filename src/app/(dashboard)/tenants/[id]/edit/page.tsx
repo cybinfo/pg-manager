@@ -16,6 +16,7 @@ import {
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
 import { Select, FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { requiredSelect, requiredAmount } from "@/lib/validation"
 import {
   Loader2,
@@ -73,6 +74,7 @@ function EditTenantContent() {
     record,
     errors,
     setLoading: _setLoading,
+    setField,
   } = useFormEditPage({
     table: "tenants",
     id,
@@ -266,13 +268,10 @@ function EditTenantContent() {
             </div>
 
             <FormField label="Check-in Date" required>
-              <Input
+              <DatePicker
                 id="check_in_date"
-                name="check_in_date"
-                type="date"
                 value={formData.check_in_date as string}
-                onChange={handleChange}
-                required
+                onChange={(val) => setField("check_in_date", val)}
                 disabled={saving}
               />
             </FormField>

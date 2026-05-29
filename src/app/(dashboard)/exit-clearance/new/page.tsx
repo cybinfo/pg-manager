@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -470,24 +471,18 @@ function InitiateCheckoutForm() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Notice Given Date" required hint="When did the tenant give notice?">
-                <Input
+                <DatePicker
                   id="notice_given_date"
-                  name="notice_given_date"
-                  type="date"
                   value={formData.notice_given_date}
-                  onChange={handleChange}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, notice_given_date: val }))}
                   disabled={loading}
-                  required
                 />
               </FormField>
               <FormField label="Expected Exit Date" required hint="Last day of stay">
-                <Input
+                <DatePicker
                   id="expected_exit_date"
-                  name="expected_exit_date"
-                  type="date"
                   value={formData.expected_exit_date}
-                  onChange={handleChange}
-                  required
+                  onChange={(val) => setFormData((prev) => ({ ...prev, expected_exit_date: val }))}
                   disabled={loading}
                 />
               </FormField>
