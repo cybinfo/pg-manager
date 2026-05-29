@@ -119,7 +119,7 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", module: "visitors" },
   { name: "Inquiries", href: "/inquiries", icon: Inbox, permission: "tenants.view", module: "inquiries" },
   { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", module: "complaints" },
-  { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", module: "notices" },
+  { name: "Announcements", href: "/notices", icon: Bell, permission: "notices.view", module: "notices" },
   { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", module: "reports" },
   { name: "Activity Log", href: "/activity", icon: Activity, permission: null, module: "activityLog" },
   { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", module: "properties", feature: "architectureView" },
@@ -223,9 +223,9 @@ export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
 
   { name: "People",       href: "/people",     icon: Contact,        permission: "tenants.view",     module: "people" },
   { name: "Visitors",     href: "/visitors",   icon: UserPlus,       permission: "visitors.view",    module: "visitors" },
-  { name: "Complaints",   href: "/complaints", icon: MessageSquare,  permission: "complaints.view",  module: "complaints" },
-  { name: "Notices",      href: "/notices",    icon: Bell,           permission: "notices.view",     module: "notices" },
-  { name: "Approvals",    href: "/approvals",  icon: ClipboardCheck, permission: "tenants.view",     module: "approvals" },
+  { name: "Complaints",      href: "/complaints", icon: MessageSquare,  permission: "complaints.view",  module: "complaints" },
+  { name: "Announcements",  href: "/notices",    icon: Bell,           permission: "notices.view",     module: "notices" },
+  { name: "Approvals",      href: "/approvals",  icon: ClipboardCheck, permission: "tenants.view",     module: "approvals" },
   { name: "Reports",      href: "/reports",    icon: FileText,       permission: "reports.view",     module: "reports" },
   { name: "Activity Log", href: "/activity",   icon: Activity,       permission: null,               module: "activityLog" },
   { name: "Staff",        href: "/staff",      icon: UserCog,        permission: "staff.view",       module: "staff" },
@@ -255,7 +255,7 @@ export const TENANT_NAVIGATION: SimpleNavItem[] = [
   { name: "Documents", href: "/tenant/documents", icon: FolderOpen },
   { name: "Renewal", href: "/tenant/renewal", icon: RefreshCw },
   { name: "Complaints", href: "/tenant/complaints", icon: MessageSquare },
-  { name: "Notices", href: "/tenant/notices", icon: Bell },
+  { name: "Announcements", href: "/tenant/notices", icon: Bell },
 ]
 
 // ============================================================================
@@ -269,7 +269,7 @@ export const LIBRARY_MEMBER_NAVIGATION: SimpleNavItem[] = [
   { name: "My Locker", href: "/member/locker", icon: Lock },
   { name: "Payments", href: "/member/payments", icon: CreditCard },
   { name: "Complaints", href: "/member/complaints", icon: MessageSquare },
-  { name: "Notices", href: "/member/notices", icon: Bell },
+  { name: "Announcements", href: "/member/notices", icon: Bell },
   { name: "My QR Code", href: "/member/qr", icon: QrCode },
 ]
 
@@ -437,7 +437,7 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/exit-clearance": { path: "/exit-clearance", permission: "exit_clearance.initiate", module: "exitClearance", title: "Exit Clearance", icon: UserMinus },
   "/visitors":    { path: "/visitors",    permission: "visitors.view",           module: "visitors",     title: "Visitors",         icon: UserPlus },
   "/complaints":  { path: "/complaints",  permission: "complaints.view",         module: "complaints",   title: "Complaints",       icon: MessageSquare },
-  "/notices":     { path: "/notices",     permission: "notices.view",            module: "notices",      title: "Notices",          icon: Bell },
+  "/notices":     { path: "/notices",     permission: "notices.view",            module: "notices",      title: "Announcements",    icon: Bell },
   "/reports":     { path: "/reports",     permission: "reports.view",            module: "reports",      title: "Reports",          icon: FileText },
   "/activity":    { path: "/activity",    permission: null,                      module: "activityLog",  title: "Activity Log",     icon: Activity },
   "/architecture":{ path: "/architecture",permission: "properties.view",         module: "properties",   title: "Architecture",     icon: Grid3X3 },

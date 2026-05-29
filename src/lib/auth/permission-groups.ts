@@ -70,12 +70,12 @@ export const PERMISSION_GROUPS: Record<string, PermissionGroup> = {
     ],
   },
   notices: {
-    label: "Notices",
+    label: "Announcements",
     permissions: [
-      { key: "notices.view", label: "View notices" },
-      { key: "notices.create", label: "Create notices" },
-      { key: "notices.edit", label: "Edit notices" },
-      { key: "notices.delete", label: "Delete notices" },
+      { key: "notices.view", label: "View announcements" },
+      { key: "notices.create", label: "Create announcements" },
+      { key: "notices.edit", label: "Edit announcements" },
+      { key: "notices.delete", label: "Delete announcements" },
     ],
   },
   visitors: {

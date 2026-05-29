@@ -216,7 +216,7 @@ export function UserMenu({ displayName, displayEmail, onLogout }: {
                     { key: "payment_reminders" as const, icon: CreditCard, label: "Payments" },
                     { key: "complaint_updates" as const, icon: MessageSquare, label: "Complaints" },
                     { key: "approval_updates" as const, icon: ClipboardCheck, label: "Approvals" },
-                    { key: "notice_updates" as const, icon: Megaphone, label: "Notices" },
+                    { key: "notice_updates" as const, icon: Megaphone, label: "Announcements" },
                     { key: "system_alerts" as const, icon: Wrench, label: "System" },
                   ].map(({ key, icon: Icon, label }) => (
                     <div key={key} className="flex items-center justify-between">

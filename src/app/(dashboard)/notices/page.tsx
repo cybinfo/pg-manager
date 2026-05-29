@@ -299,8 +299,8 @@ export default function NoticesPage() {
   return (
     <ListPageTemplate
       tableKey="notices"
-      title="Notices"
-      description="Announcements and notifications for tenants"
+      title="Announcements"
+      description="Broadcast messages and notifications to tenants and members"
       icon={Bell}
       permission="notices.view"
       module="notices"
@@ -309,7 +309,7 @@ export default function NoticesPage() {
       groupByOptions={groupByOptions}
       metrics={metrics}
       columns={columns}
-      searchPlaceholder="Search notices..."
+      searchPlaceholder="Search announcements..."
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
@@ -317,11 +317,11 @@ export default function NoticesPage() {
       exportColumns={exportColumns}
       exportFilename="notices"
       createHref="/notices/new"
-      createLabel="New Notice"
+      createLabel="New Announcement"
       createPermission="notices.create"
       detailHref={(notice) => `/notices/${notice.id}`}
-      emptyTitle="No notices found"
-      emptyDescription="Create your first notice to communicate with tenants"
+      emptyTitle="No announcements found"
+      emptyDescription="Create your first announcement to communicate with tenants and members"
     />
   )
 }

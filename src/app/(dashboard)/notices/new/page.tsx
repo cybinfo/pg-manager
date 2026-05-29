@@ -213,8 +213,8 @@ function NewNoticeContent() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">New Notice</h1>
-          <p className="text-muted-foreground">Create an announcement for tenants</p>
+          <h1 className="text-3xl font-bold">New Announcement</h1>
+          <p className="text-muted-foreground">Create an announcement for tenants and members</p>
         </div>
       </div>
 

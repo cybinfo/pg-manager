@@ -51,7 +51,7 @@ export default function NoticeDetailPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [properties, setProperties] = useState<PropertyOption[]>([])
-  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/notices", defaultLabel: "All Notices" })
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/notices", defaultLabel: "All Announcements" })
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [selectedRooms, setSelectedRooms] = useState<string[]>([])
@@ -233,7 +233,7 @@ export default function NoticeDetailPage() {
         backHref={backHref}
         backLabel={backLabel}
         breadcrumbs={[
-          { label: "Notices", href: "/notices" },
+          { label: "Announcements", href: "/notices" },
           { label: notice.title || "Edit Notice" },
         ]}
         avatar={

@@ -51,7 +51,7 @@ export default function MemberNoticesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Notices</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Announcements</h1>
         <p className="text-muted-foreground">Announcements from {member.library?.name || "your library"}</p>
       </div>
 
