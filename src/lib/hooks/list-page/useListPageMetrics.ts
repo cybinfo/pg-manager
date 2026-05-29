@@ -82,6 +82,11 @@ export function useListPageMetrics<T extends object>(
 
     try {
       const supabase = createClient()
+
+      // Guard: @supabase/ssr may not yet have the JWT in memory on first mount; without this, auth.uid() = NULL → RLS returns 0 for all counts.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
       const counts: Record<string, number> = {}
 
       // Query each metric separately
