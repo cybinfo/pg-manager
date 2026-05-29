@@ -274,19 +274,18 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     filter: { column: "transaction_type", operator: "eq", value: "out" },
   }),
   {
-    // Custom: net balance computed from two server sums
+    // Net balance derived from two server sums — returns string to avoid AnimatedNumber with negatives
     id: "net_amount",
     label: "Net Balance",
     icon: TrendingUp,
     compute: (_items, _total, serverData) => {
-      const inAmount = serverData?.money_in ?? 0
-      const outAmount = serverData?.money_out ?? 0
-      return inAmount - outAmount
+      const inAmount = Number(serverData?.["money_in"]) || 0
+      const outAmount = Number(serverData?.["money_out"]) || 0
+      return formatCurrency(inAmount - outAmount)
     },
-    format: "currency",
-    highlight: (_value) => typeof _value === "number" && _value >= 0,
+    highlight: (value) => typeof value === "string" && !value.startsWith("-"),
   },
-  createTotalMetric({ id: "total_transactions", label: "Transactions", icon: ArrowLeftRight, format: "number" }),
+  createTotalMetric({ id: "total_transactions", label: "Transactions", icon: ArrowLeftRight, format: "number", serverCount: true }),
 ]
 
 // ============================================
