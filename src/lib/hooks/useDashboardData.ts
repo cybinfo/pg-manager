@@ -115,9 +115,9 @@ export function useDashboardData(): UseDashboardDataReturn {
         libraryActiveMembersRes,
         libraryCheckedInRes,
       ] = await Promise.all([
-        supabase.from("properties").select("id", { count: "exact", head: true }),
-        supabase.from("rooms").select("total_beds, occupied_beds"),
-        supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        supabase.from("rooms").select("total_beds, occupied_beds").is("deleted_at", null),
+        supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
         supabase.from("charges").select("amount, paid_amount, status").in("status", ["pending", "partial", "overdue"]),
         supabase.from("charge_types").select("id", { count: "exact", head: true }),
         supabase.from("payments").select("amount"),
@@ -125,6 +125,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         supabase.from("complaints").select("id", { count: "exact", head: true }).eq("status", "open"),
         supabase.from("tenants").select("id", { count: "exact", head: true })
           .eq("status", "active")
+          .is("deleted_at", null)
           .not("expected_exit_date", "is", null)
           .lte("expected_exit_date", thirtyDaysFromNow.toISOString()),
         supabase.from("payments")
