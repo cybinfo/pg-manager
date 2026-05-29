@@ -89,11 +89,12 @@ export function useListPageMetrics<T extends object>(
       for (const metric of metricsWithServerFilter) {
         if (!metric.serverFilter) continue
 
-        // Use head:true (no response body) with count:"exact" — JWT is in the request cookie/header automatically.
-        // Previously tried select("id") + limit(1) but count always returned 0; head:true correctly returns total via Content-Range.
+        // Fetch matching row IDs and count them client-side — mirrors fetchServerSums pattern which is proven to work.
+        // count:"exact" + head:true and count:"exact" + limit(1) both returned 0 regardless of JWT state; this approach avoids the count header entirely.
         let query = supabase
           .from(currentConfig.table)
-          .select("*", { count: "exact", head: true })
+          .select("id")
+          .range(0, 49999)
 
         // Apply standard filters
         query = applyBaseFiltersToQuery(
@@ -104,7 +105,7 @@ export function useListPageMetrics<T extends object>(
         // Apply the metric's specific serverFilter using centralized helper
         query = applyServerFilter(query, metric.serverFilter)
 
-        const { count, error } = await query
+        const { data: rows, error } = await query
 
         if (error) {
           logger.warn("[useListPage] fetchServerCounts: query error", {
@@ -112,8 +113,8 @@ export function useListPageMetrics<T extends object>(
           })
         }
 
-        if (!error && count !== null) {
-          counts[metric.id] = count
+        if (!error && rows) {
+          counts[metric.id] = rows.length
         }
       }
 
