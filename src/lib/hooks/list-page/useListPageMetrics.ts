@@ -83,21 +83,17 @@ export function useListPageMetrics<T extends object>(
     try {
       const supabase = createClient()
 
-      // Guard: @supabase/ssr may not yet have the JWT in memory on first mount; without this, auth.uid() = NULL → RLS returns 0 for all counts.
-      const { data: { session } } = await supabase.auth.getSession()
-      logger.info("[useListPage] fetchServerCounts: session check", { hasSession: !!session, table: currentConfig.table })
-      if (!session) return
-
       const counts: Record<string, number> = {}
 
       // Query each metric separately
       for (const metric of metricsWithServerFilter) {
         if (!metric.serverFilter) continue
 
-        // GET + select("id") + limit(1): HEAD requests don't reliably attach JWT in @supabase/ssr; count comes from Content-Range.
+        // Use head:true (no response body) with count:"exact" — JWT is in the request cookie/header automatically.
+        // Previously tried select("id") + limit(1) but count always returned 0; head:true correctly returns total via Content-Range.
         let query = supabase
           .from(currentConfig.table)
-          .select("id", { count: "exact" })
+          .select("*", { count: "exact", head: true })
 
         // Apply standard filters
         query = applyBaseFiltersToQuery(
@@ -107,25 +103,20 @@ export function useListPageMetrics<T extends object>(
 
         // Apply the metric's specific serverFilter using centralized helper
         query = applyServerFilter(query, metric.serverFilter)
-        // Limit to 1 row — we only need the count from Content-Range, not row data
-        query = query.limit(1)
 
         const { count, error } = await query
 
-        logger.info("[useListPage] fetchServerCounts: metric result", {
-          metricId: metric.id,
-          table: currentConfig.table,
-          filter: JSON.stringify(metric.serverFilter),
-          count,
-          error: error ? String(error.message) : null,
-        })
+        if (error) {
+          logger.warn("[useListPage] fetchServerCounts: query error", {
+            metricId: metric.id, table: currentConfig.table, error: error.message,
+          })
+        }
 
         if (!error && count !== null) {
           counts[metric.id] = count
         }
       }
 
-      logger.info("[useListPage] fetchServerCounts: final counts", { counts, table: currentConfig.table })
       setServerCounts(counts)
     } catch (err) {
       logger.error("[useListPage] Error fetching server counts:", { error: String(err) })
