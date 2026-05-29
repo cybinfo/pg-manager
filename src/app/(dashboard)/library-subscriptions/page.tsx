@@ -184,7 +184,7 @@ const advancedFilterColumns: FilterableColumn[] = [
 // ============================================
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
-  createTotalMetric({ label: "Total Subscriptions", icon: Receipt }),
+  createTotalMetric({ label: "Total Subscriptions", icon: Receipt, serverCount: true }),
   createStatusMetric("active", "Active", Users),
   createStatusMetric("expired", "Expired", AlertTriangle),
   createSumMetric("final_amount", "total_revenue", "Total Revenue", CreditCard),
