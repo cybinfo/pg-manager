@@ -85,6 +85,7 @@ export function useListPageMetrics<T extends object>(
 
       // Guard: @supabase/ssr may not yet have the JWT in memory on first mount; without this, auth.uid() = NULL → RLS returns 0 for all counts.
       const { data: { session } } = await supabase.auth.getSession()
+      logger.info("[useListPage] fetchServerCounts: session check", { hasSession: !!session, table: currentConfig.table })
       if (!session) return
 
       const counts: Record<string, number> = {}
@@ -111,11 +112,20 @@ export function useListPageMetrics<T extends object>(
 
         const { count, error } = await query
 
+        logger.info("[useListPage] fetchServerCounts: metric result", {
+          metricId: metric.id,
+          table: currentConfig.table,
+          filter: JSON.stringify(metric.serverFilter),
+          count,
+          error: error ? String(error.message) : null,
+        })
+
         if (!error && count !== null) {
           counts[metric.id] = count
         }
       }
 
+      logger.info("[useListPage] fetchServerCounts: final counts", { counts, table: currentConfig.table })
       setServerCounts(counts)
     } catch (err) {
       logger.error("[useListPage] Error fetching server counts:", { error: String(err) })
