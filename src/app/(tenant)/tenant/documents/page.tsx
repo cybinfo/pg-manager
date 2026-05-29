@@ -31,17 +31,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useTenantDocuments } from "@/lib/hooks/useTenantDocuments"
 import type { TenantDocument } from "@/lib/hooks/useTenantDocuments"
+import { TENANT_DOCUMENT_TYPE_LABELS } from "@/lib/constants/form-options"
 
 const docStatusMap = DOCUMENT_STATUS
-
-const documentTypeLabels: Record<string, string> = {
-  id_proof: "ID Proof",
-  address_proof: "Address Proof",
-  income_proof: "Income Proof",
-  agreement: "Agreement",
-  receipt: "Receipt",
-  other: "Other",
-}
+const documentTypeLabels = TENANT_DOCUMENT_TYPE_LABELS
 
 export default function TenantDocumentsPage() {
   const { documents, tenantInfo, featureEnabled, loading, refetch } = useTenantDocuments()

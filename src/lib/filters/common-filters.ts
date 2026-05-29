@@ -198,15 +198,6 @@ export const TENANT_HISTORY_STATUS_OPTIONS: FilterOption[] = [
 ]
 
 // ============================================================================
-// ACTIVE STATUS OPTIONS (for staff, etc.)
-// ============================================================================
-
-export const ACTIVE_STATUS_OPTIONS: FilterOption[] = [
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-]
-
-// ============================================================================
 // METER STATUS OPTIONS
 // ============================================================================
 
