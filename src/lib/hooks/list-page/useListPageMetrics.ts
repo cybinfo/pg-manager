@@ -88,15 +88,15 @@ export function useListPageMetrics<T extends object>(
       const counts: Record<string, number> = {}
 
       // One query per metric — mirrors fetchServerSums structure exactly.
-      // Selecting a single small column keeps the response small; the WHERE clause
-      // (server-side filter) determines which rows are counted, not which columns.
+      // Uses count:exact (same as fetchData) for accurate counts on large datasets,
+      // with data.length as fallback. Range applied last, matching fetchData order.
       for (const metric of metricsWithServerFilter) {
         if (!metric.serverFilter) continue
 
-        let query = supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let query: any = supabase
           .from(currentConfig.table)
-          .select("id")
-          .range(0, 99999)
+          .select("id", { count: "exact" })
 
         query = applyBaseFiltersToQuery(
           query, currentConfig, currentFilterConfigs,
@@ -106,7 +106,10 @@ export function useListPageMetrics<T extends object>(
         // Apply the metric's filter server-side — same as fetchServerSums applies sumFilter
         query = applyServerFilter(query, metric.serverFilter)
 
-        const { data, error } = await query
+        // Range applied last — mirrors fetchData which gets correct count from count:exact
+        query = query.range(0, 9999)
+
+        const { data, error, count } = await query
 
         if (error) {
           logger.warn("[useListPage] fetchServerCounts: query error", {
@@ -114,7 +117,11 @@ export function useListPageMetrics<T extends object>(
           })
           counts[metric.id] = 0
         } else {
-          counts[metric.id] = data?.length ?? 0
+          // count:exact gives accurate total even for datasets > 9999 rows.
+          // Guard against the known case where count:exact returns 0 (fallback to data.length).
+          counts[metric.id] = (count !== null && count !== undefined && count > 0)
+            ? count
+            : (data?.length ?? 0)
         }
       }
 
