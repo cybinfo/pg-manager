@@ -285,7 +285,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     },
     highlight: (value) => typeof value === "string" && !value.startsWith("-"),
   },
-  createTotalMetric({ id: "total_transactions", label: "Transactions", icon: ArrowLeftRight, format: "number", serverCount: true }),
+  createTotalMetric({ id: "total_transactions", label: "Transactions", icon: ArrowLeftRight, format: "number" }),
 ]
 
 // ============================================

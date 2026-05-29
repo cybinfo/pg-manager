@@ -202,7 +202,7 @@ const advancedFilterColumns: FilterableColumn[] = [
 // ============================================
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
-  createTotalMetric({ label: "Total Payments", icon: Receipt, serverCount: true }),
+  createTotalMetric({ label: "Total Payments", icon: Receipt }),
   createSumMetric("amount", "total_amount", "Total Amount", CreditCard),
   createStatusMetric("subscription", "Subscriptions", Users, { id: "subscriptions", column: "payment_type" }),
   createTodayCountMetric("payment_date", "Today", Calendar),

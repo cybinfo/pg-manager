@@ -561,7 +561,7 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
-  createTotalMetric({ label: "Total Records", icon: Clock, serverCount: true }),
+  createTotalMetric({ label: "Total Records", icon: Clock }),
   createCountMetric("checked_in", "Currently In", Users,
     (item) => !item.check_out_time
   ),
