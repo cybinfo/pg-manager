@@ -9,8 +9,11 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { WorkflowStepper, WorkflowStepCard, WorkflowHeader, WorkflowStepDef } from "@/components/ui/workflow"
+import {
+  ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText, AlertCircle, CheckCircle2,
+} from "lucide-react"
 import { FormField, Select } from "@/components/ui/form-components"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -20,10 +23,12 @@ import { PermissionGuard } from "@/components/auth"
 import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
-import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
+import { PAYMENT_METHODS, PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
+import { cn } from "@/lib/utils"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface Tenant {
   id: string
@@ -72,6 +77,12 @@ interface Bill {
   status: string
 }
 
+const STEPS: WorkflowStepDef[] = [
+  { id: 1, label: "Select Tenant", icon: User },
+  { id: 2, label: "Select Bill", icon: FileText },
+  { id: 3, label: "Payment Details", icon: IndianRupee },
+]
+
 function NewPaymentForm() {
   const { backHref } = useBackNavigation({ defaultHref: "/payments" })
   const { isFeatureEnabled } = useFeatures()
@@ -87,6 +98,7 @@ function NewPaymentForm() {
   const [bills, setBills] = useState<Bill[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null)
+  const [currentStep, setCurrentStep] = useState(1)
 
   const [formData, setFormData] = useState({
     tenant_id: preselectedTenantId || "",
@@ -126,7 +138,6 @@ function NewPaymentForm() {
         logger.error("Error fetching tenants:", { detail: tenantsRes.error })
         showError("Failed to load tenants")
       } else {
-        // Transform the data from arrays to single objects
         const transformedTenants = ((tenantsRes.data as RawTenant[]) || []).map((tenant) => ({
           ...tenant,
           property: transformJoin(tenant.property),
@@ -134,7 +145,6 @@ function NewPaymentForm() {
         }))
         setTenants(transformedTenants)
 
-        // If preselected tenant, set it
         if (preselectedTenantId) {
           const tenant = transformedTenants.find((t) => t.id === preselectedTenantId)
           if (tenant) {
@@ -151,7 +161,6 @@ function NewPaymentForm() {
         logger.error("Error fetching charge types:", { detail: chargeTypesRes.error })
       } else {
         setChargeTypes(chargeTypesRes.data || [])
-        // Default to "Rent" if available
         const rentType = chargeTypesRes.data?.find((ct: { code: string }) => ct.code === "rent")
         if (rentType) {
           setFormData((prev) => ({ ...prev, charge_type_id: rentType.id }))
@@ -176,7 +185,6 @@ function NewPaymentForm() {
           amount: tenant.monthly_rent.toString(),
         }))
 
-        // Fetch pending bills for this tenant
         const fetchBills = async () => {
           const supabase = createClient()
           const { data: billsData, error } = await supabase
@@ -230,9 +238,7 @@ function NewPaymentForm() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const doSubmit = async () => {
     if (!formData.tenant_id || !formData.amount || !formData.payment_method) {
       showError("Please fill in all required fields")
       return
@@ -252,8 +258,6 @@ function NewPaymentForm() {
         return
       }
 
-      const supabase = createClient()
-      // Build workflow input
       const workflowInput: PaymentRecordInput = {
         tenant_id: formData.tenant_id,
         property_id: selectedTenant?.property_id || "",
@@ -267,12 +271,11 @@ function NewPaymentForm() {
         send_receipt: isFeatureEnabled("payments", "paymentReceipts"),
       }
 
-      // Execute the workflow
       const result = await recordPayment(
         workflowInput,
         user.id,
         "owner",
-        user.id // workspace_id is same as owner_id
+        user.id
       )
 
       if (!result.success) {
@@ -327,258 +330,321 @@ function NewPaymentForm() {
     )
   }
 
+  const selectedBill = bills.find((b) => b.id === formData.bill_id) ?? null
+  const step1Complete = !!formData.tenant_id
+  const step2Complete = !!formData.bill_id
+  const noBills = step1Complete && bills.length === 0
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Record Payment</h1>
-          <p className="text-muted-foreground">Record a payment from a tenant</p>
-        </div>
-      </div>
+      <WorkflowHeader
+        title="Record Payment"
+        subtitle="Record a payment from a tenant"
+        icon={CreditCard}
+        onBack={() => router.push(backHref)}
+        backLabel="Back to Payments"
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Tenant Selection */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Select Tenant</CardTitle>
-                <CardDescription>Choose the tenant making this payment</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField label="Tenant" required>
-              <Combobox
-                options={tenants.map((t): ComboboxOption => ({
-                  value: t.id,
-                  label: t.name,
-                  description: `${t.property?.name || 'Unknown Property'}, Room ${t.room?.room_number || 'N/A'}`,
-                }))}
-                value={formData.tenant_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, tenant_id: value }))}
-                placeholder="Search tenant..."
-                searchPlaceholder="Type tenant name..."
-                disabled={loading}
-              />
-            </FormField>
+      <WorkflowStepper steps={STEPS} currentStep={currentStep} />
 
-            {selectedTenant && (
-              <div className="p-3 bg-muted rounded-lg text-sm">
+      {/* Step 1 — Select Tenant */}
+      <WorkflowStepCard
+        stepNum={1}
+        title="Select Tenant"
+        description="Choose the tenant making this payment"
+        icon={User}
+        currentStep={currentStep}
+        onEdit={() => {
+          setCurrentStep(1)
+          setFormData((prev) => ({ ...prev, tenant_id: "", bill_id: "" }))
+          setSelectedTenant(null)
+          setBills([])
+        }}
+        completedSummary={
+          selectedTenant
+            ? `${selectedTenant.name} · ${selectedTenant.property?.name ?? ""}${selectedTenant.room ? ` Rm ${selectedTenant.room.room_number}` : ""}`
+            : undefined
+        }
+      >
+        <div className="space-y-4">
+          <FormField label="Tenant" required>
+            <Combobox
+              options={tenants.map((t): ComboboxOption => ({
+                value: t.id,
+                label: t.name,
+                description: `${t.property?.name ?? "Unknown Property"}, Room ${t.room?.room_number ?? "N/A"}`,
+              }))}
+              value={formData.tenant_id}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, tenant_id: value, bill_id: "" }))
+              }
+              placeholder="Search tenant..."
+              searchPlaceholder="Type tenant name..."
+              disabled={loading}
+            />
+          </FormField>
+
+          {selectedTenant && (
+            <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Monthly Rent</span>
+                <span className="font-medium">{formatCurrency(selectedTenant.monthly_rent)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Phone</span>
+                <span>{selectedTenant.phone}</span>
+              </div>
+              {selectedTenant.property && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Monthly Rent:</span>
-                  <span className="font-medium">{formatCurrency(selectedTenant.monthly_rent)}</span>
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-muted-foreground">Phone:</span>
-                  <span>{selectedTenant.phone}</span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Bill Selection - REQUIRED */}
-        {selectedTenant && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-warning/10 rounded-lg">
-                  <FileText className="h-5 w-5 text-warning" />
-                </div>
-                <div>
-                  <CardTitle>Select Bill *</CardTitle>
-                  <CardDescription>Every payment must be linked to a bill</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {bills.length > 0 ? (
-                <>
-                  <FormField label="Pending Bill" required>
-                    <Combobox
-                      options={bills.map((b): ComboboxOption => ({
-                        value: b.id,
-                        label: `${b.bill_number} - ${b.for_month}`,
-                        description: `Balance Due: ${formatCurrency(b.balance_due)}`,
-                      }))}
-                      value={formData.bill_id}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, bill_id: value }))}
-                      placeholder="Select a bill..."
-                      searchPlaceholder="Search bills..."
-                      disabled={loading}
-                    />
-                  </FormField>
-
-                  {formData.bill_id && (
-                    <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
-                      <p className="text-warning">
-                        Payment will be linked to this bill and automatically update the bill status.
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-destructive mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-destructive">No Pending Bills</h4>
-                      <p className="text-sm text-destructive/80 mt-1">
-                        This tenant has no pending bills. You must create a bill before recording a payment.
-                      </p>
-                      <Link href={`/bills/new?tenant=${selectedTenant.id}`}>
-                        <Button variant="outline" size="sm" className="mt-3 border-destructive/30 text-destructive hover:bg-destructive/10">
-                          <FileText className="mr-2 h-4 w-4" />
-                          Create Bill First
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
+                  <span className="text-muted-foreground">Property / Room</span>
+                  <span>
+                    {selectedTenant.property.name}
+                    {selectedTenant.room ? ` · Rm ${selectedTenant.room.room_number}` : ""}
+                  </span>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Payment Details */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <CardTitle>Payment Details</CardTitle>
-                <CardDescription>Enter the payment information</CardDescription>
-              </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Amount (₹)" required>
-                <Input
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="e.g., 8000"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-              </FormField>
-              <FormField label="Payment Date" required>
-                <Input
-                  id="payment_date"
-                  name="payment_date"
-                  type="date"
-                  value={formData.payment_date}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-              </FormField>
-            </div>
+          )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Payment For">
-                <Select
-                  id="charge_type_id"
-                  name="charge_type_id"
-                  value={formData.charge_type_id}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="Select type"
-                  options={chargeTypes.map((ct) => ({
-                    value: ct.id,
-                    label: ct.name,
-                  }))}
-                />
-              </FormField>
-              <FormField label="For Period">
-                <Input
-                  id="for_period"
-                  name="for_period"
-                  placeholder="e.g., January 2024"
-                  value={formData.for_period}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Payment Method" required>
-                <Select
-                  id="payment_method"
-                  name="payment_method"
-                  value={formData.payment_method}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  options={PAYMENT_METHOD_OPTIONS}
-                />
-              </FormField>
-              <FormField label="Reference Number">
-                <Input
-                  id="reference_number"
-                  name="reference_number"
-                  placeholder="UPI Ref / Cheque No."
-                  value={formData.reference_number}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Notes">
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="Any additional notes about this payment"
-                value={formData.notes}
-                onChange={handleChange}
-                disabled={loading}
-                className="min-h-[80px]"
-              />
-            </FormField>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end gap-4">
-          <Link href="/payments">
-            <Button type="button" variant="outline" disabled={loading}>
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={loading || !formData.tenant_id || !formData.bill_id}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Recording...
-              </>
-            ) : (
-              <>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Record Payment
-              </>
-            )}
+          <Button
+            className="w-full"
+            disabled={!formData.tenant_id}
+            onClick={() => setCurrentStep(2)}
+          >
+            Save &amp; Continue
+            <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
           </Button>
         </div>
-      </form>
+      </WorkflowStepCard>
+
+      {/* Step 2 — Select Bill */}
+      <WorkflowStepCard
+        stepNum={2}
+        title="Select Bill"
+        description="Every payment must be linked to a bill"
+        icon={FileText}
+        currentStep={currentStep}
+        onEdit={() => {
+          setCurrentStep(2)
+          setFormData((prev) => ({ ...prev, bill_id: "" }))
+        }}
+        completedSummary={
+          selectedBill
+            ? `${selectedBill.bill_number} · ${selectedBill.for_month} · ${formatCurrency(selectedBill.balance_due)} due`
+            : undefined
+        }
+      >
+        <div className="space-y-4">
+          {noBills ? (
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-destructive text-sm">No Pending Bills</p>
+                <p className="text-sm text-destructive/80 mt-1">
+                  This tenant has no pending bills. Create a bill before recording a payment.
+                </p>
+                <Link href={`/bills/new?tenant=${selectedTenant?.id}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 border-destructive/30 text-destructive hover:bg-destructive/10"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Create Bill First
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {bills.map((bill) => {
+                const isSelected = formData.bill_id === bill.id
+                return (
+                  <button
+                    key={bill.id}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, bill_id: bill.id }))}
+                    className={cn(
+                      "w-full text-left rounded-lg border-2 p-4 transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40 bg-card"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+                          isSelected ? "border-primary" : "border-border"
+                        )}
+                      >
+                        {isSelected && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="font-semibold text-sm">{bill.bill_number}</span>
+                          <StatusBadge status={bill.status} />
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>{bill.for_month}</span>
+                          <span>·</span>
+                          <span className="font-medium text-foreground">
+                            Balance Due: {formatCurrency(bill.balance_due)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {!noBills && (
+            <Button
+              className="w-full"
+              disabled={!formData.bill_id}
+              onClick={() => setCurrentStep(3)}
+            >
+              Save &amp; Continue
+              <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+            </Button>
+          )}
+        </div>
+      </WorkflowStepCard>
+
+      {/* Step 3 — Payment Details */}
+      <WorkflowStepCard
+        stepNum={3}
+        title="Payment Details"
+        description="Enter the amount and payment information"
+        icon={IndianRupee}
+        currentStep={currentStep}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Amount (₹)" required>
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="e.g., 8000"
+                value={formData.amount}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </FormField>
+            <FormField label="Payment Date" required>
+              <Input
+                id="payment_date"
+                name="payment_date"
+                type="date"
+                value={formData.payment_date}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Payment Method" required>
+              <Select
+                id="payment_method"
+                name="payment_method"
+                value={formData.payment_method}
+                onChange={handleChange}
+                required
+                disabled={loading}
+                options={PAYMENT_METHOD_OPTIONS}
+              />
+            </FormField>
+            <FormField label="Reference Number">
+              <Input
+                id="reference_number"
+                name="reference_number"
+                placeholder="UPI Ref / Cheque No."
+                value={formData.reference_number}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Notes">
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional notes about this payment"
+              value={formData.notes}
+              onChange={handleChange}
+              disabled={loading}
+              className="min-h-[80px]"
+            />
+          </FormField>
+
+          {/* Summary */}
+          {step1Complete && step2Complete && (
+            <div className="rounded-lg border bg-muted/40 p-4 space-y-2 text-sm">
+              <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-3">
+                Payment Summary
+              </p>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tenant</span>
+                <span className="font-medium">{selectedTenant?.name}</span>
+              </div>
+              {selectedBill && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Bill</span>
+                  <span className="font-medium">
+                    {selectedBill.bill_number} · {selectedBill.for_month}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-semibold text-primary">
+                  {formData.amount ? formatCurrency(parseFloat(formData.amount)) : "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Method</span>
+                <span className="font-medium">
+                  {PAYMENT_METHODS[formData.payment_method] ?? formData.payment_method}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <Link href="/payments" className="flex-shrink-0">
+              <Button type="button" variant="outline" disabled={loading}>
+                Cancel
+              </Button>
+            </Link>
+            <Button
+              className="flex-1"
+              disabled={loading || !step1Complete || !step2Complete || !formData.amount}
+              onClick={doSubmit}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Record Payment
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </WorkflowStepCard>
     </div>
   )
 }
