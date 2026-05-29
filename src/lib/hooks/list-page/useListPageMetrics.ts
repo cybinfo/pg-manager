@@ -98,53 +98,50 @@ export function useListPageMetrics<T extends object>(
         columnGroups.get(col)!.push(metric)
       }
 
-      for (const [column, groupMetrics] of columnGroups) {
-        let query = supabase
-          .from(currentConfig.table)
-          .select(column)
+      // Fetch all rows once (base filters only) — same approach as fetchData which is known to work.
+      // Use select("*") to avoid any PostgREST column-selection issues that affect specific column names.
+      // Range goes in the initial chain to mirror fetchServerSums which is confirmed working.
+      let baseQuery = supabase
+        .from(currentConfig.table)
+        .select("*")
+        .range(0, 99999)
 
-        // Apply standard filters (base filters only — no per-metric serverFilter)
-        query = applyBaseFiltersToQuery(
-          query, currentConfig, currentFilterConfigs,
-          currentFilters, currentSearchQuery
-        )
+      baseQuery = applyBaseFiltersToQuery(
+        baseQuery, currentConfig, currentFilterConfigs,
+        currentFilters, currentSearchQuery
+      )
 
-        query = query.range(0, 99999)
+      const { data: allRows, error: baseError } = await baseQuery
 
-        const { data: rows, error } = await query
+      if (baseError) {
+        logger.warn("[useListPage] fetchServerCounts: base query error", {
+          table: currentConfig.table, error: baseError.message,
+        })
+      } else if (allRows) {
+        const typedRows = allRows as Record<string, unknown>[]
 
-        if (error) {
-          logger.warn("[useListPage] fetchServerCounts: query error", {
-            column, table: currentConfig.table, error: error.message,
-          })
-          continue
-        }
+        for (const [column, groupMetrics] of columnGroups) {
+          for (const metric of groupMetrics) {
+            if (!metric.serverFilter) continue
+            const { operator, value } = metric.serverFilter
 
-        if (!rows) continue
+            let count: number
+            switch (operator) {
+              case "eq":          count = typedRows.filter(r => r[column] === value).length; break
+              case "neq":         count = typedRows.filter(r => r[column] !== value).length; break
+              case "in":          count = typedRows.filter(r => (value as unknown[]).includes(r[column])).length; break
+              case "not_in":      count = typedRows.filter(r => !(value as unknown[]).includes(r[column])).length; break
+              case "gt":          count = typedRows.filter(r => (r[column] as number) > (value as number)).length; break
+              case "gte":         count = typedRows.filter(r => (r[column] as number) >= (value as number)).length; break
+              case "lt":          count = typedRows.filter(r => (r[column] as number) < (value as number)).length; break
+              case "lte":         count = typedRows.filter(r => (r[column] as number) <= (value as number)).length; break
+              case "is_null":     count = typedRows.filter(r => r[column] == null).length; break
+              case "is_not_null": count = typedRows.filter(r => r[column] != null).length; break
+              default:            count = typedRows.length
+            }
 
-        const typedRows = rows as Record<string, unknown>[]
-
-        // Apply each metric's serverFilter client-side against the fetched rows
-        for (const metric of groupMetrics) {
-          if (!metric.serverFilter) continue
-          const { operator, value } = metric.serverFilter
-
-          let count: number
-          switch (operator) {
-            case "eq":       count = typedRows.filter(r => r[column] === value).length; break
-            case "neq":      count = typedRows.filter(r => r[column] !== value).length; break
-            case "in":       count = typedRows.filter(r => (value as unknown[]).includes(r[column])).length; break
-            case "not_in":   count = typedRows.filter(r => !(value as unknown[]).includes(r[column])).length; break
-            case "gt":       count = typedRows.filter(r => (r[column] as number) > (value as number)).length; break
-            case "gte":      count = typedRows.filter(r => (r[column] as number) >= (value as number)).length; break
-            case "lt":       count = typedRows.filter(r => (r[column] as number) < (value as number)).length; break
-            case "lte":      count = typedRows.filter(r => (r[column] as number) <= (value as number)).length; break
-            case "is_null":  count = typedRows.filter(r => r[column] == null).length; break
-            case "is_not_null": count = typedRows.filter(r => r[column] != null).length; break
-            default:         count = typedRows.length
+            counts[metric.id] = count
           }
-
-          counts[metric.id] = count
         }
       }
 
