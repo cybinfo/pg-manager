@@ -62,6 +62,7 @@ import {
   Trash2,
   Edit,
 } from "lucide-react"
+import { Avatar } from "@/components/ui/avatar"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
@@ -77,9 +78,10 @@ const LIBRARY_WAITLIST_DETAIL_CONFIG: DetailPageConfig<LibraryWaitlist> = {
   select: `
     *,
     library:libraries(id, name),
-    converted_member:library_members(id, name, member_code)
+    converted_member:library_members(id, name, member_code),
+    person:people(id, photo_url)
   `,
-  joinFields: ["library", "converted_member"],
+  joinFields: ["library", "converted_member", "person"],
 }
 
 export default function WaitlistDetailPage({
@@ -405,13 +407,24 @@ export default function WaitlistDetailPage({
           description="Contact details"
           icon={Users}
         >
-          <InfoRow label="Name" value={entry.name} icon={Users} />
-          <InfoRow label="Phone" value={entry.phone} icon={Phone} />
-          <InfoRow
-            label="Email"
-            value={entry.email || "—"}
-            icon={Mail}
-          />
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Avatar name={entry.name} src={entry.person?.photo_url} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium">{entry.name}</p>
+              {entry.phone && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Phone className="h-3 w-3 shrink-0" />
+                  {entry.phone}
+                </p>
+              )}
+              {entry.email && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Mail className="h-3 w-3 shrink-0" />
+                  {entry.email}
+                </p>
+              )}
+            </div>
+          </div>
         </DetailSection>
 
         {/* Preferences */}

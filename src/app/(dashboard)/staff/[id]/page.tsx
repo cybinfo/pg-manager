@@ -472,9 +472,24 @@ export default function StaffDetailPage() {
             </div>
           ) : (
             <>
-              <InfoRow label="Name" value={staff.name} icon={User} />
-              <InfoRow label="Email" value={staff.email} icon={Mail} />
-              <InfoRow label="Phone" value={staff.phone || "Not provided"} icon={Phone} />
+              <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <Avatar name={staff.name} src={staff.person?.photo_url} size="md" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">{staff.name}</p>
+                  {staff.phone && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3 shrink-0" />
+                      {staff.phone}
+                    </p>
+                  )}
+                  {staff.email && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Mail className="h-3 w-3 shrink-0" />
+                      {staff.email}
+                    </p>
+                  )}
+                </div>
+              </div>
               <InfoRow label="Added On" value={formatDate(staff.created_at)} icon={Calendar} />
               <InfoRow
                 label="Status"
