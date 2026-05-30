@@ -23,6 +23,8 @@ import { GripVertical, Lock, Unlock, RotateCcw, Eye, EyeOff } from "lucide-react
 import { Button } from "./button"
 import { logger } from "@/lib/logger"
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface SortableMasonryProps {
   children: React.ReactNode
   layoutKey: string
@@ -31,6 +33,11 @@ interface SortableMasonryProps {
   className?: string
   editable?: boolean
 }
+
+type ColItem = { id: string; element: React.ReactElement | undefined }
+type BalancedCols = ColItem[][]
+
+// ─── localStorage helpers ────────────────────────────────────────────────────
 
 function useLayoutStorage(key: string) {
   const orderKey = `section-order-${key}`
@@ -41,18 +48,13 @@ function useLayoutStorage(key: string) {
     try {
       const stored = localStorage.getItem(orderKey)
       return stored ? JSON.parse(stored) : null
-    } catch {
-      return null
-    }
+    } catch { return null }
   }, [orderKey])
 
   const saveOrder = React.useCallback((order: string[]) => {
     if (typeof window === "undefined") return
-    try {
-      localStorage.setItem(orderKey, JSON.stringify(order))
-    } catch (e) {
-      logger.error("Failed to save layout:", { detail: e })
-    }
+    try { localStorage.setItem(orderKey, JSON.stringify(order)) }
+    catch (e) { logger.error("Failed to save layout:", { detail: e }) }
   }, [orderKey])
 
   const clearOrder = React.useCallback(() => {
@@ -65,22 +67,15 @@ function useLayoutStorage(key: string) {
     try {
       const stored = localStorage.getItem(hiddenKey)
       return stored ? JSON.parse(stored) : []
-    } catch {
-      return []
-    }
+    } catch { return [] }
   }, [hiddenKey])
 
   const saveHidden = React.useCallback((ids: string[]) => {
     if (typeof window === "undefined") return
     try {
-      if (ids.length === 0) {
-        localStorage.removeItem(hiddenKey)
-      } else {
-        localStorage.setItem(hiddenKey, JSON.stringify(ids))
-      }
-    } catch (e) {
-      logger.error("Failed to save hidden sections:", { detail: e })
-    }
+      if (ids.length === 0) localStorage.removeItem(hiddenKey)
+      else localStorage.setItem(hiddenKey, JSON.stringify(ids))
+    } catch (e) { logger.error("Failed to save hidden sections:", { detail: e }) }
   }, [hiddenKey])
 
   const clearHidden = React.useCallback(() => {
@@ -91,6 +86,8 @@ function useLayoutStorage(key: string) {
   return { getStoredOrder, saveOrder, clearOrder, getStoredHidden, saveHidden, clearHidden }
 }
 
+// ─── SortableItem ─────────────────────────────────────────────────────────────
+
 interface SortableItemProps {
   id: string
   children: React.ReactNode
@@ -99,24 +96,14 @@ interface SortableItemProps {
 }
 
 function SortableItem({ id, children, isEditMode, onToggleHide }: SortableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled: !isEditMode })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id, disabled: !isEditMode })
 
-  const style = isEditMode ? {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : undefined,
-  } : undefined
+  const style = isEditMode
+    ? { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : undefined }
+    : undefined
 
-  if (!isEditMode) {
-    return <>{children}</>
-  }
+  if (!isEditMode) return <>{children}</>
 
   return (
     <div
@@ -151,40 +138,53 @@ function SortableItem({ id, children, isEditMode, onToggleHide }: SortableItemPr
   )
 }
 
-const gapStyles = {
-  sm: "gap-4",
-  md: "gap-6",
-  lg: "gap-8",
-}
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-// Simple round-robin split used only for the SSR fallback (no JS, no ids needed)
+const gapStyles = { sm: "gap-4", md: "gap-6", lg: "gap-8" }
+
+// SSR-only round-robin: no ids, no heights, just split ReactNode[]
 function splitRoundRobin<T>(items: T[], n: number): T[][] {
   const cols: T[][] = Array.from({ length: n }, () => [])
   items.forEach((item, i) => cols[i % n].push(item))
   return cols
 }
 
-// Greedy count-balanced split — same algorithm as the height-based measurement,
-// but uses item count (1 unit each) as a proxy when real heights are unavailable.
-// Includes the same 2-column post-process so fallback behaviour matches measured behaviour.
-function splitIntoColumns<T>(items: T[], n: number): T[][] {
-  const cols: T[][] = Array.from({ length: n }, () => [])
-  const counts = Array(n).fill(0)
-  items.forEach(item => {
-    const shortestCol = counts.indexOf(Math.min(...counts))
-    cols[shortestCol].push(item)
-    counts[shortestCol]++
-  })
+// ─── Core algorithm (single source of truth) ─────────────────────────────────
+//
+// Used everywhere: normal mode, edit mode, hidden zone, drag end, hide toggle.
+// Heights come from lastHeightsRef; unmeasured items get h=1 (count proxy).
+// Post-process: if one col has ≥2 more items AND is also taller, move its
+// last item to the other col so count and height imbalance don't compound.
+//
+function computeCols(
+  items: ColItem[],
+  n: number,
+  heights: Map<string, number>
+): BalancedCols {
+  const colH = Array(n).fill(0)
+  const dist: string[][] = Array.from({ length: n }, () => [])
+
+  for (const { id } of items) {
+    const h = heights.get(id) ?? 1
+    const shortest = colH.indexOf(Math.min(...colH))
+    dist[shortest].push(id)
+    colH[shortest] += h
+  }
+
   if (n === 2) {
-    const longerCol = cols[0].length > cols[1].length ? 0 : 1
-    const shorterCol = 1 - longerCol
-    if (Math.abs(cols[0].length - cols[1].length) >= 2 && counts[longerCol] >= counts[shorterCol]) {
-      const moved = cols[longerCol].pop()
-      if (moved !== undefined) cols[shorterCol].push(moved)
+    const longer = dist[0].length > dist[1].length ? 0 : 1
+    const shorter = 1 - longer
+    if (Math.abs(dist[0].length - dist[1].length) >= 2 && colH[longer] >= colH[shorter]) {
+      const moved = dist[longer].pop()
+      if (moved !== undefined) dist[shorter].push(moved)
     }
   }
-  return cols
+
+  const childMap = new Map(items.map(item => [item.id, item.element]))
+  return dist.map(ids => ids.map(id => ({ id, element: childMap.get(id) })))
 }
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function SortableMasonry({
   children,
@@ -198,265 +198,177 @@ export function SortableMasonry({
   const [mounted, setMounted] = React.useState(false)
   const [showHidden, setShowHidden] = React.useState(false)
   const [hiddenIds, setHiddenIds] = React.useState<string[]>([])
-  const { getStoredOrder, saveOrder, clearOrder, getStoredHidden, saveHidden, clearHidden } = useLayoutStorage(layoutKey)
+  const [balancedCols, setBalancedCols] = React.useState<BalancedCols | null>(null)
+
+  const { getStoredOrder, saveOrder, clearOrder, getStoredHidden, saveHidden, clearHidden } =
+    useLayoutStorage(layoutKey)
+
+  // Persists measured heights across all re-renders and state changes.
+  // This is the single source of truth for heights used by computeCols everywhere.
+  const lastHeightsRef = React.useRef<Map<string, number>>(new Map())
+
+  // Refs for measuring DOM heights in normal mode
+  const itemRefs = React.useRef<Map<string, HTMLDivElement | null>>(new Map())
+
+  // ── childrenWithIds ──────────────────────────────────────────────────────
 
   const childrenWithIds = React.useMemo(() => {
     const items: { id: string; element: React.ReactElement }[] = []
     const usedIds = new Set<string>()
-
     React.Children.forEach(children, (child, index) => {
       if (React.isValidElement(child)) {
         let id: string
-
-        if (child.key && typeof child.key === 'string') {
+        if (child.key && typeof child.key === "string") {
           id = `section-${child.key}`
-        } else if (child.props && typeof child.props === 'object' && 'title' in child.props) {
-          const title = String(child.props.title || '')
-          id = `section-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`
+        } else if (child.props && typeof child.props === "object" && "title" in child.props) {
+          const title = String(child.props.title || "")
+          id = `section-${title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`
         } else {
           id = `section-${index}`
         }
-
-        if (usedIds.has(id)) {
-          id = `${id}-${index}`
-        }
+        if (usedIds.has(id)) id = `${id}-${index}`
         usedIds.add(id)
-
         items.push({ id, element: child })
       }
     })
     return items
   }, [children])
 
-  const defaultOrder = React.useMemo(() =>
-    childrenWithIds.map(item => item.id),
+  const defaultOrder = React.useMemo(
+    () => childrenWithIds.map(item => item.id),
     [childrenWithIds]
   )
 
   const [order, setOrder] = React.useState<string[]>(defaultOrder)
 
-  // Refs to measure each item's rendered height
-  const itemRefs = React.useRef<Map<string, HTMLDivElement | null>>(new Map())
-  // Height-balanced column distribution; null = use round-robin until first measurement
-  const [balancedCols, setBalancedCols] = React.useState<Array<Array<{ id: string; element: React.ReactElement | undefined }>> | null>(null)
+  // ── Load persisted state on mount ────────────────────────────────────────
 
-  // Load stored order and hidden state on mount
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     const stored = getStoredOrder()
     if (stored && stored.length > 0) {
       const currentIds = new Set(defaultOrder)
-      const storedIds = new Set(stored)
       const orderedExisting = stored.filter(id => currentIds.has(id))
-      const newItems = defaultOrder.filter(id => !storedIds.has(id))
-      const mergedOrder = [...orderedExisting, ...newItems]
+      const newItems = defaultOrder.filter(id => !new Set(stored).has(id))
       if (orderedExisting.length > 0) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setOrder(mergedOrder)
+        setOrder([...orderedExisting, ...newItems])
       }
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHiddenIds(getStoredHidden())
   }, [getStoredOrder, getStoredHidden, defaultOrder])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+  // ── Derived item lists ───────────────────────────────────────────────────
+
+  const orderedChildren = React.useMemo(() => {
+    const childMap = new Map(childrenWithIds.map(item => [item.id, item.element]))
+    return order.map(id => ({ id, element: childMap.get(id) })).filter(item => item.element) as ColItem[]
+  }, [order, childrenWithIds])
+
+  const visibleChildren = React.useMemo(
+    () => orderedChildren.filter(item => !hiddenIds.includes(item.id)),
+    [orderedChildren, hiddenIds]
   )
+
+  const hiddenChildren = React.useMemo(
+    () => orderedChildren.filter(item => hiddenIds.includes(item.id)),
+    [orderedChildren, hiddenIds]
+  )
+
+  // ── Measure heights in normal mode, then recompute ───────────────────────
+  // itemRefs are only set in normal mode — if all heights are 0 we're in edit
+  // mode or pre-mount; skip so round-robin fallback stays in place.
+
+  React.useEffect(() => {
+    if (!mounted || visibleChildren.length === 0) return
+    const timer = setTimeout(() => {
+      let totalHeight = 0
+      for (const { id } of visibleChildren) {
+        const h = itemRefs.current.get(id)?.offsetHeight ?? 0
+        if (h > 0) lastHeightsRef.current.set(id, h)
+        totalHeight += h
+      }
+      if (totalHeight === 0) return
+      setBalancedCols(computeCols(visibleChildren, columns, lastHeightsRef.current))
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [mounted, visibleChildren, columns])
+
+  // ── Sensors ──────────────────────────────────────────────────────────────
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleDragEnd = React.useCallback((event: DragEndEvent) => {
     const { active, over } = event
-    if (over && active.id !== over.id) {
-      setBalancedCols(null)
-      setOrder(prevOrder => {
-        const oldIndex = prevOrder.indexOf(active.id as string)
-        const newIndex = prevOrder.indexOf(over.id as string)
-        const newOrder = arrayMove(prevOrder, oldIndex, newIndex)
-        saveOrder(newOrder)
-        return newOrder
-      })
-    }
-  }, [saveOrder])
+    if (!over || active.id === over.id) return
+    setOrder(prevOrder => {
+      const newOrder = arrayMove(
+        prevOrder,
+        prevOrder.indexOf(active.id as string),
+        prevOrder.indexOf(over.id as string)
+      )
+      saveOrder(newOrder)
+      // Recompute from stored heights with new order so edit mode stays balanced
+      const childMap = new Map(childrenWithIds.map(c => [c.id, c.element]))
+      const newVisible = newOrder
+        .map(id => ({ id, element: childMap.get(id) }))
+        .filter(item => item.element && !hiddenIds.includes(item.id)) as ColItem[]
+      setBalancedCols(computeCols(newVisible, columns, lastHeightsRef.current))
+      return newOrder
+    })
+  }, [saveOrder, childrenWithIds, hiddenIds, columns])
 
   const handleResetLayout = React.useCallback(() => {
     clearOrder()
     clearHidden()
+    lastHeightsRef.current.clear()
     setBalancedCols(null)
     setOrder(defaultOrder)
     setHiddenIds([])
     setShowHidden(false)
   }, [clearOrder, clearHidden, defaultOrder])
 
+  // Recompute balanced cols from scratch whenever visibility changes.
+  // Uses stored heights so the distribution is always optimal — no in-place patching.
   const handleToggleHide = React.useCallback((id: string) => {
-    // Update hiddenIds and balancedCols together so the layout never loses its
-    // measured distribution — hiding removes the item from its column in-place,
-    // unhiding slots it back into the shorter column. Only fall back to null when
-    // balancedCols hasn't been measured yet.
     setHiddenIds(prev => {
       const isHiding = !prev.includes(id)
       const next = isHiding ? [...prev, id] : prev.filter(h => h !== id)
       saveHidden(next)
-
-      setBalancedCols(prevCols => {
-        if (!prevCols) return null
-        if (isHiding) {
-          return prevCols.map(col => col.filter(item => item.id !== id))
-        } else {
-          const element = childrenWithIds.find(c => c.id === id)?.element
-          if (!element) return prevCols
-          const colLengths = prevCols.map(col => col.length)
-          const shortestIdx = colLengths.indexOf(Math.min(...colLengths))
-          return prevCols.map((col, i) =>
-            i === shortestIdx ? [...col, { id, element }] : col
-          )
-        }
-      })
-
+      // Recompute visible distribution with the updated hidden set
+      const childMap = new Map(childrenWithIds.map(c => [c.id, c.element]))
+      const newVisible = orderedChildren
+        .filter(item => !next.includes(item.id))
+        .map(item => ({ id: item.id, element: childMap.get(item.id) })) as ColItem[]
+      setBalancedCols(computeCols(newVisible, columns, lastHeightsRef.current))
       return next
     })
-  }, [saveHidden, childrenWithIds])
+  }, [saveHidden, childrenWithIds, orderedChildren, columns])
 
-  const orderedChildren = React.useMemo(() => {
-    const childMap = new Map(childrenWithIds.map(item => [item.id, item.element]))
-    return order.map(id => ({
-      id,
-      element: childMap.get(id),
-    })).filter(item => item.element)
-  }, [order, childrenWithIds])
+  // ── Hidden zone renderer (shared by edit + normal mode) ──────────────────
+  // Uses the same computeCols so hidden section layout matches the main grid algorithm.
 
-  const visibleChildren = React.useMemo(() =>
-    orderedChildren.filter(item => !hiddenIds.includes(item.id)),
-    [orderedChildren, hiddenIds]
-  )
-
-  const hiddenChildren = React.useMemo(() =>
-    orderedChildren.filter(item => hiddenIds.includes(item.id)),
-    [orderedChildren, hiddenIds]
-  )
-
-  // After visible items render in normal mode, measure heights and redistribute into shortest column first.
-  // itemRefs are only populated in normal mode — skip if all heights are zero (e.g. called while in edit mode).
-  React.useEffect(() => {
-    if (!mounted || visibleChildren.length === 0) return
-    const timer = setTimeout(() => {
-      const colHeights = Array(columns).fill(0)
-      const dist: string[][] = Array.from({ length: columns }, () => [])
-      let totalHeight = 0
-      for (const { id } of visibleChildren) {
-        const el = itemRefs.current.get(id)
-        const h = el ? el.offsetHeight : 0
-        totalHeight += h
-        const shortestCol = colHeights.indexOf(Math.min(...colHeights))
-        dist[shortestCol].push(id)
-        colHeights[shortestCol] += h
-      }
-      // No real measurements available (refs belong to normal mode only) — keep round-robin fallback
-      if (totalHeight === 0) return
-
-      // Post-process for 2-column layouts: if one column ended up with ≥2 more sections
-      // AND is also the taller column, move its last section to the other column.
-      // This prevents a single tall item locking one column while the other accumulates all the rest.
-      if (columns === 2) {
-        const longerCountCol = dist[0].length > dist[1].length ? 0 : 1
-        const shorterCountCol = 1 - longerCountCol
-        const countDiff = Math.abs(dist[0].length - dist[1].length)
-        if (countDiff >= 2 && colHeights[longerCountCol] >= colHeights[shorterCountCol]) {
-          const moved = dist[longerCountCol].pop()
-          if (moved !== undefined) dist[shorterCountCol].push(moved)
-        }
-      }
-
-      const childMap = new Map(visibleChildren.map(item => [item.id, item.element]))
-      setBalancedCols(dist.map(ids => ids.map(id => ({ id, element: childMap.get(id) }))))
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [mounted, visibleChildren, columns])
-
-  // SSR fallback: split children into independent flex columns (no JS needed)
-  if (!mounted) {
-    const ssrChildren = React.Children.toArray(children)
-    const ssrCols = splitRoundRobin(ssrChildren, columns)
+  const renderHiddenZone = () => {
+    if (hiddenChildren.length === 0) return null
+    const hiddenCols = computeCols(hiddenChildren, columns, lastHeightsRef.current)
     return (
-      <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
-        {ssrCols.map((colItems, colIdx) => (
-          <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
-            {colItems}
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  // Edit mode: visible sections in draggable grid, hidden sections in their own zone below
-  if (isEditMode) {
-    const editCols = balancedCols
-      ? balancedCols.map(col => [...col])
-      : splitIntoColumns(visibleChildren, columns)
-    const visibleIds = visibleChildren.map(c => c.id)
-    return (
-      <div className="relative">
-        <div className="flex items-center justify-end gap-2 mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetLayout}
-            className="text-xs h-8"
-          >
-            <RotateCcw className="mr-1 h-3 w-3" />
-            Reset
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setIsEditMode(false)}
-            className="text-xs h-8"
-          >
-            <Lock className="mr-1 h-3 w-3" />
-            Done
-          </Button>
+      <div className="mt-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 border-t border-dashed" />
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Hidden sections</span>
+          <div className="flex-1 border-t border-dashed" />
         </div>
-
-        {/* Visible sections — draggable */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={visibleIds} strategy={rectSortingStrategy}>
-            <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
-              {editCols.map((colItems, colIdx) => (
-                <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
-                  {colItems.map(({ id, element }) => (
-                    <SortableItem
-                      key={id}
-                      id={id}
-                      isEditMode={true}
-                      onToggleHide={() => handleToggleHide(id)}
-                    >
-                      {element}
-                    </SortableItem>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {/* Hidden sections — separate zone, same visual as the normal-mode reveal panel */}
-        {hiddenChildren.length > 0 && (
-          <div className="mt-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 border-t border-dashed" />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Hidden sections</span>
-              <div className="flex-1 border-t border-dashed" />
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {hiddenChildren.map(({ id, element }) => (
+        <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap])}>
+          {hiddenCols.map((colItems, colIdx) => (
+            <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+              {colItems.map(({ id, element }) => (
                 <div key={id} className="relative">
                   <div className="opacity-40 pointer-events-none select-none">
                     {element}
@@ -475,14 +387,73 @@ export function SortableMasonry({
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     )
   }
 
-  // Normal mode: height-balanced visible columns
-  const cols = balancedCols ?? splitIntoColumns(visibleChildren, columns)
+  // ─── SSR fallback ────────────────────────────────────────────────────────
+
+  if (!mounted) {
+    const ssrCols = splitRoundRobin(React.Children.toArray(children), columns)
+    return (
+      <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
+        {ssrCols.map((colItems, colIdx) => (
+          <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+            {colItems}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // ─── Edit mode ───────────────────────────────────────────────────────────
+  // Visible sections in draggable two-column grid.
+  // Hidden sections in their own zone below (same computeCols algorithm).
+
+  if (isEditMode) {
+    const editCols = balancedCols ?? computeCols(visibleChildren, columns, lastHeightsRef.current)
+    const visibleIds = visibleChildren.map(c => c.id)
+    return (
+      <div className="relative">
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <Button variant="outline" size="sm" onClick={handleResetLayout} className="text-xs h-8">
+            <RotateCcw className="mr-1 h-3 w-3" />
+            Reset
+          </Button>
+          <Button variant="default" size="sm" onClick={() => setIsEditMode(false)} className="text-xs h-8">
+            <Lock className="mr-1 h-3 w-3" />
+            Done
+          </Button>
+        </div>
+
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={visibleIds} strategy={rectSortingStrategy}>
+            <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
+              {editCols.map((colItems, colIdx) => (
+                <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+                  {colItems.map(({ id, element }) => (
+                    <SortableItem key={id} id={id} isEditMode={true} onToggleHide={() => handleToggleHide(id)}>
+                      {element}
+                    </SortableItem>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {renderHiddenZone()}
+      </div>
+    )
+  }
+
+  // ─── Normal mode ─────────────────────────────────────────────────────────
+  // balancedCols = measured height-based distribution.
+  // Falls back to computeCols with stored heights (or count proxy) if null.
+
+  const cols = balancedCols ?? computeCols(visibleChildren, columns, lastHeightsRef.current)
 
   return (
     <div className="relative">
@@ -495,20 +466,12 @@ export function SortableMasonry({
               onClick={() => setShowHidden(v => !v)}
               className="text-xs h-8 text-muted-foreground"
             >
-              {showHidden
-                ? <Eye className="mr-1 h-3 w-3" />
-                : <EyeOff className="mr-1 h-3 w-3" />
-              }
+              {showHidden ? <Eye className="mr-1 h-3 w-3" /> : <EyeOff className="mr-1 h-3 w-3" />}
               {showHidden ? "Hide" : `Hidden (${hiddenChildren.length})`}
             </Button>
           )}
           {editable && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditMode(true)}
-              className="text-xs h-8"
-            >
+            <Button variant="outline" size="sm" onClick={() => setIsEditMode(true)} className="text-xs h-8">
               <Unlock className="mr-1 h-3 w-3" />
               Customize Layout
             </Button>
@@ -522,7 +485,7 @@ export function SortableMasonry({
             {colItems.map(({ id, element }) => (
               <div
                 key={id}
-                ref={(el) => { itemRefs.current.set(id, el) }}
+                ref={el => { itemRefs.current.set(id, el) }}
                 className={balancedCols !== null ? "[&>*]:![animation:none]" : ""}
               >
                 {element}
@@ -532,36 +495,7 @@ export function SortableMasonry({
         ))}
       </div>
 
-      {/* Revealed hidden sections */}
-      {showHidden && hiddenChildren.length > 0 && (
-        <div className="mt-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 border-t border-dashed" />
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Hidden sections</span>
-            <div className="flex-1 border-t border-dashed" />
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {hiddenChildren.map(({ id, element }) => (
-              <div key={id} className="relative">
-                <div className="opacity-40 pointer-events-none select-none">
-                  {element}
-                </div>
-                <div className="absolute top-2 right-2 z-10">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs bg-card shadow-sm"
-                    onClick={() => handleToggleHide(id)}
-                  >
-                    <Eye className="mr-1 h-3 w-3" />
-                    Unhide
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {showHidden && renderHiddenZone()}
     </div>
   )
 }
