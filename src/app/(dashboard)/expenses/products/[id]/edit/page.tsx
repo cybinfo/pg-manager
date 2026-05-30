@@ -19,6 +19,7 @@ import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Label, Select, FormField } from "@/components/ui"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 
 import type { Product, ProductFormData, ProductCategory } from "@/types/expense-enhanced.types"
@@ -60,7 +61,7 @@ function EditProductContent({
     category_id: "",
     default_unit: "",
     default_rate: undefined,
-    is_active: true,
+    is_active: true as boolean,
   })
 
   // Load product and categories
@@ -277,16 +278,14 @@ function EditProductContent({
 
                 {/* Active Status */}
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+                    checked={formData.is_active as boolean}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, is_active: checked === true }))
                     }
-                    className="h-4 w-4 rounded border-border"
                   />
-                  <Label htmlFor="is_active">Active (available for selection)</Label>
+                  <Label htmlFor="is_active" className="text-sm font-normal cursor-pointer">Active (available for selection)</Label>
                 </div>
               </CardContent>
             </Card>

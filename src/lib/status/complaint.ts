@@ -31,3 +31,6 @@ export const COMPLAINT_CATEGORIES: Record<string, string> = {
 }
 
 export const COMPLAINT_CATEGORY_OPTIONS = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
+
+/** Open complaint statuses — used to filter complaints that still need attention */
+export const OPEN_COMPLAINT_STATUSES = ["open", "acknowledged", "in_progress"] as const

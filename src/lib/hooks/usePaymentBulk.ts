@@ -6,6 +6,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { showError } from "@/lib/toast-helpers"
 import { logger } from "@/lib/logger"
 import { type TenantWithBillDues } from "@/types/payments.types"
+import { OUTSTANDING_BILL_STATUSES } from "@/lib/status"
 
 interface RowState {
   selected: boolean
@@ -31,7 +32,7 @@ export function usePaymentBulk() {
             room:rooms(id, room_number)
           )
         `)
-        .in("status", ["pending", "partial", "overdue"])
+        .in("status", [...OUTSTANDING_BILL_STATUSES])
         .gt("balance_due", 0)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })

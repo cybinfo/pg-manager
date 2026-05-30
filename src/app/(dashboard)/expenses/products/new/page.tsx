@@ -25,6 +25,7 @@ import {
   Select,
   Label,
 } from "@/components/ui"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 
 import type { ProductCategory } from "@/types/expense-enhanced.types"
@@ -234,16 +235,14 @@ function NewProductContent() {
 
       {/* Active Status */}
       <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
+        <Checkbox
           id="is_active"
-          checked={formData.is_active}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+          checked={formData.is_active as boolean}
+          onCheckedChange={(checked) =>
+            setFormData((prev) => ({ ...prev, is_active: checked === true }))
           }
-          className="h-4 w-4 rounded border-border"
         />
-        <Label htmlFor="is_active">Active (available for selection)</Label>
+        <Label htmlFor="is_active" className="text-sm font-normal cursor-pointer">Active (available for selection)</Label>
       </div>
     </FormPageTemplate>
   )

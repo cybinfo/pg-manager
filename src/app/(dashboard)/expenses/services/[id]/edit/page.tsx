@@ -18,7 +18,8 @@ import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Input, Select, FormField, Textarea } from "@/components/ui"
+import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
 
@@ -66,7 +67,7 @@ function EditServicePaymentContent({
     service_date: "",
     description: "",
     gross_amount: 0,
-    tds_applicable: false,
+    tds_applicable: false as boolean,
     tds_section: undefined,
     tds_rate: undefined,
     tds_amount: undefined,
@@ -425,21 +426,19 @@ function EditServicePaymentContent({
                   {/* TDS Settings */}
                   <div className="p-4 bg-muted/50 rounded-lg space-y-4">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         id="tds_applicable"
-                        checked={formData.tds_applicable}
-                        onChange={(e) =>
+                        checked={formData.tds_applicable as boolean}
+                        onCheckedChange={(checked) =>
                           setFormData((prev) => ({
                             ...prev,
-                            tds_applicable: e.target.checked,
+                            tds_applicable: checked === true,
                           }))
                         }
-                        className="h-4 w-4 rounded border-border"
                       />
-                      <label htmlFor="tds_applicable" className="text-sm font-medium">
+                      <Label htmlFor="tds_applicable" className="text-sm font-medium cursor-pointer">
                         TDS Applicable
-                      </label>
+                      </Label>
                     </div>
 
                     {formData.tds_applicable && (

@@ -6,6 +6,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Building2, User, Home, ArrowRight, CheckCircle, Clock, Loader2 } from "lucide-react"
 import { brandGradient } from "@/lib/design-tokens"
+import { PageFullLoading } from "@/components/ui/loading"
 
 interface InviteInfo {
   expired: boolean
@@ -60,11 +61,7 @@ export default function InviteTokenPage() {
   }, [token, router])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageFullLoading />
   }
 
   if (!info) {

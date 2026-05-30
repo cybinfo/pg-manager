@@ -18,7 +18,8 @@ import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Input, Select, FormField, Textarea } from "@/components/ui"
+import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
 
@@ -394,15 +395,13 @@ function EditBillPaymentContent({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
+                    <Label className="flex items-center gap-2 text-sm font-normal cursor-pointer">
+                      <Checkbox
                         checked={showGstFields}
-                        onChange={(e) => setShowGstFields(e.target.checked)}
-                        className="h-4 w-4 rounded border-border"
+                        onCheckedChange={(checked) => setShowGstFields(checked === true)}
                       />
                       GST Breakdown
-                    </label>
+                    </Label>
                   </div>
 
                   {!showGstFields ? (

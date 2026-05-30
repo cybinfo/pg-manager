@@ -49,6 +49,17 @@ export function PageLoading({ message }: { message?: string }) {
 }
 
 // ============================================
+// Full-Screen Page Loading (for auth/layout pages)
+// ============================================
+export function PageFullLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-muted/50">
+      <Spinner size="lg" aria-hidden={true} />
+    </div>
+  )
+}
+
+// ============================================
 // Skeleton Components
 // ============================================
 type SkeletonProps = React.HTMLAttributes<HTMLDivElement>

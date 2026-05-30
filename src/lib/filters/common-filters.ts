@@ -255,37 +255,6 @@ export const PROPERTY_FILTER: FilterConfig = {
   placeholder: "All Properties",
 }
 
-/**
- * Date range filter configs for common date fields
- */
-export const DATE_RANGE_FILTERS = {
-  created: {
-    id: "created_at",
-    label: "Created Date",
-    type: "date-range" as const,
-  },
-  payment: {
-    id: "payment_date",
-    label: "Payment Date",
-    type: "date-range" as const,
-  },
-  checkIn: {
-    id: "check_in_date",
-    label: "Check-in Date",
-    type: "date-range" as const,
-  },
-  expectedExit: {
-    id: "expected_exit_date",
-    label: "Exit Date",
-    type: "date-range" as const,
-  },
-  reading: {
-    id: "reading_date",
-    label: "Reading Date",
-    type: "date-range" as const,
-  },
-}
-
 // ============================================================================
 // COMPUTED FIELD HELPERS
 // ============================================================================
@@ -317,10 +286,3 @@ export function createMonthYearFields(
   }
 }
 
-/**
- * Standard month/year field names for grouping
- */
-export const MONTH_YEAR_GROUP_OPTIONS = [
-  { value: "month", label: "Month" },
-  { value: "year", label: "Year" },
-]

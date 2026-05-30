@@ -33,6 +33,7 @@ import {
   WorkflowStepDef,
 } from "@/components/ui/workflow"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface ChargeType {
   id: string
@@ -589,12 +590,10 @@ function NewMeterReadingContent() {
           {calculatedUnits !== null && calculatedUnits > 0 && (
             <div className="space-y-3 pt-3 border-t">
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="generateCharge"
                   checked={generateCharge}
-                  onChange={(e) => setGenerateCharge(e.target.checked)}
-                  className="h-4 w-4 rounded border-border"
+                  onCheckedChange={(checked) => setGenerateCharge(checked === true)}
                   disabled={saving}
                 />
                 <Label htmlFor="generateCharge" className="font-medium cursor-pointer">

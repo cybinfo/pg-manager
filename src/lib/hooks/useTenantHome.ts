@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { logger } from "@/lib/logger"
 import { createClient } from "@/lib/supabase/client"
 import { useTenantPortalData } from "./useTenantPortalData"
+import { OPEN_COMPLAINT_STATUSES } from "@/lib/status"
 
 export interface RecentPayment {
   id: string
@@ -32,6 +33,7 @@ export function useTenantHome(): UseTenantHomeReturn {
   useEffect(() => {
     if (tenantLoading) return
     if (!tenant) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDataLoading(false)
       return
     }
@@ -55,7 +57,7 @@ export function useTenantHome(): UseTenantHomeReturn {
             .select("id", { count: "exact", head: true })
             .eq("tenant_id", tenant.id)
             .is("deleted_at", null)
-            .in("status", ["open", "acknowledged", "in_progress"]),
+            .in("status", [...OPEN_COMPLAINT_STATUSES]),
           supabase
             .from("notices")
             .select("id", { count: "exact", head: true })

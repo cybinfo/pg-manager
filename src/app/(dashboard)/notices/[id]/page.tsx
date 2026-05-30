@@ -18,6 +18,7 @@ import {
   DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Megaphone,
   Loader2,
@@ -65,7 +66,7 @@ export default function NoticeDetailPage() {
     title: "",
     content: "",
     expires_at: "",
-    is_active: true,
+    is_active: true as boolean,
   })
 
   const {
@@ -82,6 +83,7 @@ export default function NoticeDetailPage() {
   // Initialize form data when notice loads
   useEffect(() => {
     if (notice && !formInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         property_id: notice.property_id || "",
         type: notice.type,
@@ -116,8 +118,10 @@ export default function NoticeDetailPage() {
   // Filter rooms when property changes
   useEffect(() => {
     if (formData.property_id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredRooms(rooms.filter((r) => r.property_id === formData.property_id))
     } else {
+       
       setFilteredRooms([])
     }
   }, [formData.property_id, rooms])
@@ -465,13 +469,10 @@ export default function NoticeDetailPage() {
             <div className="space-y-2">
               <Label>Status</Label>
               <div className="flex items-center gap-2 h-10">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="is_active"
-                  name="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
-                  className="h-4 w-4 rounded border-input"
+                  checked={formData.is_active as boolean}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked === true }))}
                 />
                 <label htmlFor="is_active" className="text-sm">
                   Active

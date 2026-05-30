@@ -22,6 +22,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
+import { PageFullLoading } from "@/components/ui/loading"
 
 const templates = [
   {
@@ -383,11 +384,7 @@ export default function SetupPage() {
 
   // Show loading while checking if user already has a workspace
   if (checkingExisting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageFullLoading />
   }
 
   return (

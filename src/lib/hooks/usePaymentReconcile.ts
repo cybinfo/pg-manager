@@ -6,6 +6,7 @@ import { transformArrayJoins } from "@/lib/supabase/transforms"
 import { showError } from "@/lib/toast-helpers"
 import { logger } from "@/lib/logger"
 import type { UnreconciledPayment, OutstandingBill } from "@/lib/services/reconciliation"
+import { OUTSTANDING_BILL_STATUSES } from "@/lib/status"
 
 export function usePaymentReconcile() {
   const [loading, setLoading] = useState(true)
@@ -36,7 +37,7 @@ export function usePaymentReconcile() {
             property:properties(id, name)
           `)
           .gt("balance_due", 0)
-          .in("status", ["pending", "partial", "overdue"])
+          .in("status", [...OUTSTANDING_BILL_STATUSES])
           .is("deleted_at", null)
           .order("bill_date", { ascending: false }),
       ])

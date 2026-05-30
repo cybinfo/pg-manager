@@ -13,6 +13,7 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import {
   DetailHero,
@@ -368,12 +369,10 @@ function NewMeterContent() {
         >
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="assign_to_room"
-                type="checkbox"
                 checked={formData.assign_to_room as boolean}
-                onChange={(e) => updateField("assign_to_room", e.target.checked)}
-                className="h-4 w-4 rounded border-border"
+                onCheckedChange={(checked) => updateField("assign_to_room", checked === true)}
               />
               <Label htmlFor="assign_to_room" className="font-normal cursor-pointer">
                 Assign to a room immediately

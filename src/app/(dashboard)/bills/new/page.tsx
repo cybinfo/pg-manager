@@ -32,6 +32,8 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { DatePicker } from "@/components/ui/date-picker"
 import { getTodayISO, parseMonthIndex } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { calculateProRataAmount, getProRataBreakdown } from "@/lib/billing/pro-rata"
 import { useFeatures } from "@/lib/features/use-features"
 import {
@@ -133,6 +135,7 @@ function NewBillContent() {
     const billDate = new Date(formData.bill_date)
     const dueDate = new Date(billDate)
     dueDate.setDate(dueDate.getDate() + 5)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData((prev) => ({
       ...prev,
       due_date: dueDate.toISOString().split("T")[0],
@@ -311,6 +314,7 @@ function NewBillContent() {
         billDate = new Date(now.getFullYear(), now.getMonth(), 1)
       }
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({
         ...prev,
         bill_date: billDate.toISOString().split("T")[0],
@@ -602,16 +606,14 @@ function NewBillContent() {
           {proRataEnabled && selectedTenant && (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <input
+                <Checkbox
                   id="prorata-toggle"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-input"
                   checked={proRata.enabled}
-                  onChange={(e) => setProRata((p) => ({ ...p, enabled: e.target.checked }))}
+                  onCheckedChange={(checked) => setProRata((p) => ({ ...p, enabled: checked === true }))}
                 />
-                <label htmlFor="prorata-toggle" className="text-sm font-medium cursor-pointer">
+                <Label htmlFor="prorata-toggle" className="text-sm font-medium cursor-pointer">
                   Apply pro-rata calculation for this bill
-                </label>
+                </Label>
               </div>
               {proRata.enabled && (
                 <div className="space-y-3">

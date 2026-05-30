@@ -117,6 +117,14 @@ export const PERSON_TAG_COLORS: Record<string, string> = {
   vip: "bg-warning/10 text-warning",
 }
 
+export const PERSON_TAG_FILTER_OPTIONS = [
+  { value: "tenant", label: "Tenants" },
+  { value: "staff", label: "Staff" },
+  { value: "visitor", label: "Visitors" },
+  { value: "service_provider", label: "Service Providers" },
+  { value: "vip", label: "VIP" },
+]
+
 export const KITCHEN_WASTAGE_REASON_LABELS: Record<string, { label: string; labelHi: string }> = {
   over_prepared: { label: "Over Prepared", labelHi: "ज्यादा बनाया" },
   spoiled: { label: "Spoiled", labelHi: "खराब हो गया" },
@@ -294,6 +302,9 @@ export const BOOLEAN_STRING_OPTIONS = [
   { value: "true", label: "Active" },
   { value: "false", label: "Inactive" },
 ]
+
+/** Outstanding bill statuses used in payment reconciliation and bulk operations */
+export const OUTSTANDING_BILL_STATUSES = ["pending", "partial", "overdue"] as const
 
 /** Unit options for products and daily-spend expense entries */
 export const UNIT_OPTIONS = [

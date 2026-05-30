@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { OUTSTANDING_BILL_STATUSES } from "@/lib/status"
 
 export interface DashboardStats {
   properties: number
@@ -118,7 +119,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         supabase.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null),
         supabase.from("rooms").select("total_beds, occupied_beds").is("deleted_at", null),
         supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
-        supabase.from("charges").select("amount, paid_amount, status").in("status", ["pending", "partial", "overdue"]),
+        supabase.from("charges").select("amount, paid_amount, status").in("status", [...OUTSTANDING_BILL_STATUSES]),
         supabase.from("charge_types").select("id", { count: "exact", head: true }),
         supabase.from("payments").select("amount"),
         supabase.from("expenses").select("amount"),

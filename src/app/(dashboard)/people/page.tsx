@@ -32,7 +32,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { PEOPLE_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { PERSON_TAG_COLORS } from "@/lib/status-config"
+import { PERSON_TAG_COLORS, PERSON_TAG_FILTER_OPTIONS } from "@/lib/status-config"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 import { useEffect, useState, useCallback } from "react"
@@ -218,13 +218,7 @@ const filters: FilterConfig[] = [
     label: "Role",
     type: "select",
     placeholder: "All Roles",
-    options: [
-      { value: "tenant", label: "Tenants" },
-      { value: "staff", label: "Staff" },
-      { value: "visitor", label: "Visitors" },
-      { value: "service_provider", label: "Service Providers" },
-      { value: "vip", label: "VIP" },
-    ],
+    options: PERSON_TAG_FILTER_OPTIONS,
   },
   createStatusFilter(PEOPLE_STATUS_OPTIONS),
 ]

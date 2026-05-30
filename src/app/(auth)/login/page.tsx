@@ -9,7 +9,8 @@ import { isDeviceTrusted, trustDevice } from "@/lib/auth/device-trust"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent, CardFooter } from "@/components/ui/card"
-import { Loader2, Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
+import { PageFullLoading } from "@/components/ui/loading"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { ContextPicker } from "@/components/auth/context-picker"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
@@ -72,6 +73,7 @@ function LoginForm() {
 
       if (userContexts && userContexts.length > 0) {
         if (userContexts.length === 1) {
+          // eslint-disable-next-line react-hooks/immutability
           handleContextSelect(userContexts[0].context_id, false)
         } else {
           setContexts(userContexts)
@@ -471,11 +473,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-muted/50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense fallback={<PageFullLoading />}>
       <LoginForm />
     </Suspense>
   )

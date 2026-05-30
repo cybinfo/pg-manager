@@ -14,6 +14,7 @@ import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
 import { SubmitButton } from "@/components/ui/submit-button"
 import { brandGradient } from "@/lib/design-tokens"
+import { PageFullLoading } from "@/components/ui/loading"
 
 function ResetPasswordForm() {
   const { handleSuccess } = useFormSubmit({
@@ -215,11 +216,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-muted/50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense fallback={<PageFullLoading />}>
       <ResetPasswordForm />
     </Suspense>
   )

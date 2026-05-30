@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Building2, Loader2 } from "lucide-react"
+import { Building2 } from "lucide-react"
+import { PageFullLoading } from "@/components/ui/loading"
 
 export default function SetupLayout({
   children,
@@ -30,11 +31,7 @@ export default function SetupLayout({
   }, [router])
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageFullLoading />
   }
 
   return (

@@ -17,7 +17,8 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Input, Select, FormField, Textarea } from "@/components/ui"
+import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 
 import type { ServiceCategory, ServiceProviderFormData, TdsSection } from "@/types/expense-enhanced.types"
@@ -53,10 +54,10 @@ function NewServiceProviderContent() {
     pan: "",
     gstin: "",
     upi_id: "",
-    tds_applicable: false,
+    tds_applicable: false as boolean,
     tds_section: undefined,
     tds_rate: undefined,
-    is_active: true,
+    is_active: true as boolean,
     notes: "",
   })
 
@@ -297,23 +298,21 @@ function NewServiceProviderContent() {
                   {/* TDS Settings */}
                   <div className="p-4 bg-muted/50 rounded-lg space-y-4">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         id="tds_applicable"
-                        checked={formData.tds_applicable}
-                        onChange={(e) =>
+                        checked={formData.tds_applicable as boolean}
+                        onCheckedChange={(checked) =>
                           setFormData((prev) => ({
                             ...prev,
-                            tds_applicable: e.target.checked,
-                            tds_section: e.target.checked ? prev.tds_section : undefined,
-                            tds_rate: e.target.checked ? prev.tds_rate : undefined,
+                            tds_applicable: checked === true,
+                            tds_section: checked === true ? prev.tds_section : undefined,
+                            tds_rate: checked === true ? prev.tds_rate : undefined,
                           }))
                         }
-                        className="h-4 w-4 rounded border-border"
                       />
-                      <label htmlFor="tds_applicable" className="text-sm font-medium">
+                      <Label htmlFor="tds_applicable" className="text-sm font-medium cursor-pointer">
                         TDS Applicable
-                      </label>
+                      </Label>
                     </div>
 
                     {formData.tds_applicable && (
@@ -375,18 +374,16 @@ function NewServiceProviderContent() {
 
                 {/* Active Status */}
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+                    checked={formData.is_active as boolean}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, is_active: checked === true }))
                     }
-                    className="h-4 w-4 rounded border-border"
                   />
-                  <label htmlFor="is_active" className="text-sm">
+                  <Label htmlFor="is_active" className="text-sm font-normal cursor-pointer">
                     Active (available for selection)
-                  </label>
+                  </Label>
                 </div>
               </CardContent>
             </Card>

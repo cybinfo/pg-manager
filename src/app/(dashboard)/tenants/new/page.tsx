@@ -21,6 +21,7 @@ import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { onboardTenantUser } from "@/lib/services/tenant-onboarding"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useFeatures } from "@/lib/features/use-features"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
@@ -93,7 +94,7 @@ function NewTenantContent() {
     security_deposit: "",
     // Status & Verification
     police_verification_status: "pending",
-    agreement_signed: false,
+    agreement_signed: false as boolean,
     notes: "",
   })
 
@@ -696,14 +697,11 @@ function NewTenantContent() {
             </FormField>
 
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="agreement_signed"
-                name="agreement_signed"
-                type="checkbox"
-                checked={formData.agreement_signed}
-                onChange={handleChange}
+                checked={formData.agreement_signed as boolean}
+                onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, agreement_signed: checked === true }))}
                 disabled={loading}
-                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="agreement_signed" className="font-normal cursor-pointer">
                 Agreement signed
