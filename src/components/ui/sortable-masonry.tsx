@@ -315,19 +315,24 @@ export function SortableMasonry({
     [orderedChildren, hiddenIds]
   )
 
-  // After visible items render, measure heights and redistribute into shortest column first
+  // After visible items render in normal mode, measure heights and redistribute into shortest column first.
+  // itemRefs are only populated in normal mode — skip if all heights are zero (e.g. called while in edit mode).
   React.useEffect(() => {
     if (!mounted || visibleChildren.length === 0) return
     const timer = setTimeout(() => {
       const colHeights = Array(columns).fill(0)
       const dist: string[][] = Array.from({ length: columns }, () => [])
+      let totalHeight = 0
       for (const { id } of visibleChildren) {
         const el = itemRefs.current.get(id)
         const h = el ? el.offsetHeight : 0
+        totalHeight += h
         const shortestCol = colHeights.indexOf(Math.min(...colHeights))
         dist[shortestCol].push(id)
         colHeights[shortestCol] += h
       }
+      // No real measurements available (refs belong to normal mode only) — keep round-robin fallback
+      if (totalHeight === 0) return
       const childMap = new Map(visibleChildren.map(item => [item.id, item.element]))
       setBalancedCols(dist.map(ids => ids.map(id => ({ id, element: childMap.get(id) }))))
     }, 0)
