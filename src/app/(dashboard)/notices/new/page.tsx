@@ -512,7 +512,7 @@ function NewNoticeContent() {
                   <Checkbox
                     id="is_active"
                     checked={formData.is_active as boolean}
-                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked }))}
+                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked === true }))}
                     disabled={saving}
                   />
                   <Label htmlFor="is_active" className="text-sm cursor-pointer">
