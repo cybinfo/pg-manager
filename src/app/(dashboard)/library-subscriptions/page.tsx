@@ -254,8 +254,10 @@ export default function LibrarySubscriptionsPage() {
       exportColumns={exportColumns}
       exportFilename="library-subscriptions"
       detailHref={(sub) => `/library-subscriptions/${sub.id}`}
+      createHref="/library-subscriptions/new"
+      createLabel="Add Subscription"
       emptyTitle="No subscriptions found"
-      emptyDescription="Subscriptions are created when members enroll in a library plan"
+      emptyDescription="Add a subscription for any existing library member"
     />
   )
 }
