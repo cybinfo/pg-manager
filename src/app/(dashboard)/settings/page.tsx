@@ -14,7 +14,8 @@ import {
   ToggleLeft,
   ShieldCheck,
 } from "lucide-react"
-import { PageHeader } from "@/components/ui/page-header"
+import { DetailHero } from "@/components/ui"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { PageSkeleton } from "@/components/ui/loading"
 import { OwnerGuard } from "@/components/auth"
 import { useAuth } from "@/lib/auth"
@@ -51,7 +52,7 @@ function SettingsContent() {
   const tabParam = searchParams.get("tab")
   const activeTab: TabId = isValidTab(tabParam) ? tabParam : DEFAULT_TAB
 
-  const setActiveTab = useCallback((tab: TabId) => {
+  const setActiveTab = useCallback((tab: string) => {
     const params = new URLSearchParams(searchParams.toString())
     if (tab === DEFAULT_TAB) {
       params.delete("tab")
@@ -79,15 +80,15 @@ function SettingsContent() {
   } = useSettingsData()
 
   const tabs: { id: TabId; label: string; icon: typeof User }[] = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "room-types", label: "Room Types", icon: Bed },
-    { id: "billing", label: "Billing & Charges", icon: CreditCard },
-    { id: "food", label: "Food & Meals", icon: UtensilsCrossed },
-    { id: "expenses", label: "Expense Categories", icon: IndianRupee },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "features", label: "Features", icon: ToggleLeft },
-    { id: "defaults", label: "Default Settings", icon: Settings },
-    { id: "security", label: "Security", icon: ShieldCheck },
+    { id: "profile",       label: "Profile",             icon: User },
+    { id: "room-types",    label: "Room Types",          icon: Bed },
+    { id: "billing",       label: "Billing & Charges",   icon: CreditCard },
+    { id: "food",          label: "Food & Meals",        icon: UtensilsCrossed },
+    { id: "expenses",      label: "Expense Categories",  icon: IndianRupee },
+    { id: "notifications", label: "Notifications",       icon: Bell },
+    { id: "features",      label: "Features",            icon: ToggleLeft },
+    { id: "defaults",      label: "Default Settings",    icon: Settings },
+    { id: "security",      label: "Security",            icon: ShieldCheck },
   ]
 
   if (loading) {
@@ -96,123 +97,114 @@ function SettingsContent() {
 
   return (
     <OwnerGuard>
-    <div className="space-y-6">
-      <PageHeader
-        title="Settings"
-        description="Manage your account and preferences"
-        icon={Cog}
-        breadcrumbs={[{ label: "Settings" }]}
-      />
+      <div className="space-y-6">
+        <DetailHero
+          title="Settings"
+          subtitle="Manage your account and preferences"
+          backHref="/dashboard"
+          icon={Cog}
+          breadcrumbs={[{ label: "Settings" }]}
+        />
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b">
-        {tabs.map((tab) => {
-          const Icon = tab.icon
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          )
-        })}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="h-auto bg-transparent border-b rounded-none p-0 gap-0 w-full justify-start flex-wrap">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 gap-2 text-muted-foreground data-[state=active]:text-primary hover:text-foreground transition-colors"
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+
+          <TabsContent value="profile">
+            <ProfileSettings
+              owner={owner}
+              setOwner={(o) => setOwner(o)}
+              userId={user?.id}
+              profile={profile}
+            />
+          </TabsContent>
+
+          <TabsContent value="room-types">
+            <RoomTypeSettings
+              configurableRoomTypes={configurableRoomTypes}
+              setConfigurableRoomTypes={setConfigurableRoomTypes}
+              config={config}
+              setConfig={(c) => setConfig(c)}
+            />
+          </TabsContent>
+
+          <TabsContent value="billing">
+            <BillingSettings
+              chargeTypes={chargeTypes}
+              setChargeTypes={setChargeTypes}
+              utilityRates={utilityRates}
+              setUtilityRates={setUtilityRates}
+              autoBillingSettings={autoBillingSettings}
+              setAutoBillingSettings={setAutoBillingSettings}
+              billingCycleMode={billingCycleMode}
+              setBillingCycleMode={setBillingCycleMode}
+              configForm={configForm}
+              config={config}
+              setConfig={(c) => setConfig(c)}
+              propertyTypePricing={propertyTypePricing}
+            />
+          </TabsContent>
+
+          <TabsContent value="food">
+            <FoodSettings
+              foodSettings={foodSettings}
+              setFoodSettings={setFoodSettings}
+              configId={config?.id}
+            />
+          </TabsContent>
+
+          <TabsContent value="expenses">
+            <ExpenseTypeSettings
+              expenseTypes={expenseTypes}
+              setExpenseTypes={setExpenseTypes}
+            />
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <NotificationSettings
+              notificationSettings={notificationSettings}
+              setNotificationSettings={setNotificationSettings}
+              config={config}
+              owner={owner}
+            />
+          </TabsContent>
+
+          <TabsContent value="features">
+            <FeatureSettings />
+          </TabsContent>
+
+          <TabsContent value="defaults">
+            <div className="space-y-6">
+              <DefaultSettings
+                configForm={configForm}
+                setConfigForm={setConfigForm}
+                config={config}
+                setConfig={(c) => setConfig(c)}
+              />
+              <FeatureGuard module="approvals" feature="autoApproval">
+                <ApprovalSettings />
+              </FeatureGuard>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <SessionSettings />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Profile Tab */}
-      {activeTab === "profile" && (
-        <ProfileSettings
-          owner={owner}
-          setOwner={(o) => setOwner(o)}
-          userId={user?.id}
-          profile={profile}
-        />
-      )}
-
-      {/* Room Types Tab */}
-      {activeTab === "room-types" && (
-        <RoomTypeSettings
-          configurableRoomTypes={configurableRoomTypes}
-          setConfigurableRoomTypes={setConfigurableRoomTypes}
-          config={config}
-          setConfig={(c) => setConfig(c)}
-        />
-      )}
-
-      {/* Billing Tab */}
-      {activeTab === "billing" && (
-        <BillingSettings
-          chargeTypes={chargeTypes}
-          setChargeTypes={setChargeTypes}
-          utilityRates={utilityRates}
-          setUtilityRates={setUtilityRates}
-          autoBillingSettings={autoBillingSettings}
-          setAutoBillingSettings={setAutoBillingSettings}
-          billingCycleMode={billingCycleMode}
-          setBillingCycleMode={setBillingCycleMode}
-          configForm={configForm}
-          config={config}
-          setConfig={(c) => setConfig(c)}
-          propertyTypePricing={propertyTypePricing}
-        />
-      )}
-
-      {/* Food Tab */}
-      {activeTab === "food" && (
-        <FoodSettings
-          foodSettings={foodSettings}
-          setFoodSettings={setFoodSettings}
-          configId={config?.id}
-        />
-      )}
-
-      {/* Expenses Tab */}
-      {activeTab === "expenses" && (
-        <ExpenseTypeSettings
-          expenseTypes={expenseTypes}
-          setExpenseTypes={setExpenseTypes}
-        />
-      )}
-
-      {/* Notifications Tab */}
-      {activeTab === "notifications" && (
-        <NotificationSettings
-          notificationSettings={notificationSettings}
-          setNotificationSettings={setNotificationSettings}
-          config={config}
-          owner={owner}
-        />
-      )}
-
-      {/* Features Tab */}
-      {activeTab === "features" && (
-        <FeatureSettings />
-      )}
-
-      {/* Security Tab */}
-      {activeTab === "security" && <SessionSettings />}
-
-      {/* Defaults Tab */}
-      {activeTab === "defaults" && (
-        <div className="space-y-6">
-          <DefaultSettings
-            configForm={configForm}
-            setConfigForm={setConfigForm}
-            config={config}
-            setConfig={(c) => setConfig(c)}
-          />
-          <FeatureGuard module="approvals" feature="autoApproval">
-            <ApprovalSettings />
-          </FeatureGuard>
-        </div>
-      )}
-    </div>
     </OwnerGuard>
   )
 }
