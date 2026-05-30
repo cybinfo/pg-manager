@@ -15,7 +15,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { cn } from "@/lib/utils"
@@ -285,8 +285,9 @@ export function SortableMasonry({
     )
   }
 
-  // Edit mode: single vertical list with drag handles for clear reordering UX
+  // Edit mode: same two-column layout with drag handles on each card
   if (isEditMode) {
+    const editCols = balancedCols ?? splitIntoColumns(orderedChildren, columns)
     return (
       <div className="relative">
         <div className="flex items-center justify-end gap-2 mb-4">
@@ -315,12 +316,16 @@ export function SortableMasonry({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={order} strategy={verticalListSortingStrategy}>
-            <div className={cn("flex flex-col", gapStyles[gap])}>
-              {orderedChildren.map(({ id, element }) => (
-                <SortableItem key={id} id={id} isEditMode={isEditMode}>
-                  {element}
-                </SortableItem>
+          <SortableContext items={order} strategy={rectSortingStrategy}>
+            <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
+              {editCols.map((colItems, colIdx) => (
+                <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+                  {colItems.map(({ id, element }) => (
+                    <SortableItem key={id} id={id} isEditMode={isEditMode}>
+                      {element}
+                    </SortableItem>
+                  ))}
+                </div>
               ))}
             </div>
           </SortableContext>
