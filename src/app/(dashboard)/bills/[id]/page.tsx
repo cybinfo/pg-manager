@@ -30,7 +30,15 @@ import { PermissionGate } from "@/components/auth"
 import { useFeatures } from "@/lib/features/use-features"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { BILL_STATUS } from "@/lib/status"
-import { BillPaymentForm, BillBreakdown, BillInfoSidebar } from "./_components"
+import {
+  BillPaymentForm,
+  BillLineItemsSection,
+  BillPaymentHistorySection,
+  BillNotesSection,
+  BillInfoSection,
+  BillTenantSection,
+  BillPropertySection,
+} from "./_components"
 
 interface Payment {
   id: string
@@ -228,22 +236,20 @@ ManageKar`
       </div>
 
       <DetailPageTemplate layoutKey="bill-detail" entityType="bill" record={bill}>
-        {/* Left Column - Bill Details & Payments */}
-        <BillBreakdown
+        <BillLineItemsSection
           lineItems={lineItems}
           subtotal={subtotal}
           totalAmount={bill.total_amount}
           discountAmount={bill.discount_amount || 0}
           lateFee={bill.late_fee || 0}
           previousBalance={bill.previous_balance || 0}
-          payments={payments}
-          billId={billId}
-          notes={bill.notes}
           showGst={gstEnabled}
         />
-
-        {/* Right Column - Info Sidebar */}
-        <BillInfoSidebar bill={bill} isOverdue={isOverdue} />
+        <BillInfoSection bill={bill} isOverdue={isOverdue} />
+        <BillPaymentHistorySection payments={payments} billId={billId} />
+        {bill.tenant && <BillTenantSection tenant={bill.tenant} room={bill.room} />}
+        {bill.property && <BillPropertySection property={bill.property} />}
+        {bill.notes && <BillNotesSection notes={bill.notes} />}
       </DetailPageTemplate>
 
       {/* Delete Confirmation Dialog */}

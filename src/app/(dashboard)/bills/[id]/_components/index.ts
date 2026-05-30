@@ -1,3 +1,3 @@
 export { BillPaymentForm } from "./BillPaymentForm"
-export { BillBreakdown } from "./BillBreakdown"
-export { BillInfoSidebar } from "./BillInfoSidebar"
+export { BillLineItemsSection, BillPaymentHistorySection, BillNotesSection } from "./BillBreakdown"
+export { BillInfoSection, BillTenantSection, BillPropertySection } from "./BillInfoSidebar"
