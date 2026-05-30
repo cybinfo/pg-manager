@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { DetailSection, InfoRow } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Avatar } from "@/components/ui/avatar"
@@ -116,14 +115,18 @@ export function BillInfoSidebar({ bill, isOverdue }: BillInfoSidebarProps) {
           description="Bill location"
           icon={Building2}
         >
-          <InfoRow label="Name" value={bill.property.name} />
-          {bill.property.address && (
-            <InfoRow label="Address" value={bill.property.address} />
-          )}
           <Link href={`/properties/${bill.property.id}`}>
-            <Button variant="outline" size="sm" className="w-full mt-3">
-              View Property
-            </Button>
+            <div className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium">{bill.property.name}</p>
+                {bill.property.address && (
+                  <p className="text-sm text-muted-foreground truncate">{bill.property.address}</p>
+                )}
+              </div>
+            </div>
           </Link>
         </DetailSection>
       )}

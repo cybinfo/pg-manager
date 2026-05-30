@@ -565,47 +565,33 @@ export default function VisitorDetailPage() {
         >
           <div className={`grid ${visitor.visitor_type === "tenant_visitor" && visitor.tenant ? "md:grid-cols-2" : "md:grid-cols-1"} gap-6`}>
             {visitor.visitor_type === "tenant_visitor" && visitor.tenant && (
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar name={visitor.tenant.name} size="md" />
-                  <div>
-                    <p className="font-semibold">{visitor.tenant.name}</p>
-                    <p className="text-sm text-muted-foreground">Tenant</p>
+              <Link href={`/tenants/${visitor.tenant.id}`}>
+                <div className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow">
+                  <Avatar name={visitor.tenant.name} src={visitor.tenant.person?.photo_url} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{visitor.tenant.name}</p>
+                    {visitor.tenant.phone && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-3 w-3 shrink-0" />
+                        {visitor.tenant.phone}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <a href={`tel:${visitor.tenant.phone}`} className="hover:text-primary">
-                      {visitor.tenant.phone}
-                    </a>
-                  </div>
-                </div>
-                <Link href={`/tenants/${visitor.tenant.id}`}>
-                  <Button variant="outline" size="sm" className="w-full mt-3">
-                    View Tenant Profile
-                  </Button>
-                </Link>
-              </div>
+              </Link>
             )}
 
             {visitor.property && (
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Link href={`/properties/${visitor.property.id}`}>
+                <div className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-semibold">{visitor.property.name}</p>
-                    <p className="text-sm text-muted-foreground">Property</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{visitor.property.name}</p>
                   </div>
                 </div>
-                <Link href={`/properties/${visitor.property.id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    View Property
-                  </Button>
-                </Link>
-              </div>
+              </Link>
             )}
           </div>
         </DetailSection>

@@ -38,9 +38,7 @@ import {
   UserCheck,
   XCircle,
   Clock,
-  ExternalLink,
 } from "lucide-react"
-import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
@@ -362,23 +360,19 @@ export default function InquiryDetailPage() {
         {/* Property Card */}
         {inquiry.property && (
           <DetailSection title="Property" icon={Building2}>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-info/10 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-info" />
+            <Link href={`/properties/${inquiry.property.id}`}>
+              <div className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <PropertyLink id={inquiry.property.id} name={inquiry.property.name} />
-                  <p className="text-sm text-muted-foreground">{inquiry.property.city}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">{inquiry.property.name}</p>
+                  {inquiry.property.city && (
+                    <p className="text-sm text-muted-foreground">{inquiry.property.city}</p>
+                  )}
                 </div>
               </div>
-              <Link href={`/properties/${inquiry.property.id}`}>
-                <Button variant="outline" size="sm" className="w-full">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Property
-                </Button>
-              </Link>
-            </div>
+            </Link>
           </DetailSection>
         )}
 
