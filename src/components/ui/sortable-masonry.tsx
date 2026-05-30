@@ -352,7 +352,11 @@ export function SortableMasonry({
         {cols.map((colItems, colIdx) => (
           <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
             {colItems.map(({ id, element }) => (
-              <div key={id} ref={(el) => { itemRefs.current.set(id, el) }}>
+              <div
+                key={id}
+                ref={(el) => { itemRefs.current.set(id, el) }}
+                className={balancedCols !== null ? "[&>*]:![animation:none]" : ""}
+              >
                 {element}
               </div>
             ))}
