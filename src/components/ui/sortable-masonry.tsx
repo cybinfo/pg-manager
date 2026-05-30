@@ -115,16 +115,17 @@ function SortableItem({ id, children, isEditMode }: SortableItemProps) {
   )
 }
 
-const columnStyles = {
-  1: "grid-cols-1",
-  2: "grid-cols-1 md:grid-cols-2",
-  3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-}
-
 const gapStyles = {
   sm: "gap-4",
   md: "gap-6",
   lg: "gap-8",
+}
+
+// Distribute items round-robin across N columns: 0→col0, 1→col1, 2→col0, …
+function splitIntoColumns<T>(items: T[], n: number): T[][] {
+  const cols: T[][] = Array.from({ length: n }, () => [])
+  items.forEach((item, i) => cols[i % n].push(item))
+  return cols
 }
 
 export function SortableMasonry({
@@ -243,26 +244,25 @@ export function SortableMasonry({
     })).filter(item => item.element)
   }, [order, childrenWithIds])
 
-  // SSR fallback
+  // SSR fallback: split children into independent flex columns (no JS needed)
   if (!mounted) {
+    const ssrChildren = React.Children.toArray(children)
+    const ssrCols = splitIntoColumns(ssrChildren, columns)
     return (
-      <div className={cn(
-        "grid",
-        columnStyles[columns],
-        "items-start",
-        gapStyles[gap],
-        className
-      )}>
-        {children}
+      <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
+        {ssrCols.map((colItems, colIdx) => (
+          <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+            {colItems}
+          </div>
+        ))}
       </div>
     )
   }
 
-  // Edit mode: show masonry with drag handles visible
+  // Edit mode: single vertical list with drag handles for clear reordering UX
   if (isEditMode) {
     return (
       <div className="relative">
-        {/* Edit mode controls */}
         <div className="flex items-center justify-end gap-2 mb-4">
           <Button
             variant="outline"
@@ -290,13 +290,7 @@ export function SortableMasonry({
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
-            <div className={cn(
-              "grid",
-              columnStyles[columns],
-              "items-start",
-              gapStyles[gap],
-              className
-            )}>
+            <div className={cn("flex flex-col", gapStyles[gap])}>
               {orderedChildren.map(({ id, element }) => (
                 <SortableItem key={id} id={id} isEditMode={isEditMode}>
                   {element}
@@ -309,10 +303,11 @@ export function SortableMasonry({
     )
   }
 
-  // Normal mode: masonry layout with ordered children
+  // Normal mode: independent flex columns — no row-height gaps, items stack from top
+  const cols = splitIntoColumns(orderedChildren, columns)
+
   return (
     <div className="relative">
-      {/* Customize button */}
       {editable && (
         <div className="flex items-center justify-end mb-4">
           <Button
@@ -327,15 +322,13 @@ export function SortableMasonry({
         </div>
       )}
 
-      <div className={cn(
-        "grid",
-        columnStyles[columns],
-        "items-start",
-        gapStyles[gap],
-        className
-      )}>
-        {orderedChildren.map(({ id, element }) => (
-          <React.Fragment key={id}>{element}</React.Fragment>
+      <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
+        {cols.map((colItems, colIdx) => (
+          <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+            {colItems.map(({ id, element }) => (
+              <React.Fragment key={id}>{element}</React.Fragment>
+            ))}
+          </div>
         ))}
       </div>
     </div>
