@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { DetailSection, InfoRow } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { FileText, Calendar, User, Phone, Mail, Home, Building2 } from "lucide-react"
+import { Avatar } from "@/components/ui/avatar"
+import { FileText, Calendar, User, Phone, Mail, Building2 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { BILL_STATUS } from "@/lib/status"
 
@@ -23,6 +24,7 @@ interface BillInfoSidebarProps {
       name: string
       phone?: string
       email?: string
+      person?: { id: string; photo_url?: string | null } | null
     } | null
     property?: {
       id: string
@@ -81,36 +83,28 @@ export function BillInfoSidebar({ bill, isOverdue }: BillInfoSidebarProps) {
           description="Billed to"
           icon={User}
         >
-          <InfoRow label="Name" value={bill.tenant.name} />
-          {bill.tenant.phone && (
-            <InfoRow
-              label="Phone"
-              value={
-                <a href={`tel:${bill.tenant.phone}`} className="text-primary hover:underline">
-                  {bill.tenant.phone}
-                </a>
-              }
-              icon={Phone}
-            />
-          )}
-          {bill.tenant.email && (
-            <InfoRow
-              label="Email"
-              value={
-                <a href={`mailto:${bill.tenant.email}`} className="text-primary hover:underline truncate">
-                  {bill.tenant.email}
-                </a>
-              }
-              icon={Mail}
-            />
-          )}
-          {bill.room && (
-            <InfoRow label="Room" value={`Room ${bill.room.room_number}`} icon={Home} />
-          )}
           <Link href={`/tenants/${bill.tenant.id}`}>
-            <Button variant="outline" size="sm" className="w-full mt-3">
-              View Tenant
-            </Button>
+            <div className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow">
+              <Avatar name={bill.tenant.name} src={bill.tenant.person?.photo_url} size="md" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium">{bill.tenant.name}</p>
+                {bill.tenant.phone && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3 w-3 shrink-0" />
+                    {bill.tenant.phone}
+                  </p>
+                )}
+                {bill.tenant.email && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                    <Mail className="h-3 w-3 shrink-0" />
+                    {bill.tenant.email}
+                  </p>
+                )}
+                {bill.room && (
+                  <p className="text-xs text-muted-foreground font-mono">Room {bill.room.room_number}</p>
+                )}
+              </div>
+            </div>
           </Link>
         </DetailSection>
       )}
