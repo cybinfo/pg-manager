@@ -23,6 +23,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
+import { useSessionTrack } from "@/lib/hooks/useSessionTrack"
 import { showSuccess } from "@/lib/toast-helpers"
 import { ThemeToggleSidebar } from "@/components/ui/theme-toggle"
 import { PWAInstallPrompt, PWAInstallButton } from "@/components/pwa-install-prompt"
@@ -55,6 +56,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const [sidebarEditMode, setSidebarEditMode] = useState(false)
   const { applyOrder, reorderMain, reorderChildren, resetOrder, isLoaded: orderLoaded } = useSidebarOrder()
+  useSessionTrack()
 
   // Toggle expanded state for a menu
   const toggleMenu = (menuName: string) => {

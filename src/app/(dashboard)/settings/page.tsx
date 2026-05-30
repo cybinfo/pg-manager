@@ -11,7 +11,8 @@ import {
   Cog,
   Bed,
   UtensilsCrossed,
-  ToggleLeft
+  ToggleLeft,
+  ShieldCheck,
 } from "lucide-react"
 import { PageHeader } from "@/components/ui/page-header"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -29,10 +30,11 @@ import {
   FeatureSettings,
   DefaultSettings,
   ApprovalSettings,
+  SessionSettings,
 } from "./_components"
 import { FeatureGuard } from "@/components/auth"
 
-const VALID_TABS = ["profile", "room-types", "billing", "food", "expenses", "notifications", "features", "defaults"] as const
+const VALID_TABS = ["profile", "room-types", "billing", "food", "expenses", "notifications", "features", "defaults", "security"] as const
 type TabId = typeof VALID_TABS[number]
 
 const DEFAULT_TAB: TabId = "profile"
@@ -85,6 +87,7 @@ function SettingsContent() {
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "features", label: "Features", icon: ToggleLeft },
     { id: "defaults", label: "Default Settings", icon: Settings },
+    { id: "security", label: "Security", icon: ShieldCheck },
   ]
 
   if (loading) {
@@ -191,6 +194,9 @@ function SettingsContent() {
       {activeTab === "features" && (
         <FeatureSettings />
       )}
+
+      {/* Security Tab */}
+      {activeTab === "security" && <SessionSettings />}
 
       {/* Defaults Tab */}
       {activeTab === "defaults" && (
