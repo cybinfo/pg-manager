@@ -151,10 +151,11 @@ export function DetailListSection<T>({
         </div>
       ) : (
         // List with items
-        <div className={itemSpacing === "none" ? "space-y-0" : itemSpacing === "sm" ? "space-y-2" : "space-y-3"}>
+        <div className={cn(itemSpacing !== "none" && "flex flex-col", itemSpacing === "sm" ? "gap-2" : itemSpacing === "md" ? "gap-3" : "")}>
           <div
             className={cn(
-              itemSpacing === "none" ? "space-y-0" : itemSpacing === "sm" ? "space-y-2" : "space-y-3",
+              itemSpacing !== "none" && "flex flex-col",
+              itemSpacing === "sm" ? "gap-2" : itemSpacing === "md" ? "gap-3" : "",
               "transition-all duration-200",
               isExpanded && "animate-fade-in"
             )}
