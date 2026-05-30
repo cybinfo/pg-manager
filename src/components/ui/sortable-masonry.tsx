@@ -181,6 +181,11 @@ export function SortableMasonry({
   // Current order
   const [order, setOrder] = React.useState<string[]>(defaultOrder)
 
+  // Refs to measure each item's rendered height
+  const itemRefs = React.useRef<Map<string, HTMLDivElement | null>>(new Map())
+  // Height-balanced column distribution; null = use round-robin until first measurement
+  const [balancedCols, setBalancedCols] = React.useState<Array<Array<{ id: string; element: React.ReactElement | undefined }>> | null>(null)
+
   // Load stored order on mount - flexible matching for varying section counts
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -219,6 +224,7 @@ export function SortableMasonry({
   const handleDragEnd = React.useCallback((event: DragEndEvent) => {
     const { active, over } = event
     if (over && active.id !== over.id) {
+      setBalancedCols(null) // reset so round-robin shows while re-measuring
       setOrder(prevOrder => {
         const oldIndex = prevOrder.indexOf(active.id as string)
         const newIndex = prevOrder.indexOf(over.id as string)
@@ -232,6 +238,7 @@ export function SortableMasonry({
   // Reset to default order
   const handleResetLayout = React.useCallback(() => {
     clearOrder()
+    setBalancedCols(null)
     setOrder(defaultOrder)
   }, [clearOrder, defaultOrder])
 
@@ -243,6 +250,25 @@ export function SortableMasonry({
       element: childMap.get(id),
     })).filter(item => item.element)
   }, [order, childrenWithIds])
+
+  // After items render, measure heights and redistribute into shortest column first
+  React.useEffect(() => {
+    if (!mounted || orderedChildren.length === 0) return
+    const timer = setTimeout(() => {
+      const colHeights = Array(columns).fill(0)
+      const dist: string[][] = Array.from({ length: columns }, () => [])
+      for (const { id } of orderedChildren) {
+        const el = itemRefs.current.get(id)
+        const h = el ? el.offsetHeight : 0
+        const shortestCol = colHeights.indexOf(Math.min(...colHeights))
+        dist[shortestCol].push(id)
+        colHeights[shortestCol] += h
+      }
+      const childMap = new Map(orderedChildren.map(item => [item.id, item.element]))
+      setBalancedCols(dist.map(ids => ids.map(id => ({ id, element: childMap.get(id) }))))
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [mounted, orderedChildren, columns])
 
   // SSR fallback: split children into independent flex columns (no JS needed)
   if (!mounted) {
@@ -303,8 +329,8 @@ export function SortableMasonry({
     )
   }
 
-  // Normal mode: independent flex columns — no row-height gaps, items stack from top
-  const cols = splitIntoColumns(orderedChildren, columns)
+  // Normal mode: height-balanced columns (falls back to round-robin before first measurement)
+  const cols = balancedCols ?? splitIntoColumns(orderedChildren, columns)
 
   return (
     <div className="relative">
@@ -326,7 +352,9 @@ export function SortableMasonry({
         {cols.map((colItems, colIdx) => (
           <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
             {colItems.map(({ id, element }) => (
-              <React.Fragment key={id}>{element}</React.Fragment>
+              <div key={id} ref={(el) => { itemRefs.current.set(id, el) }}>
+                {element}
+              </div>
             ))}
           </div>
         ))}
