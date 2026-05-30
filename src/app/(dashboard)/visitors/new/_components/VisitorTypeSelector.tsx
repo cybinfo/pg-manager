@@ -8,7 +8,7 @@ import {
   VISITOR_TYPE_LABELS,
   VISITOR_TYPE_DESCRIPTIONS,
 } from "@/types/visitors.types"
-import { VISITOR_TYPE_COLORS, VISITOR_TYPE_ICONS } from "@/lib/status"
+import { VISITOR_TYPE_ICONS } from "@/lib/status"
 
 interface VisitorTypeSelectorProps {
   selectedType: VisitorType
@@ -46,15 +46,15 @@ export function VisitorTypeSelector({
                 disabled={!!selectedContact && selectedContact.visitor_type !== type}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
                   selectedType === type
-                    ? VISITOR_TYPE_COLORS[type] + " border-current"
-                    : "border-border hover:border-border"
+                    ? "bg-primary/10 border-primary"
+                    : "border-border hover:border-primary/40"
                 } ${selectedContact && selectedContact.visitor_type !== type ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${
-                    selectedType === type ? "bg-card/50" : "bg-muted"
+                    selectedType === type ? "bg-primary/20" : "bg-muted"
                   }`}>
-                    <Icon className="h-5 w-5" />
+                    <Icon className={`h-5 w-5 ${selectedType === type ? "text-primary" : ""}`} />
                   </div>
                   <div>
                     <div className="font-medium">{VISITOR_TYPE_LABELS[type]}</div>
