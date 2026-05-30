@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
-import { EmptyState } from "@/components/ui/empty-state"
 
 import type { ServiceProvider, ServiceCategory, ServiceProviderFormData, TdsSection } from "@/types/expense-enhanced.types"
 import { TDS_SECTION_OPTIONS, TDS_RATES } from "@/lib/constants/form-options"
@@ -195,15 +194,9 @@ function EditServiceProviderContent({
 
   if (!provider) {
     return (
-      <div className="container py-6">
-        <EmptyState
-          title="Provider not found"
-          description="The service provider you're looking for doesn't exist."
-          action={{
-            label: "Back to Providers",
-            href: "/expenses/services/providers",
-          }}
-        />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
       </div>
     )
   }

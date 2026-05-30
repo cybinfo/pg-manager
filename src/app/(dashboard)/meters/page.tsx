@@ -20,7 +20,7 @@ import { METER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, METER_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
-import { METER_STATUS_OPTIONS } from "@/lib/filters/common-filters"
+import { METER_STATUS_OPTIONS, METER_TYPE_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
@@ -211,23 +211,14 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Type",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "electricity", label: "Electricity" },
-      { value: "water", label: "Water" },
-      { value: "gas", label: "Gas" },
-    ],
+    filterOptions: METER_TYPE_OPTIONS,
   },
   {
     key: "status",
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "active", label: "Active" },
-      { value: "faulty", label: "Faulty" },
-      { value: "replaced", label: "Replaced" },
-      { value: "retired", label: "Retired" },
-    ],
+    filterOptions: METER_STATUS_OPTIONS,
   },
   {
     key: "initial_reading",

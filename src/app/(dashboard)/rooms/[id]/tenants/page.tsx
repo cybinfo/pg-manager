@@ -4,9 +4,8 @@ import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Users, UserCheck, UserMinus, Clock, ArrowLeft, Home } from "lucide-react"
+import { Users, UserCheck, UserMinus, Clock, ArrowLeft } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -174,12 +173,10 @@ export default function RoomTenantsPage() {
 
   if (notFound) {
     return (
-      <EmptyState
-        icon={Home}
-        title="Room not found"
-        description="The room you're looking for doesn't exist."
-        action={{ label: "Back to Rooms", href: "/rooms" }}
-      />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+      </div>
     )
   }
 

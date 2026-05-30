@@ -4,9 +4,8 @@ import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Home, Bed, CheckCircle, AlertCircle, ArrowLeft, Building2 } from "lucide-react"
+import { Home, Bed, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ROOM_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -266,12 +265,10 @@ export default function PropertyRoomsPage() {
 
   if (notFound) {
     return (
-      <EmptyState
-        icon={Building2}
-        title="Property not found"
-        description="The property you're looking for doesn't exist."
-        action={{ label: "Back to Properties", href: "/properties" }}
-      />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+      </div>
     )
   }
 

@@ -154,12 +154,7 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("seat_number", "Seat Number"),
-  statusFilterColumn([
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "reserved", label: "Reserved" },
-    { value: "maintenance", label: "Maintenance" },
-  ]),
+  statusFilterColumn(LIBRARY_SEAT_STATUS_OPTIONS),
   textFilterColumn("row_number", "Row Number"),
   booleanFilterColumn("has_power_outlet", "Power Outlet"),
   booleanFilterColumn("has_lamp", "Lamp"),

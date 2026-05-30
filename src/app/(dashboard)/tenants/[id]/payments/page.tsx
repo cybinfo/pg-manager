@@ -4,9 +4,8 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { CreditCard, IndianRupee, Wallet, Receipt, Banknote, ArrowLeft, User } from "lucide-react"
+import { CreditCard, IndianRupee, Wallet, Receipt, Banknote, ArrowLeft } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -252,12 +251,10 @@ export default function TenantPaymentsPage() {
 
   if (notFound) {
     return (
-      <EmptyState
-        icon={User}
-        title="Tenant not found"
-        description="The tenant you're looking for doesn't exist."
-        action={{ label: "Back to Tenants", href: "/tenants" }}
-      />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+      </div>
     )
   }
 

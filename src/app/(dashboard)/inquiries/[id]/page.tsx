@@ -45,6 +45,7 @@ import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
 import { showSuccess } from "@/lib/toast-helpers"
 import { INQUIRY_STATUS_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_LABELS } from "@/lib/status"
+import { INQUIRY_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 // ============================================
@@ -77,12 +78,7 @@ const statusLabels = INQUIRY_STATUS_LABELS
 const statusColors = INQUIRY_STATUS_COLORS
 const sourceLabels = INQUIRY_SOURCE_LABELS
 
-const statusOptions = [
-  { value: "new", label: "New" },
-  { value: "contacted", label: "Contacted" },
-  { value: "converted", label: "Converted" },
-  { value: "closed", label: "Closed" },
-]
+const statusOptions = INQUIRY_STATUS_OPTIONS
 
 // ============================================
 // Status Badge Component

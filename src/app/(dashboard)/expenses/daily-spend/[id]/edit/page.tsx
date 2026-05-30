@@ -22,7 +22,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
-import { EmptyState } from "@/components/ui/empty-state"
 import { DatePicker } from "@/components/ui/date-picker"
 
 import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, UNIT_OPTIONS } from "@/lib/status"
@@ -274,15 +273,9 @@ function EditDailySpendContent({
 
   if (!entry) {
     return (
-      <div className="container py-6">
-        <EmptyState
-          title="Entry not found"
-          description="The expense entry you're looking for doesn't exist."
-          action={{
-            label: "Back to Daily Spend",
-            href: "/expenses/daily-spend",
-          }}
-        />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
       </div>
     )
   }

@@ -29,3 +29,5 @@ export const COMPLAINT_CATEGORIES: Record<string, string> = {
   noise: "Noise/Disturbance",
   other: "Other",
 }
+
+export const COMPLAINT_CATEGORY_OPTIONS = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))

@@ -24,9 +24,9 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 import { useMemberComplaints } from "@/lib/hooks/useMemberComplaints"
-import { COMPLAINT_CATEGORIES } from "@/lib/status"
+import { COMPLAINT_CATEGORIES, COMPLAINT_CATEGORY_OPTIONS } from "@/lib/status"
 
-const categoryOptions = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
+const categoryOptions = COMPLAINT_CATEGORY_OPTIONS
 const categoryLabels = COMPLAINT_CATEGORIES
 
 export default function MemberComplaintsPage() {

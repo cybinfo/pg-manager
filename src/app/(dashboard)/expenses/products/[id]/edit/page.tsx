@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Label, Select, FormField } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
-import { EmptyState } from "@/components/ui/empty-state"
 
 import type { Product, ProductFormData, ProductCategory } from "@/types/expense-enhanced.types"
 import { UNIT_OPTIONS } from "@/lib/status"
@@ -169,15 +168,9 @@ function EditProductContent({
 
   if (!product) {
     return (
-      <div className="container py-6">
-        <EmptyState
-          title="Product not found"
-          description="The product you're looking for doesn't exist."
-          action={{
-            label: "Back to Products",
-            href: "/expenses/products",
-          }}
-        />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
       </div>
     )
   }

@@ -23,7 +23,6 @@ import {
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
-import { EmptyState } from "@/components/ui/empty-state"
 
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
@@ -191,15 +190,9 @@ function EditMiscTransactionContent({
 
   if (notFound) {
     return (
-      <div className="container py-6">
-        <EmptyState
-          title="Transaction not found"
-          description="The transaction you're looking for doesn't exist or has been deleted."
-          action={{
-            label: "Back to Transactions",
-            href: "/expenses/misc",
-          }}
-        />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
       </div>
     )
   }
