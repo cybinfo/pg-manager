@@ -112,6 +112,7 @@ export const PERSON_TAG_COLORS: Record<string, string> = {
   tenant: "bg-info/10 text-info",
   staff: "bg-success/10 text-success",
   visitor: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+  library_member: "bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300",
   service_provider: "bg-warning/10 text-warning",
   frequent: "bg-warning/10 text-warning",
   vip: "bg-warning/10 text-warning",
@@ -121,6 +122,7 @@ export const PERSON_TAG_FILTER_OPTIONS = [
   { value: "tenant", label: "Tenants" },
   { value: "staff", label: "Staff" },
   { value: "visitor", label: "Visitors" },
+  { value: "library_member", label: "Library Members" },
   { value: "service_provider", label: "Service Providers" },
   { value: "vip", label: "VIP" },
 ]

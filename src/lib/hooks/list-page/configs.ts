@@ -348,7 +348,7 @@ export const PEOPLE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
       is_tenant: tags.includes("tenant"),
       is_staff: tags.includes("staff"),
       is_visitor: tags.includes("visitor"),
-      primary_role: tags.includes("tenant") ? "Tenant" : tags.includes("staff") ? "Staff" : tags.includes("visitor") ? "Visitor" : tags.includes("library_member") ? "Library Member" : "Other",
+      primary_role: tags.length > 0 ? tags[0].replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Other",
     }
   },
 }
