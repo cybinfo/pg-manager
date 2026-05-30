@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { cn } from "@/lib/utils"
-import { GripVertical, Lock, Unlock, RotateCcw } from "lucide-react"
+import { GripVertical, Lock, Unlock, RotateCcw, Eye, EyeOff } from "lucide-react"
 import { Button } from "./button"
 import { logger } from "@/lib/logger"
 
@@ -32,45 +32,74 @@ interface SortableMasonryProps {
   editable?: boolean
 }
 
-// Hook to get layout order from localStorage
 function useLayoutStorage(key: string) {
-  const storageKey = `section-order-${key}`
+  const orderKey = `section-order-${key}`
+  const hiddenKey = `section-hidden-${key}`
 
   const getStoredOrder = React.useCallback((): string[] | null => {
     if (typeof window === "undefined") return null
     try {
-      const stored = localStorage.getItem(storageKey)
+      const stored = localStorage.getItem(orderKey)
       return stored ? JSON.parse(stored) : null
     } catch {
       return null
     }
-  }, [storageKey])
+  }, [orderKey])
 
   const saveOrder = React.useCallback((order: string[]) => {
     if (typeof window === "undefined") return
     try {
-      localStorage.setItem(storageKey, JSON.stringify(order))
+      localStorage.setItem(orderKey, JSON.stringify(order))
     } catch (e) {
       logger.error("Failed to save layout:", { detail: e })
     }
-  }, [storageKey])
+  }, [orderKey])
 
   const clearOrder = React.useCallback(() => {
     if (typeof window === "undefined") return
-    localStorage.removeItem(storageKey)
-  }, [storageKey])
+    localStorage.removeItem(orderKey)
+  }, [orderKey])
 
-  return { getStoredOrder, saveOrder, clearOrder }
+  const getStoredHidden = React.useCallback((): string[] => {
+    if (typeof window === "undefined") return []
+    try {
+      const stored = localStorage.getItem(hiddenKey)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  }, [hiddenKey])
+
+  const saveHidden = React.useCallback((ids: string[]) => {
+    if (typeof window === "undefined") return
+    try {
+      if (ids.length === 0) {
+        localStorage.removeItem(hiddenKey)
+      } else {
+        localStorage.setItem(hiddenKey, JSON.stringify(ids))
+      }
+    } catch (e) {
+      logger.error("Failed to save hidden sections:", { detail: e })
+    }
+  }, [hiddenKey])
+
+  const clearHidden = React.useCallback(() => {
+    if (typeof window === "undefined") return
+    localStorage.removeItem(hiddenKey)
+  }, [hiddenKey])
+
+  return { getStoredOrder, saveOrder, clearOrder, getStoredHidden, saveHidden, clearHidden }
 }
 
-// Sortable item wrapper for edit mode
 interface SortableItemProps {
   id: string
   children: React.ReactNode
   isEditMode: boolean
+  isHidden: boolean
+  onToggleHide: () => void
 }
 
-function SortableItem({ id, children, isEditMode }: SortableItemProps) {
+function SortableItem({ id, children, isEditMode, isHidden, onToggleHide }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -96,9 +125,23 @@ function SortableItem({ id, children, isEditMode }: SortableItemProps) {
       style={style}
       className={cn(
         "relative group",
-        isDragging && "opacity-80 shadow-2xl"
+        isDragging && "opacity-80 shadow-2xl",
+        isHidden && "opacity-50"
       )}
     >
+      {/* Eye toggle — top left */}
+      <button
+        onClick={onToggleHide}
+        title={isHidden ? "Show section" : "Hide section"}
+        className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-card/95 backdrop-blur-sm rounded-md shadow-md border p-1.5 hover:bg-primary/5"
+      >
+        {isHidden
+          ? <Eye className="h-4 w-4 text-muted-foreground" />
+          : <EyeOff className="h-4 w-4 text-muted-foreground" />
+        }
+      </button>
+
+      {/* Drag handle — top right */}
       <div
         {...attributes}
         {...listeners}
@@ -108,7 +151,18 @@ function SortableItem({ id, children, isEditMode }: SortableItemProps) {
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
-      <div className="ring-2 ring-dashed ring-teal-500/30 rounded-lg">
+
+      {/* Hidden badge */}
+      {isHidden && (
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center z-10 pointer-events-none">
+          <span className="bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded-full border">Hidden</span>
+        </div>
+      )}
+
+      <div className={cn(
+        "ring-2 ring-dashed rounded-lg",
+        isHidden ? "ring-muted-foreground/20" : "ring-teal-500/30"
+      )}>
         {children}
       </div>
     </div>
@@ -138,29 +192,27 @@ export function SortableMasonry({
 }: SortableMasonryProps) {
   const [isEditMode, setIsEditMode] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
-  const { getStoredOrder, saveOrder, clearOrder } = useLayoutStorage(layoutKey)
+  const [showHidden, setShowHidden] = React.useState(false)
+  const [hiddenIds, setHiddenIds] = React.useState<string[]>([])
+  const { getStoredOrder, saveOrder, clearOrder, getStoredHidden, saveHidden, clearHidden } = useLayoutStorage(layoutKey)
 
-  // Get valid children with stable IDs based on title prop or key
   const childrenWithIds = React.useMemo(() => {
     const items: { id: string; element: React.ReactElement }[] = []
     const usedIds = new Set<string>()
 
     React.Children.forEach(children, (child, index) => {
       if (React.isValidElement(child)) {
-        // Try to get a stable ID from: key > title prop > index fallback
         let id: string
 
         if (child.key && typeof child.key === 'string') {
           id = `section-${child.key}`
         } else if (child.props && typeof child.props === 'object' && 'title' in child.props) {
-          // Use title prop for stable ID (kebab-case)
           const title = String(child.props.title || '')
           id = `section-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`
         } else {
           id = `section-${index}`
         }
 
-        // Handle duplicate IDs by appending index
         if (usedIds.has(id)) {
           id = `${id}-${index}`
         }
@@ -172,13 +224,11 @@ export function SortableMasonry({
     return items
   }, [children])
 
-  // Default order
   const defaultOrder = React.useMemo(() =>
     childrenWithIds.map(item => item.id),
     [childrenWithIds]
   )
 
-  // Current order
   const [order, setOrder] = React.useState<string[]>(defaultOrder)
 
   // Refs to measure each item's rendered height
@@ -186,31 +236,26 @@ export function SortableMasonry({
   // Height-balanced column distribution; null = use round-robin until first measurement
   const [balancedCols, setBalancedCols] = React.useState<Array<Array<{ id: string; element: React.ReactElement | undefined }>> | null>(null)
 
-  // Load stored order on mount - flexible matching for varying section counts
+  // Load stored order and hidden state on mount
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     const stored = getStoredOrder()
     if (stored && stored.length > 0) {
-      // Build new order: start with stored items that exist, then add any new items
       const currentIds = new Set(defaultOrder)
       const storedIds = new Set(stored)
-
-      // Items from stored order that still exist
       const orderedExisting = stored.filter(id => currentIds.has(id))
-      // New items not in stored order (append at end)
       const newItems = defaultOrder.filter(id => !storedIds.has(id))
-
       const mergedOrder = [...orderedExisting, ...newItems]
-
-      // Only apply if we have at least some matching items
       if (orderedExisting.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setOrder(mergedOrder)
       }
     }
-  }, [getStoredOrder, defaultOrder])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHiddenIds(getStoredHidden())
+  }, [getStoredOrder, getStoredHidden, defaultOrder])
 
-  // Sensors for drag-and-drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -220,11 +265,10 @@ export function SortableMasonry({
     })
   )
 
-  // Handle drag end
   const handleDragEnd = React.useCallback((event: DragEndEvent) => {
     const { active, over } = event
     if (over && active.id !== over.id) {
-      setBalancedCols(null) // reset so round-robin shows while re-measuring
+      setBalancedCols(null)
       setOrder(prevOrder => {
         const oldIndex = prevOrder.indexOf(active.id as string)
         const newIndex = prevOrder.indexOf(over.id as string)
@@ -235,14 +279,24 @@ export function SortableMasonry({
     }
   }, [saveOrder])
 
-  // Reset to default order
   const handleResetLayout = React.useCallback(() => {
     clearOrder()
+    clearHidden()
     setBalancedCols(null)
     setOrder(defaultOrder)
-  }, [clearOrder, defaultOrder])
+    setHiddenIds([])
+    setShowHidden(false)
+  }, [clearOrder, clearHidden, defaultOrder])
 
-  // Get ordered children
+  const handleToggleHide = React.useCallback((id: string) => {
+    setBalancedCols(null)
+    setHiddenIds(prev => {
+      const next = prev.includes(id) ? prev.filter(h => h !== id) : [...prev, id]
+      saveHidden(next)
+      return next
+    })
+  }, [saveHidden])
+
   const orderedChildren = React.useMemo(() => {
     const childMap = new Map(childrenWithIds.map(item => [item.id, item.element]))
     return order.map(id => ({
@@ -251,24 +305,34 @@ export function SortableMasonry({
     })).filter(item => item.element)
   }, [order, childrenWithIds])
 
-  // After items render, measure heights and redistribute into shortest column first
+  const visibleChildren = React.useMemo(() =>
+    orderedChildren.filter(item => !hiddenIds.includes(item.id)),
+    [orderedChildren, hiddenIds]
+  )
+
+  const hiddenChildren = React.useMemo(() =>
+    orderedChildren.filter(item => hiddenIds.includes(item.id)),
+    [orderedChildren, hiddenIds]
+  )
+
+  // After visible items render, measure heights and redistribute into shortest column first
   React.useEffect(() => {
-    if (!mounted || orderedChildren.length === 0) return
+    if (!mounted || visibleChildren.length === 0) return
     const timer = setTimeout(() => {
       const colHeights = Array(columns).fill(0)
       const dist: string[][] = Array.from({ length: columns }, () => [])
-      for (const { id } of orderedChildren) {
+      for (const { id } of visibleChildren) {
         const el = itemRefs.current.get(id)
         const h = el ? el.offsetHeight : 0
         const shortestCol = colHeights.indexOf(Math.min(...colHeights))
         dist[shortestCol].push(id)
         colHeights[shortestCol] += h
       }
-      const childMap = new Map(orderedChildren.map(item => [item.id, item.element]))
+      const childMap = new Map(visibleChildren.map(item => [item.id, item.element]))
       setBalancedCols(dist.map(ids => ids.map(id => ({ id, element: childMap.get(id) }))))
     }, 0)
     return () => clearTimeout(timer)
-  }, [mounted, orderedChildren, columns])
+  }, [mounted, visibleChildren, columns])
 
   // SSR fallback: split children into independent flex columns (no JS needed)
   if (!mounted) {
@@ -285,9 +349,9 @@ export function SortableMasonry({
     )
   }
 
-  // Edit mode: same two-column layout with drag handles on each card
+  // Edit mode: all sections (including hidden) shown with drag + eye controls
   if (isEditMode) {
-    const editCols = balancedCols ?? splitIntoColumns(orderedChildren, columns)
+    const editCols = splitIntoColumns(orderedChildren, columns)
     return (
       <div className="relative">
         <div className="flex items-center justify-end gap-2 mb-4">
@@ -298,7 +362,7 @@ export function SortableMasonry({
             className="text-xs h-8"
           >
             <RotateCcw className="mr-1 h-3 w-3" />
-            Reset Order
+            Reset
           </Button>
           <Button
             variant="default"
@@ -321,7 +385,13 @@ export function SortableMasonry({
               {editCols.map((colItems, colIdx) => (
                 <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
                   {colItems.map(({ id, element }) => (
-                    <SortableItem key={id} id={id} isEditMode={isEditMode}>
+                    <SortableItem
+                      key={id}
+                      id={id}
+                      isEditMode={isEditMode}
+                      isHidden={hiddenIds.includes(id)}
+                      onToggleHide={() => handleToggleHide(id)}
+                    >
                       {element}
                     </SortableItem>
                   ))}
@@ -334,22 +404,38 @@ export function SortableMasonry({
     )
   }
 
-  // Normal mode: height-balanced columns (falls back to round-robin before first measurement)
-  const cols = balancedCols ?? splitIntoColumns(orderedChildren, columns)
+  // Normal mode: height-balanced visible columns
+  const cols = balancedCols ?? splitIntoColumns(visibleChildren, columns)
 
   return (
     <div className="relative">
-      {editable && (
-        <div className="flex items-center justify-end mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditMode(true)}
-            className="text-xs h-8"
-          >
-            <Unlock className="mr-1 h-3 w-3" />
-            Customize Layout
-          </Button>
+      {(editable || hiddenChildren.length > 0) && (
+        <div className="flex items-center justify-end gap-2 mb-4">
+          {hiddenChildren.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHidden(v => !v)}
+              className="text-xs h-8 text-muted-foreground"
+            >
+              {showHidden
+                ? <Eye className="mr-1 h-3 w-3" />
+                : <EyeOff className="mr-1 h-3 w-3" />
+              }
+              {showHidden ? "Hide" : `Hidden (${hiddenChildren.length})`}
+            </Button>
+          )}
+          {editable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditMode(true)}
+              className="text-xs h-8"
+            >
+              <Unlock className="mr-1 h-3 w-3" />
+              Customize Layout
+            </Button>
+          )}
         </div>
       )}
 
@@ -368,6 +454,37 @@ export function SortableMasonry({
           </div>
         ))}
       </div>
+
+      {/* Revealed hidden sections */}
+      {showHidden && hiddenChildren.length > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 border-t border-dashed" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Hidden sections</span>
+            <div className="flex-1 border-t border-dashed" />
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {hiddenChildren.map(({ id, element }) => (
+              <div key={id} className="relative">
+                <div className="opacity-40 pointer-events-none select-none">
+                  {element}
+                </div>
+                <div className="absolute top-2 right-2 z-10">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs bg-card shadow-sm"
+                    onClick={() => handleToggleHide(id)}
+                  >
+                    <Eye className="mr-1 h-3 w-3" />
+                    Unhide
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
