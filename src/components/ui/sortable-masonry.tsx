@@ -157,10 +157,32 @@ const gapStyles = {
   lg: "gap-8",
 }
 
-// Distribute items round-robin across N columns: 0→col0, 1→col1, 2→col0, …
-function splitIntoColumns<T>(items: T[], n: number): T[][] {
+// Simple round-robin split used only for the SSR fallback (no JS, no ids needed)
+function splitRoundRobin<T>(items: T[], n: number): T[][] {
   const cols: T[][] = Array.from({ length: n }, () => [])
   items.forEach((item, i) => cols[i % n].push(item))
+  return cols
+}
+
+// Greedy count-balanced split — same algorithm as the height-based measurement,
+// but uses item count (1 unit each) as a proxy when real heights are unavailable.
+// Includes the same 2-column post-process so fallback behaviour matches measured behaviour.
+function splitIntoColumns<T>(items: T[], n: number): T[][] {
+  const cols: T[][] = Array.from({ length: n }, () => [])
+  const counts = Array(n).fill(0)
+  items.forEach(item => {
+    const shortestCol = counts.indexOf(Math.min(...counts))
+    cols[shortestCol].push(item)
+    counts[shortestCol]++
+  })
+  if (n === 2) {
+    const longerCol = cols[0].length > cols[1].length ? 0 : 1
+    const shorterCol = 1 - longerCol
+    if (Math.abs(cols[0].length - cols[1].length) >= 2 && counts[longerCol] >= counts[shorterCol]) {
+      const moved = cols[longerCol].pop()
+      if (moved !== undefined) cols[shorterCol].push(moved)
+    }
+  }
   return cols
 }
 
@@ -271,13 +293,33 @@ export function SortableMasonry({
   }, [clearOrder, clearHidden, defaultOrder])
 
   const handleToggleHide = React.useCallback((id: string) => {
-    setBalancedCols(null)
+    // Update hiddenIds and balancedCols together so the layout never loses its
+    // measured distribution — hiding removes the item from its column in-place,
+    // unhiding slots it back into the shorter column. Only fall back to null when
+    // balancedCols hasn't been measured yet.
     setHiddenIds(prev => {
-      const next = prev.includes(id) ? prev.filter(h => h !== id) : [...prev, id]
+      const isHiding = !prev.includes(id)
+      const next = isHiding ? [...prev, id] : prev.filter(h => h !== id)
       saveHidden(next)
+
+      setBalancedCols(prevCols => {
+        if (!prevCols) return null
+        if (isHiding) {
+          return prevCols.map(col => col.filter(item => item.id !== id))
+        } else {
+          const element = childrenWithIds.find(c => c.id === id)?.element
+          if (!element) return prevCols
+          const colLengths = prevCols.map(col => col.length)
+          const shortestIdx = colLengths.indexOf(Math.min(...colLengths))
+          return prevCols.map((col, i) =>
+            i === shortestIdx ? [...col, { id, element }] : col
+          )
+        }
+      })
+
       return next
     })
-  }, [saveHidden])
+  }, [saveHidden, childrenWithIds])
 
   const orderedChildren = React.useMemo(() => {
     const childMap = new Map(childrenWithIds.map(item => [item.id, item.element]))
@@ -338,7 +380,7 @@ export function SortableMasonry({
   // SSR fallback: split children into independent flex columns (no JS needed)
   if (!mounted) {
     const ssrChildren = React.Children.toArray(children)
-    const ssrCols = splitIntoColumns(ssrChildren, columns)
+    const ssrCols = splitRoundRobin(ssrChildren, columns)
     return (
       <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap], className)}>
         {ssrCols.map((colItems, colIdx) => (
