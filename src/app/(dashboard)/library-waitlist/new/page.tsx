@@ -17,8 +17,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { ArrowLeft, Users, Loader2, Clock } from "lucide-react"
+import { Users, Loader2, Clock } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
+import { DetailHero } from "@/components/ui"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { PermissionGuard } from "@/components/auth"
@@ -168,20 +169,17 @@ function AddToWaitlistContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add to Waitlist</h1>
-          <p className="text-muted-foreground">
-            Add a prospective member to the waitlist
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add to Waitlist"
+        subtitle="Add a prospective member to the waitlist"
+        backHref={backHref}
+        backLabel="Back to Waitlist"
+        icon={Users}
+        breadcrumbs={[
+          { label: "Library Waitlist", href: "/library-waitlist" },
+          { label: "Add to Waitlist" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

@@ -19,7 +19,8 @@ import { requiredField, requiredSelect } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
-import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
+import { Grid3X3, Loader2 } from "lucide-react"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import type { LibraryOption } from "@/types/library.types"
 
@@ -149,20 +150,17 @@ function NewLibrarySectionContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Section</h1>
-          <p className="text-muted-foreground">
-            Create a new section in a library
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add Section"
+        subtitle="Create a new section in a library"
+        backHref={backHref}
+        backLabel="Back to Sections"
+        icon={Grid3X3}
+        breadcrumbs={[
+          { label: "Library Sections", href: "/library-sections" },
+          { label: "Add Section" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

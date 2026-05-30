@@ -19,7 +19,8 @@ import { requiredField, requiredSelect } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
-import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
+import { Armchair, Loader2 } from "lucide-react"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 interface Section {
@@ -150,20 +151,17 @@ function NewLibrarySeatContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Seat</h1>
-          <p className="text-muted-foreground">
-            Add a new seat to a library section
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add Seat"
+        subtitle="Add a new seat to a library section"
+        backHref={backHref}
+        backLabel="Back to Seats"
+        icon={Armchair}
+        breadcrumbs={[
+          { label: "Library Seats", href: "/library-seats" },
+          { label: "Add Seat" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

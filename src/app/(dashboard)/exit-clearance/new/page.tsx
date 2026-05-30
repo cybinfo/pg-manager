@@ -12,7 +12,6 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  ArrowLeft,
   LogOut,
   Loader2,
   User,
@@ -29,6 +28,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate} from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import { Textarea } from "@/components/ui/textarea"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -362,18 +362,17 @@ function InitiateCheckoutForm() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Initiate Checkout</h1>
-          <p className="text-muted-foreground">Start the exit clearance process</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Initiate Checkout"
+        subtitle="Start the exit clearance process"
+        backHref={backHref}
+        backLabel="Back to Exit Clearance"
+        icon={LogOut}
+        breadcrumbs={[
+          { label: "Exit Clearance", href: "/exit-clearance" },
+          { label: "Initiate Checkout" },
+        ]}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Tenant Selection */}

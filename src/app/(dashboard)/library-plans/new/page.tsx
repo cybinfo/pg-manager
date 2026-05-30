@@ -16,9 +16,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { CreditCard, Loader2 } from "lucide-react"
 import { requiredField, requiredAmount, requiredPositiveInt } from "@/lib/validation"
 import { TIME_SLOT_OPTIONS } from "@/types/library.types"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPlanPage() {
@@ -109,20 +110,17 @@ function NewLibraryPlanContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Plan</h1>
-          <p className="text-muted-foreground">
-            Create a new subscription plan
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add Plan"
+        subtitle="Create a new subscription plan"
+        backHref={backHref}
+        backLabel="Back to Plans"
+        icon={CreditCard}
+        breadcrumbs={[
+          { label: "Library Plans", href: "/library-plans" },
+          { label: "Add Plan" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

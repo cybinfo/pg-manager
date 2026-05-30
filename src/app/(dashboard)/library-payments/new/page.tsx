@@ -17,11 +17,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { CreditCard, Loader2 } from "lucide-react"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import { DatePicker } from "@/components/ui/date-picker"
 import { getTodayISO } from "@/lib/date-helpers"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_TYPE_OPTIONS } from "@/lib/status"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 interface Member {
@@ -210,20 +211,17 @@ function NewLibraryPaymentContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Record Payment</h1>
-          <p className="text-muted-foreground">
-            Record a payment from a library member
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Record Payment"
+        subtitle="Record a payment from a library member"
+        backHref={backHref}
+        backLabel="Back to Payments"
+        icon={CreditCard}
+        breadcrumbs={[
+          { label: "Library Payments", href: "/library-payments" },
+          { label: "Record Payment" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

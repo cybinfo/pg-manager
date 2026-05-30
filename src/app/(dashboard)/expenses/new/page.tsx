@@ -13,13 +13,13 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import {
   Loader2,
-  ArrowLeft,
   Receipt,
   Wallet,
   FileText,
 } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
+import { DetailHero } from "@/components/ui"
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
@@ -158,19 +158,18 @@ function NewExpenseContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Add Expense</h1>
-          <p className="text-muted-foreground">Record a new property expense</p>
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <DetailHero
+        title="Add Expense"
+        subtitle="Record a new property expense"
+        backHref={backHref}
+        backLabel="Back to Expenses"
+        icon={Receipt}
+        breadcrumbs={[
+          { label: "Expenses", href: "/expenses" },
+          { label: "Add Expense" },
+        ]}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}

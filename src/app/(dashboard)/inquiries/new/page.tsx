@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredPhone, requiredSelect } from "@/lib/validation"
-import { ArrowLeft, Inbox, Loader2 } from "lucide-react"
+import { Inbox, Loader2 } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import { defaultConfigurableRoomTypes, ConfigurableRoomType } from "@/types/rooms.types"
 import type { PropertyOption } from "@/types/properties.types"
@@ -102,18 +103,17 @@ function NewInquiryContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Log Inquiry</h1>
-          <p className="text-muted-foreground">Record a phone, WhatsApp, or walk-in inquiry</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Log Inquiry"
+        subtitle="Record a phone, WhatsApp, or walk-in inquiry"
+        backHref={backHref}
+        backLabel="Back to Inquiries"
+        icon={Inbox}
+        breadcrumbs={[
+          { label: "Inquiries", href: "/inquiries" },
+          { label: "Log Inquiry" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

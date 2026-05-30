@@ -17,7 +17,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredSelect } from "@/lib/validation"
-import { ArrowLeft, Lock, Loader2 } from "lucide-react"
+import { Lock, Loader2 } from "lucide-react"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import { LOCKER_SIZE_OPTIONS } from "@/lib/constants/form-options"
 import type { LibraryOption } from "@/types/library.types"
@@ -139,20 +140,17 @@ function NewLibraryLockerContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Locker</h1>
-          <p className="text-muted-foreground">
-            Add a new locker to a library
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add Locker"
+        subtitle="Add a new locker to a library"
+        backHref={backHref}
+        backLabel="Back to Lockers"
+        icon={Lock}
+        breadcrumbs={[
+          { label: "Library Lockers", href: "/library-lockers" },
+          { label: "Add Locker" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

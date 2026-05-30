@@ -16,7 +16,8 @@ import { FormField } from "@/components/ui/form-components"
 import { requiredField } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
+import { Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPage() {
@@ -97,20 +98,17 @@ function NewLibraryContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Library</h1>
-          <p className="text-muted-foreground">
-            Add a new study library or reading room
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add Library"
+        subtitle="Add a new study library or reading room"
+        backHref={backHref}
+        backLabel="Back to Library"
+        icon={Library}
+        breadcrumbs={[
+          { label: "Library", href: "/library" },
+          { label: "Add Library" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

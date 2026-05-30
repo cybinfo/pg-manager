@@ -19,8 +19,9 @@ import { FormField } from "@/components/ui/form-components"
 import type { ValidatorResult } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
+import { Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
+import { DetailHero } from "@/components/ui"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
@@ -269,20 +270,17 @@ function NewLibraryAttendanceContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Check In</h1>
-          <p className="text-muted-foreground">
-            Record member attendance
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Check In"
+        subtitle="Record member attendance"
+        backHref={backHref}
+        backLabel="Back to Attendance"
+        icon={Clock}
+        breadcrumbs={[
+          { label: "Attendance", href: "/library-attendance" },
+          { label: "Check In" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

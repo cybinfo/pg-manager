@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
+import { MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITY } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { PageSkeleton } from "@/components/ui/loading"
+import { DetailHero } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import type { PropertyOption } from "@/types/properties.types"
 
@@ -252,17 +253,17 @@ function NewComplaintForm() {
   if (properties.length === 0 && libraries.length === 0) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link href={backHref}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Log Complaint</h1>
-            <p className="text-muted-foreground">Report an issue or problem</p>
-          </div>
-        </div>
+        <DetailHero
+          title="Log Complaint"
+          subtitle="Report an issue or problem"
+          backHref={backHref}
+          backLabel="Back to Complaints"
+          icon={MessageSquare}
+          breadcrumbs={[
+            { label: "Complaints", href: "/complaints" },
+            { label: "Log Complaint" },
+          ]}
+        />
 
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -287,18 +288,17 @@ function NewComplaintForm() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/complaints">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Log Complaint</h1>
-          <p className="text-muted-foreground">Report an issue or problem</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Log Complaint"
+        subtitle="Report an issue or problem"
+        backHref={backHref}
+        backLabel="Back to Complaints"
+        icon={MessageSquare}
+        breadcrumbs={[
+          { label: "Complaints", href: "/complaints" },
+          { label: "Log Complaint" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
