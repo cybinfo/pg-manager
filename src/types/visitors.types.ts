@@ -11,7 +11,7 @@ export type VisitorType = 'tenant_visitor' | 'enquiry' | 'service_provider' | 'g
 
 export type EnquiryStatus = 'pending' | 'follow_up' | 'converted' | 'lost'
 
-export type EnquirySource = 'walk_in' | 'referral' | 'online' | 'social_media' | 'other'
+export type EnquirySource = 'walk_in' | 'phone' | 'whatsapp' | 'website' | 'referral' | 'online' | 'social_media' | 'other'
 
 // ============================================
 // Visitor Contact (Directory Entry)
@@ -77,7 +77,7 @@ export interface Visitor {
   visitor_phone: string | null
   relation: string | null
   purpose: string | null
-  check_in_time: string
+  check_in_time: string | null
   check_out_time: string | null
   is_overnight: boolean
   overnight_charge: number | null
@@ -95,6 +95,7 @@ export interface Visitor {
   enquiry_source: EnquirySource | null
   rooms_interested: string[] | null
   follow_up_date: string | null
+  expected_move_in: string | null
   converted_tenant_id: string | null
 
   // General visitor fields
@@ -156,6 +157,7 @@ export interface VisitorFormData {
   enquiry_source?: EnquirySource
   rooms_interested?: string[]
   follow_up_date?: string
+  expected_move_in?: string
 
   // General fields
   notes?: string
@@ -213,6 +215,9 @@ export const ENQUIRY_STATUS_COLORS: Record<EnquiryStatus, string> = {
 
 export const ENQUIRY_SOURCE_LABELS: Record<EnquirySource, string> = {
   walk_in: 'Walk-in',
+  phone: 'Phone Call',
+  whatsapp: 'WhatsApp',
+  website: 'Website Form',
   referral: 'Referral',
   online: 'Online',
   social_media: 'Social Media',

@@ -143,7 +143,8 @@ export default function VisitorDetailPage() {
     fetchVisitHistory()
   }, [visitor?.visitor_contact_id, params.id])
 
-  const getDuration = (checkIn: string, checkOut: string | null) => {
+  const getDuration = (checkIn: string | null, checkOut: string | null) => {
+    if (!checkIn) return "—"
     const start = new Date(checkIn)
     const end = checkOut ? new Date(checkOut) : new Date()
     const diffMs = end.getTime() - start.getTime()

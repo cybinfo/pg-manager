@@ -61,6 +61,7 @@ export interface VisitorFormData {
   enquiry_source: EnquirySource | ""
   rooms_interested: string[]
   follow_up_date: string
+  expected_move_in: string
   notes: string
   id_type: string
   id_number: string
@@ -88,6 +89,7 @@ const INITIAL_FORM_DATA: VisitorFormData = {
   enquiry_source: "",
   rooms_interested: [],
   follow_up_date: "",
+  expected_move_in: "",
   notes: "",
   id_type: "",
   id_number: "",
@@ -266,8 +268,16 @@ export function useVisitorForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!selectedPerson) {
+    // Enquiry type allows submission without a People directory entry (phone/web leads)
+    const isEnquiry = formData.visitor_type === "enquiry"
+
+    if (!selectedPerson && !isEnquiry) {
       showError("Please select a visitor from the People directory")
+      return
+    }
+
+    if (!selectedPerson && isEnquiry && !formData.visitor_name.trim()) {
+      showError("Please enter the enquiry person's name")
       return
     }
 
@@ -281,7 +291,7 @@ export function useVisitorForm() {
       return
     }
 
-    const serviceType = selectedPerson.occupation || formData.service_type
+    const serviceType = selectedPerson?.occupation || formData.service_type
     if (formData.visitor_type === "service_provider" && !serviceType) {
       showError("Please select a service type or add occupation in People module")
       return
@@ -299,43 +309,46 @@ export function useVisitorForm() {
       const supabase = createClient()
       let visitorContactId = formData.visitor_contact_id
 
-      if (!visitorContactId) {
-        const { data: contactData, error: contactError } = await supabase
-          .from("visitor_contacts")
-          .insert({
-            owner_id: user.id,
-            person_id: selectedPerson.id,
-            name: selectedPerson.name,
-            phone: selectedPerson.phone || null,
-            visitor_type: formData.visitor_type,
-            company_name: selectedPerson.company_name || null,
-            service_type: selectedPerson.occupation || null,
-            id_type: selectedPerson.id_documents?.[0]?.type || null,
-            id_number: selectedPerson.id_documents?.[0]?.number || null,
-            notes: formData.notes || null,
-          })
-          .select("id")
-          .single()
+      // Only create/update a visitor contact when a People record was selected
+      if (selectedPerson) {
+        if (!visitorContactId) {
+          const { data: contactData, error: contactError } = await supabase
+            .from("visitor_contacts")
+            .insert({
+              owner_id: user.id,
+              person_id: selectedPerson.id,
+              name: selectedPerson.name,
+              phone: selectedPerson.phone || null,
+              visitor_type: formData.visitor_type,
+              company_name: selectedPerson.company_name || null,
+              service_type: selectedPerson.occupation || null,
+              id_type: selectedPerson.id_documents?.[0]?.type || null,
+              id_number: selectedPerson.id_documents?.[0]?.number || null,
+              notes: formData.notes || null,
+            })
+            .select("id")
+            .single()
 
-        if (contactError) {
-          logger.error("Error creating visitor contact:", { detail: contactError })
+          if (contactError) {
+            logger.error("Error creating visitor contact:", { detail: contactError })
+          } else {
+            visitorContactId = contactData.id
+          }
         } else {
-          visitorContactId = contactData.id
+          await supabase
+            .from("visitor_contacts")
+            .update({
+              person_id: selectedPerson.id,
+              name: selectedPerson.name,
+              phone: selectedPerson.phone || null,
+              company_name: selectedPerson.company_name || null,
+              service_type: selectedPerson.occupation || null,
+              id_type: selectedPerson.id_documents?.[0]?.type || null,
+              id_number: selectedPerson.id_documents?.[0]?.number || null,
+              updated_at: getNowISO(),
+            })
+            .eq("id", visitorContactId)
         }
-      } else {
-        await supabase
-          .from("visitor_contacts")
-          .update({
-            person_id: selectedPerson.id,
-            name: selectedPerson.name,
-            phone: selectedPerson.phone || null,
-            company_name: selectedPerson.company_name || null,
-            service_type: selectedPerson.occupation || null,
-            id_type: selectedPerson.id_documents?.[0]?.type || null,
-            id_number: selectedPerson.id_documents?.[0]?.number || null,
-            updated_at: getNowISO(),
-          })
-          .eq("id", visitorContactId)
       }
 
       const numNights = formData.is_overnight ? parseInt(formData.num_nights || "1") : null
@@ -391,17 +404,21 @@ export function useVisitorForm() {
         }
       }
 
+      // Walk-in enquiries get a check-in time; phone/web/remote enquiries don't
+      const isWalkIn = formData.visitor_type !== "enquiry" || formData.enquiry_source === "walk_in" || !formData.enquiry_source
+      const checkInTime = isWalkIn ? getNowISO() : null
+
       const visitorData = withCreatedBy({
         owner_id: user.id,
         property_id: formData.property_id,
         visitor_contact_id: visitorContactId || null,
         visitor_type: formData.visitor_type,
-        visitor_name: selectedPerson.name,
-        visitor_phone: selectedPerson.phone || null,
-        id_type: selectedPerson.id_documents?.[0]?.type || null,
-        id_number: selectedPerson.id_documents?.[0]?.number || null,
+        visitor_name: selectedPerson?.name || formData.visitor_name,
+        visitor_phone: selectedPerson?.phone || formData.visitor_phone || null,
+        id_type: selectedPerson?.id_documents?.[0]?.type || null,
+        id_number: selectedPerson?.id_documents?.[0]?.number || null,
         purpose: formData.purpose || null,
-        check_in_time: getNowISO(),
+        check_in_time: checkInTime,
         is_overnight: formData.is_overnight,
         num_nights: numNights,
         charge_per_night: chargePerNight,
@@ -409,7 +426,7 @@ export function useVisitorForm() {
         expected_checkout_date: expectedCheckout,
         notes: formData.notes || null,
         vehicle_number: formData.vehicle_number || null,
-        person_id: selectedPerson.id,
+        person_id: selectedPerson?.id || null,
       }, user.id) as unknown as Record<string, unknown>
 
       if (formData.visitor_type === "tenant_visitor") {
@@ -417,13 +434,14 @@ export function useVisitorForm() {
         visitorData.relation = formData.relation || null
         visitorData.bill_id = billId
       } else if (formData.visitor_type === "service_provider") {
-        visitorData.company_name = selectedPerson.company_name || formData.company_name || null
-        visitorData.service_type = selectedPerson.occupation || formData.service_type || null
+        visitorData.company_name = selectedPerson?.company_name || formData.company_name || null
+        visitorData.service_type = selectedPerson?.occupation || formData.service_type || null
       } else if (formData.visitor_type === "enquiry") {
         visitorData.enquiry_status = "pending"
         visitorData.enquiry_source = formData.enquiry_source || null
         visitorData.rooms_interested = formData.rooms_interested.length > 0 ? formData.rooms_interested : null
         visitorData.follow_up_date = formData.follow_up_date || null
+        visitorData.expected_move_in = formData.expected_move_in || null
       } else if (formData.visitor_type === "general") {
         visitorData.host_name = formData.host_name || null
         visitorData.department = formData.department || null

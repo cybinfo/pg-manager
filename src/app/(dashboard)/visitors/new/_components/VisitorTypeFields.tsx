@@ -33,6 +33,7 @@ interface VisitorTypeFieldsProps {
     enquiry_source: EnquirySource | ""
     follow_up_date: string
     rooms_interested: string[]
+    expected_move_in: string
     host_name: string
     department: string
   }
@@ -83,6 +84,7 @@ export function VisitorTypeFields({
           enquiry_source: formData.enquiry_source,
           follow_up_date: formData.follow_up_date,
           rooms_interested: formData.rooms_interested,
+          expected_move_in: formData.expected_move_in,
         }}
         onChange={onChange}
         onRoomsInterestedChange={onRoomsInterestedChange}

@@ -38,7 +38,6 @@ import {
   MoreHorizontal,
   User,
   FolderOpen,
-  Inbox,
   Package,
   ShoppingCart,
   Store,
@@ -117,7 +116,6 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", module: "meters" },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", module: "exitClearance" },
   { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", module: "visitors" },
-  { name: "Inquiries", href: "/inquiries", icon: Inbox, permission: "tenants.view", module: "inquiries" },
   { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", module: "complaints" },
   { name: "Announcements", href: "/notices", icon: Bell, permission: "notices.view", module: "notices" },
   { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", module: "reports" },
@@ -223,13 +221,12 @@ export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
 
   { name: "People",       href: "/people",     icon: Contact,        permission: "tenants.view",     module: "people" },
   { name: "Visitors",     href: "/visitors",   icon: UserPlus,       permission: "visitors.view",    module: "visitors" },
-  { name: "Complaints",      href: "/complaints", icon: MessageSquare,  permission: "complaints.view",  module: "complaints" },
+  { name: "Complaints",   href: "/complaints", icon: MessageSquare,  permission: "complaints.view",  module: "complaints" },
   { name: "Announcements",  href: "/notices",    icon: Bell,           permission: "notices.view",     module: "notices" },
   { name: "Approvals",      href: "/approvals",  icon: ClipboardCheck, permission: "tenants.view",     module: "approvals" },
   { name: "Reports",      href: "/reports",    icon: FileText,       permission: "reports.view",     module: "reports" },
   { name: "Activity Log", href: "/activity",   icon: Activity,       permission: null,               module: "activityLog" },
   { name: "Staff",        href: "/staff",      icon: UserCog,        permission: "staff.view",       module: "staff" },
-  { name: "Inquiries",    href: "/inquiries",  icon: Inbox,          permission: "tenants.view",     module: "inquiries" },
 ]
 
 /**
@@ -443,7 +440,6 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/architecture":{ path: "/architecture",permission: "properties.view",         module: "properties",   title: "Architecture",     icon: Grid3X3 },
   "/approvals":   { path: "/approvals",   permission: "tenants.view",            module: "approvals",    title: "Approvals",        icon: ClipboardCheck },
   "/staff":       { path: "/staff",       permission: "staff.view",              module: "staff",        title: "Staff",            icon: UserCog },
-  "/inquiries":   { path: "/inquiries",   permission: "tenants.view",            module: "inquiries",    title: "Inquiries",        icon: Inbox },
   "/library":     { path: "/library",     permission: "library.view",            module: "members",      title: "Library",          icon: Library },
   "/library-sections": { path: "/library-sections", permission: "library_sections.view", module: "sections", title: "Sections", icon: Layers },
   "/library-members":  { path: "/library-members",  permission: "library_members.view",  module: "members",  title: "Members",  icon: Users },

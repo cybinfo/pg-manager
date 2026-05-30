@@ -53,6 +53,8 @@ function NewVisitorContent() {
     handleSubmit,
   } = useVisitorForm()
 
+  const isEnquiry = formData.visitor_type === "enquiry"
+
   if (loadingData) {
     return <PageSkeleton variant="form" />
   }
@@ -91,14 +93,14 @@ function NewVisitorContent() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <DetailHero
-        title="Check In Visitor"
-        subtitle="Register a new or returning visitor"
+        title={isEnquiry ? "Log Enquiry" : "Check In Visitor"}
+        subtitle={isEnquiry ? "Record a prospective tenant enquiry" : "Register a new or returning visitor"}
         backHref={backHref}
         backLabel="All Visitors"
         icon={UserPlus}
         breadcrumbs={[
           { label: "Visitors", href: "/visitors" },
-          { label: "Add Visitor" },
+          { label: isEnquiry ? "Log Enquiry" : "Check In Visitor" },
         ]}
       />
 
@@ -195,12 +197,12 @@ function NewVisitorContent() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Checking In...
+                {isEnquiry ? "Saving..." : "Checking In..."}
               </>
             ) : (
               <>
                 <UserPlus className="mr-2 h-4 w-4" />
-                Check In Visitor
+                {isEnquiry ? "Log Enquiry" : "Check In Visitor"}
               </>
             )}
           </Button>

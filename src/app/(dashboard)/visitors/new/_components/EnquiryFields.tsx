@@ -14,7 +14,7 @@ interface Room {
 }
 
 interface EnquiryFieldsProps {
-  formData: { enquiry_source: EnquirySource | ""; follow_up_date: string; rooms_interested: string[] }
+  formData: { enquiry_source: EnquirySource | ""; follow_up_date: string; rooms_interested: string[]; expected_move_in: string }
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void
   onRoomsInterestedChange: (roomId: string) => void
   filteredRooms: Room[]
@@ -52,17 +52,29 @@ export function EnquiryFields({ formData, onChange, onRoomsInterestedChange, fil
             />
           </FormField>
           <div className="space-y-2">
-            <Label htmlFor="follow_up_date">
+            <Label htmlFor="expected_move_in">
               <Calendar className="h-4 w-4 inline mr-1" />
-              Follow-up Date
+              Expected Move-in
             </Label>
             <DatePicker
-              id="follow_up_date"
-              value={formData.follow_up_date}
-              onChange={(val) => onChange({ target: { name: "follow_up_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
+              id="expected_move_in"
+              value={formData.expected_move_in}
+              onChange={(val) => onChange({ target: { name: "expected_move_in", value: val } } as React.ChangeEvent<HTMLInputElement>)}
               disabled={loading}
             />
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="follow_up_date">
+            <Calendar className="h-4 w-4 inline mr-1" />
+            Follow-up Date
+          </Label>
+          <DatePicker
+            id="follow_up_date"
+            value={formData.follow_up_date}
+            onChange={(val) => onChange({ target: { name: "follow_up_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
+            disabled={loading}
+          />
         </div>
 
         {filteredRooms.length > 0 && (
