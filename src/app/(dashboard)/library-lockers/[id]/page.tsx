@@ -16,6 +16,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
 import {
   DetailHero,
   InfoCard,
@@ -51,8 +52,9 @@ import {
   UserPlus,
   UserMinus,
   Loader2,
+  Phone,
 } from "lucide-react"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import {
@@ -365,35 +367,48 @@ export default function LibraryLockerDetailPage() {
             description="Currently assigned to"
             icon={Users}
           >
-            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-              <div>
-                <Link
-                  href={`/library-members/${locker.current_member.id}`}
-                  className="font-semibold hover:text-primary hover:underline"
-                >
-                  {locker.current_member.name}
-                </Link>
-                {locker.current_member.member_code && (
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {locker.current_member.member_code}
-                  </p>
-                )}
+            <Link href={`/library-members/${locker.current_member.id}`}>
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3">
+                  <Avatar
+                    name={locker.current_member.person?.name || locker.current_member.name}
+                    src={locker.current_member.person?.photo_url}
+                    size="md"
+                  />
+                  <div>
+                    <p className="font-medium">
+                      {locker.current_member.person?.name || locker.current_member.name}
+                    </p>
+                    {(locker.current_member.person?.phone || locker.current_member.phone) && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {locker.current_member.person?.phone || locker.current_member.phone}
+                      </p>
+                    )}
+                    {locker.current_member.member_code && (
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {locker.current_member.member_code}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  {!!locker.monthly_rent && (
+                    <p className="font-medium">{formatCurrency(locker.monthly_rent)}/mo</p>
+                  )}
+                  {locker.assigned_from && (
+                    <p className="text-xs text-muted-foreground">
+                      Since {formatDate(locker.assigned_from)}
+                    </p>
+                  )}
+                  {locker.assigned_until && (
+                    <p className="text-xs text-muted-foreground">
+                      Until {formatDate(locker.assigned_until)}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-            {locker.assigned_from && (
-              <InfoRow
-                label="Assigned From"
-                value={formatDate(locker.assigned_from)}
-                icon={Calendar}
-              />
-            )}
-            {locker.assigned_until && (
-              <InfoRow
-                label="Assigned Until"
-                value={formatDate(locker.assigned_until)}
-                icon={Calendar}
-              />
-            )}
+            </Link>
           </DetailSection>
         )}
 

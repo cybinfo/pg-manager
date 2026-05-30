@@ -262,7 +262,9 @@ export interface LibraryLocker extends AuditableEntity {
 
   // Joined fields
   library?: Pick<Library, "id" | "name"> | null
-  current_member?: Pick<LibraryMember, "id" | "name" | "member_code"> | null
+  current_member?: (Pick<LibraryMember, "id" | "name" | "member_code" | "phone"> & {
+    person?: Pick<Person, "id" | "name" | "photo_url" | "phone"> | null
+  }) | null
 }
 
 // ============================================================================

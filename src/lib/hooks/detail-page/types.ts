@@ -824,7 +824,7 @@ export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     library:libraries(id, name),
-    current_member:library_members!fk_lockers_current_member(id, name, member_code, phone, person:people(id, name))
+    current_member:library_members!fk_lockers_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
   `,
   joinFields: ["library", "current_member"],
   redirectOnNotFound: "/library-lockers",
