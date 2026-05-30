@@ -140,6 +140,7 @@ function NewStaffContent() {
         .single()
 
       if (data && !data.is_blocked) {
+        // eslint-disable-next-line react-hooks/immutability
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
         showError("This person is blocked and cannot be added as staff")
@@ -240,26 +241,31 @@ function NewStaffContent() {
       // Step 2.5: Create or link person record if person_id is provided
       let personId = selectedPerson?.id || null
       if (!personId && (staffName || staffPhone || staffEmail)) {
-        // Try to create/find person using upsert_person RPC
-        const { data: newPersonId } = await supabase.rpc("upsert_person", {
-          p_owner_id: user.id,
-          p_name: staffName,
-          p_phone: staffPhone || null,
-          p_email: staffEmail || null,
-          p_tags: ["staff"],
-          p_source: "staff",
-        }).catch(() => ({ data: null }))
-
-        personId = newPersonId || null
+        try {
+          const { data: newPersonId } = await supabase.rpc("upsert_person", {
+            p_owner_id: user.id,
+            p_name: staffName,
+            p_phone: staffPhone || null,
+            p_email: staffEmail || null,
+            p_tags: ["staff"],
+            p_source: "staff",
+          })
+          personId = newPersonId || null
+        } catch {
+          personId = null
+        }
       } else if (personId) {
-        // Add staff tag to existing person
-        await supabase.rpc("upsert_person", {
-          p_owner_id: user.id,
-          p_name: staffName,
-          p_phone: staffPhone || null,
-          p_email: staffEmail || null,
-          p_tags: ["staff"],
-        }).catch(() => null)
+        try {
+          await supabase.rpc("upsert_person", {
+            p_owner_id: user.id,
+            p_name: staffName,
+            p_phone: staffPhone || null,
+            p_email: staffEmail || null,
+            p_tags: ["staff"],
+          })
+        } catch {
+          // non-fatal: person tag update failure doesn't block staff creation
+        }
       }
 
       // Step 3: Create staff member (with user_id and person_id if exists)

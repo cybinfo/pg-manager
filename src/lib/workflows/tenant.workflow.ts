@@ -449,9 +449,11 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       // Rollback: Decrement room occupancy
       rollback: async (context, input) => {
         const supabase = createClient()
-        await supabase.rpc('decrement_room_occupancy', {
-          p_room_id: input.room_id,
-        }).catch((err: unknown) => workflowLogger.warn("[TenantCreate] Rollback decrement failed:", { detail: err }))
+        try {
+          await supabase.rpc('decrement_room_occupancy', { p_room_id: input.room_id })
+        } catch (err: unknown) {
+          workflowLogger.warn("[TenantCreate] Rollback decrement failed:", { detail: String(err) })
+        }
       },
       optional: false, // CRITICAL: Room occupancy must be accurate
     },
