@@ -345,6 +345,7 @@ function EditPersonContent() {
           subtitle={`Update details for ${formData.name}`}
           backHref={backHref}
           backLabel={backLabel}
+          breadcrumbs={[{ label: "People", href: "/people" }, { label: "Edit Person" }]}
           avatar={
             <Avatar
               name={formData.name || "P"}

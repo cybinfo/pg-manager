@@ -7,6 +7,7 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { requiredField } from "@/lib/validation"
@@ -22,7 +23,6 @@ import {
   Clock,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
-import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useFeatures } from "@/lib/features/use-features"
 import { Textarea } from "@/components/ui/textarea"
@@ -509,17 +509,15 @@ function NewNoticeContent() {
               <div className="space-y-2">
                 <Label>Status</Label>
                 <div className="flex items-center gap-2 h-10">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="is_active"
-                    name="is_active"
                     checked={formData.is_active as boolean}
-                    onChange={handleChange}
-                    className="h-4 w-4 rounded border-input"
+                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked }))}
+                    disabled={saving}
                   />
-                  <label htmlFor="is_active" className="text-sm">
+                  <Label htmlFor="is_active" className="text-sm cursor-pointer">
                     Publish immediately
-                  </label>
+                  </Label>
                 </div>
               </div>
             </div>
@@ -527,18 +525,16 @@ function NewNoticeContent() {
             <FeatureGuard module="notices" feature="noticeScheduling">
               <div className="pt-4 border-t space-y-3">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="schedule_for_later"
                     checked={scheduleForLater}
-                    onChange={(e) => {
-                      setScheduleForLater(e.target.checked)
-                      if (!e.target.checked) {
+                    onCheckedChange={(checked) => {
+                      setScheduleForLater(checked as boolean)
+                      if (!checked) {
                         setFormData((prev) => ({ ...prev, scheduled_at: "" }))
                       }
                     }}
                     disabled={saving}
-                    className="h-4 w-4 rounded border-input"
                   />
                   <label htmlFor="schedule_for_later" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />

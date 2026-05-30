@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth"
 import { useAdminExplorerData } from "@/lib/hooks/useAdminExplorerData"
 import type { AdminWorkspace } from "@/lib/hooks/useAdminExplorerData"
 import { PageHeader } from "@/components/ui/page-header"
+import { PageLoading } from "@/components/ui/loading"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -94,11 +95,7 @@ export default function AdminExplorerPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   if (!isPlatformAdmin) {

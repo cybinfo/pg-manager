@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
-  Building2, Home, Bed, Users, Loader2, ChevronRight,
+  Building2, Home, Bed, Users, ChevronRight,
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
 } from "lucide-react"
 import { PropertyGrid, RoomGrid, BedView } from "./_components"
@@ -14,6 +14,7 @@ import type { ArchProperty } from "./_components"
 import type { ArchRoom } from "./_components"
 import { calculateOccupancyRate } from "@/lib/format"
 import { useArchitectureData } from "@/lib/hooks/useArchitectureData"
+import { PageLoading } from "@/components/ui/loading"
 
 type ViewMode = "properties" | "rooms" | "beds"
 
@@ -80,11 +81,7 @@ export default function ArchitecturePage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (

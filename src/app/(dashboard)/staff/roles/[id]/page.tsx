@@ -23,6 +23,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-groups"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import { PageLoading } from "@/components/ui/loading"
 import { DetailSection, DetailPageTemplate, InfoBanner } from "@/components/ui"
 import { PermissionGate } from "@/components/auth"
 
@@ -234,11 +235,7 @@ export default function EditRolePage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   if (!role) {

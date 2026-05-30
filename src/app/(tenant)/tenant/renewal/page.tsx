@@ -60,37 +60,41 @@ function TenantRenewalContent() {
     }
 
     setSubmitting(true)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    const { error } = await supabase.from("approvals").insert(
-      withCreatedBy({
-        requester_tenant_id: tenant.id,
-        workspace_id: tenantContext.workspace_id,
-        owner_id: tenantContext.owner_id,
-        type: "lease_renewal",
-        title: "Lease Renewal Request",
-        description: reason.trim(),
-        payload: {
-          current_rent: tenant.monthly_rent,
-          check_in_date: tenant.check_in_date,
-          room: tenant.room ? `Room ${tenant.room.room_number}` : null,
-          property: tenant.property?.name,
-        },
-        status: "pending",
-      }, user?.id || tenant.id)
-    )
+      const { error } = await supabase.from("approvals").insert(
+        withCreatedBy({
+          requester_tenant_id: tenant.id,
+          workspace_id: tenantContext.workspace_id,
+          owner_id: tenantContext.owner_id,
+          type: "lease_renewal",
+          title: "Lease Renewal Request",
+          description: reason.trim(),
+          payload: {
+            current_rent: tenant.monthly_rent,
+            check_in_date: tenant.check_in_date,
+            room: tenant.room ? `Room ${tenant.room.room_number}` : null,
+            property: tenant.property?.name,
+          },
+          status: "pending",
+        }, user?.id || tenant.id)
+      )
 
-    setSubmitting(false)
+      if (error) {
+        showError("Failed to submit renewal request. Please try again.")
+        return
+      }
 
-    if (error) {
+      showSuccess("Renewal request submitted! Your property owner will review it.")
+      setReason("")
+      setShowForm(false)
+      fetchRequests(tenant.id)
+    } catch {
       showError("Failed to submit renewal request. Please try again.")
-      return
+    } finally {
+      setSubmitting(false)
     }
-
-    showSuccess("Renewal request submitted! Your property owner will review it.")
-    setReason("")
-    setShowForm(false)
-    fetchRequests(tenant.id)
   }
 
   if (tenantLoading) return <PageSkeleton variant="detail" />

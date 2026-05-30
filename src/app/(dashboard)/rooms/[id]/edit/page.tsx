@@ -14,6 +14,7 @@ import { requiredSelect, requiredField, requiredAmount } from "@/lib/validation"
 import { ArrowLeft, Home, Loader2 } from "lucide-react"
 import { Select } from "@/components/ui/form-components"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { PageLoading } from "@/components/ui/loading"
 import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
@@ -145,11 +146,7 @@ function EditRoomContent() {
   }, [user])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (

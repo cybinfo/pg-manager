@@ -17,6 +17,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import { PageLoading } from "@/components/ui/loading"
 import type { TenantFeatures } from "@/types/portal.types"
 
 import {
@@ -267,11 +268,7 @@ function EditPropertyContent() {
   }
 
   if (loadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (

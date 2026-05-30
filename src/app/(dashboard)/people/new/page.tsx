@@ -269,6 +269,7 @@ function NewPersonContent() {
           subtitle="Add a new person to the central directory"
           backHref={backHref}
           backLabel={backLabel}
+          breadcrumbs={[{ label: "People", href: "/people" }, { label: "Add Person" }]}
           avatar={
             <div className="p-3 bg-primary/10 rounded-lg">
               <User className="h-8 w-8 text-primary" />

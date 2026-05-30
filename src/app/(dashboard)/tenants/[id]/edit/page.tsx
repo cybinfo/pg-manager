@@ -173,6 +173,7 @@ function EditTenantContent() {
         subtitle={`Update tenancy details for ${(person?.name as string) || "Tenant"}`}
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[{ label: "Tenants", href: "/tenants" }, { label: "Edit Tenancy" }]}
         avatar={
           <Avatar
             name={(person?.name as string) || "T"}

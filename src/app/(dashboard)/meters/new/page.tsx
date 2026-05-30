@@ -253,6 +253,7 @@ function NewMeterContent() {
           subtitle="Register a new meter in the system"
           backHref={backHref}
           backLabel={backLabel}
+          breadcrumbs={[{ label: "Meters", href: "/meters" }, { label: "Add Meter" }]}
           avatar={
             <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
               <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />

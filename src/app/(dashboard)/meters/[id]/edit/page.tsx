@@ -171,6 +171,7 @@ function EditMeterContent() {
           subtitle={record?.meter_number as string}
           backHref={backHref}
           backLabel={backLabel}
+          breadcrumbs={[{ label: "Meters", href: "/meters" }, { label: "Edit Meter" }]}
           avatar={
             <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
               <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />

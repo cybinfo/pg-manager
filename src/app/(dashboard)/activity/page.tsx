@@ -71,6 +71,12 @@ const ACTION_CONFIG: Record<string, { label: string; variant: "default" | "secon
   view: { label: "Viewed", variant: "outline", icon: Eye },
 }
 
+const ACTIVITY_ACTION_OPTIONS = [
+  { value: "create", label: "Created" },
+  { value: "update", label: "Updated" },
+  { value: "delete", label: "Deleted" },
+]
+
 const ENTITY_ICONS: Record<string, typeof User> = {
   tenant: User,
   tenants: User,
@@ -121,11 +127,7 @@ const filters: FilterConfig[] = [
     label: "Action",
     type: "select",
     placeholder: "All Actions",
-    options: [
-      { value: "create", label: "Created" },
-      { value: "update", label: "Updated" },
-      { value: "delete", label: "Deleted" },
-    ],
+    options: ACTIVITY_ACTION_OPTIONS,
   },
   {
     id: "entity_type",
@@ -289,11 +291,7 @@ export default function ActivityLogPage() {
       header: "Action",
       filterType: "select",
       filterOperators: ["eq", "neq", "in", "not_in"],
-      filterOptions: [
-        { value: "create", label: "Created" },
-        { value: "update", label: "Updated" },
-        { value: "delete", label: "Deleted" },
-      ],
+      filterOptions: ACTIVITY_ACTION_OPTIONS,
     },
     {
       key: "entity_type",
