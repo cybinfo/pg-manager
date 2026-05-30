@@ -315,6 +315,20 @@ export function SortableMasonry({
       }
       // No real measurements available (refs belong to normal mode only) — keep round-robin fallback
       if (totalHeight === 0) return
+
+      // Post-process for 2-column layouts: if one column ended up with ≥2 more sections
+      // AND is also the taller column, move its last section to the other column.
+      // This prevents a single tall item locking one column while the other accumulates all the rest.
+      if (columns === 2) {
+        const longerCountCol = dist[0].length > dist[1].length ? 0 : 1
+        const shorterCountCol = 1 - longerCountCol
+        const countDiff = Math.abs(dist[0].length - dist[1].length)
+        if (countDiff >= 2 && colHeights[longerCountCol] >= colHeights[shorterCountCol]) {
+          const moved = dist[longerCountCol].pop()
+          if (moved !== undefined) dist[shorterCountCol].push(moved)
+        }
+      }
+
       const childMap = new Map(visibleChildren.map(item => [item.id, item.element]))
       setBalancedCols(dist.map(ids => ids.map(id => ({ id, element: childMap.get(id) }))))
     }, 0)
