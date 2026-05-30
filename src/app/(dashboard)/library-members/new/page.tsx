@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getTodayISO, computeEndDate } from "@/lib/date-helpers"
 import { TimeSlot, formatTime12h, calcSlotHours } from "@/lib/time-slots"
-import { formatDate, formatNumber } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -202,7 +202,7 @@ function NewLibraryMemberContent() {
   const totalSlotHours = validTimeSlots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
   const hoursExceeded = selectedPlan?.hours_included ? totalSlotHours > selectedPlan.hours_included : false
   const priceCalcDisplay = selectedPlan && formData.duration_months
-    ? `₹${formatNumber(selectedPlan.base_price)}/month × ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = ₹${formatNumber(selectedPlan.base_price * formData.duration_months)}`
+    ? `${formatCurrency(selectedPlan.base_price)}/month × ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = ${formatCurrency(selectedPlan.base_price * formData.duration_months)}`
     : null
 
   const libraryOptions = libraries.map((lib) => ({

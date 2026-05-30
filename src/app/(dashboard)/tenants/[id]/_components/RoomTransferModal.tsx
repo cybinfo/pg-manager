@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Currency } from "@/components/ui/currency"
+import { formatCurrency } from "@/lib/format"
 import { Loader2, ArrowRightLeft } from "lucide-react"
 import { ROOM_TRANSFER_REASON_OPTIONS } from "@/lib/constants/form-options"
 import { showError, showSuccess } from "@/lib/toast-helpers"
@@ -110,7 +111,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
               }}
               options={availableRooms.map((room) => ({
                 value: room.id,
-                label: `Room ${room.room_number} (${room.occupied_beds}/${room.total_beds} beds) - ₹${room.rent_amount}`,
+                label: `Room ${room.room_number} (${room.occupied_beds}/${room.total_beds} beds) - ${formatCurrency(room.rent_amount)}`,
               }))}
               placeholder="Select a room"
             />

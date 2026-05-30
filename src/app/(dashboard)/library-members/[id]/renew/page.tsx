@@ -32,7 +32,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { NotFoundState } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
-import { formatDate, formatNumber } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { getTodayISO, computeEndDate, computeDefaultStartDate } from "@/lib/date-helpers"
 import { TimeSlot, formatTime12h, calcSlotHours, parseTimeSlots } from "@/lib/time-slots"
 import { useFormValidation } from "@/lib/hooks/useFormValidation"
@@ -172,6 +172,7 @@ export default function RenewLibraryMemberPage({
         const amount = matchingPlan.base_price * durationMonths
         const prefillSlots = parseTimeSlots(currentMembership.time_slot)
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData((prev) => ({
           ...prev,
           plan_id: matchingPlan.id,
@@ -287,7 +288,7 @@ export default function RenewLibraryMemberPage({
   const hoursExceeded = selectedPlan?.hours_included ? totalSlotHours > selectedPlan.hours_included : false
 
   const priceCalcDisplay = selectedPlan && formData.duration_months
-    ? `₹${formatNumber(selectedPlan.base_price)}/month × ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = ₹${formatNumber(selectedPlan.base_price * formData.duration_months)}`
+    ? `${formatCurrency(selectedPlan.base_price)}/month × ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = ${formatCurrency(selectedPlan.base_price * formData.duration_months)}`
     : null
 
   const planOptions = plans.map((plan) => ({

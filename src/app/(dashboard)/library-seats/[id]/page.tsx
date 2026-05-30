@@ -17,6 +17,7 @@ import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
 import {
   DetailHero,
   InfoCard,
@@ -39,6 +40,7 @@ import {
   CalendarPlus,
   X,
   Loader2,
+  Phone,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
@@ -109,6 +111,7 @@ export default function LibrarySeatDetailPage() {
       .order("name")
       .then(({ data }: { data: MemberOption[] | null }) => setReservationMembers(data || []))
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReservations()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, params.id])
@@ -349,21 +352,33 @@ export default function LibrarySeatDetailPage() {
               description="Currently assigned to"
               icon={Users}
             >
-              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                <div>
-                  <Link
-                    href={`/library-members/${seat.current_member.id}`}
-                    className="font-semibold hover:text-primary hover:underline"
-                  >
-                    {seat.current_member.name}
-                  </Link>
-                  {seat.current_member.member_code && (
-                    <p className="text-sm text-muted-foreground font-mono">
-                      {seat.current_member.member_code}
-                    </p>
-                  )}
+              <Link href={`/library-members/${seat.current_member.id}`}>
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      name={seat.current_member.person?.name || seat.current_member.name}
+                      src={seat.current_member.person?.photo_url}
+                      size="md"
+                    />
+                    <div>
+                      <p className="font-medium">
+                        {seat.current_member.person?.name || seat.current_member.name}
+                      </p>
+                      {(seat.current_member.person?.phone || seat.current_member.phone) && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {seat.current_member.person?.phone || seat.current_member.phone}
+                        </p>
+                      )}
+                      {seat.current_member.member_code && (
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {seat.current_member.member_code}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Link>
             </DetailSection>
           </FeatureGuard>
         )}

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -14,8 +15,6 @@ import {
   LogOut,
   Loader2,
   User,
-  Building2,
-  Home,
   Calendar,
   IndianRupee,
   AlertCircle,
@@ -39,6 +38,7 @@ interface TenantRaw {
   id: string
   name: string
   phone: string
+  photo_url: string | null
   monthly_rent: number
   check_in_date: string
   notice_date: string | null
@@ -54,6 +54,7 @@ interface Tenant {
   id: string
   name: string
   phone: string
+  photo_url: string | null
   monthly_rent: number
   check_in_date: string
   notice_date: string | null
@@ -130,6 +131,7 @@ function InitiateCheckoutForm() {
           property_id,
           room_id,
           property:properties(id, name),
+          photo_url,
           room:rooms(id, room_number, deposit_amount)
         `)
         .eq("status", "notice_period")
@@ -153,6 +155,7 @@ function InitiateCheckoutForm() {
           notice_date: t.notice_date,
           expected_exit_date: t.expected_exit_date,
           status: t.status,
+          photo_url: t.photo_url,
           property_id: t.property_id,
           room_id: t.room_id,
           property: transformJoin(t.property),
@@ -192,6 +195,7 @@ function InitiateCheckoutForm() {
   useEffect(() => {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTenant(tenant || null)
 
       // Update dates from tenant's stored values when selecting a different tenant
@@ -412,16 +416,19 @@ function InitiateCheckoutForm() {
             </FormField>
 
             {selectedTenant && (
-              <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedTenant.property?.name || "—"}</span>
+              <div className="p-3 bg-muted/50 rounded-lg space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar name={selectedTenant.name} src={selectedTenant.photo_url} size="lg" />
+                  <div>
+                    <p className="font-semibold">{selectedTenant.name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedTenant.phone}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedTenant.property?.name || "—"}
+                      {selectedTenant.room && ` • Room ${selectedTenant.room.room_number}`}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Home className="h-4 w-4 text-muted-foreground" />
-                    <span>Room {selectedTenant.room?.room_number || "—"}</span>
-                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-2 border-t">
                   <div className="flex items-center gap-2">
                     <IndianRupee className="h-4 w-4 text-muted-foreground" />
                     <span>Rent: {formatCurrency(selectedTenant.monthly_rent)}/month</span>
@@ -431,12 +438,10 @@ function InitiateCheckoutForm() {
                     <span>Since: {formatDate(new Date(selectedTenant.check_in_date))}</span>
                   </div>
                 </div>
-                <div className="pt-2 border-t mt-2">
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Security Deposit:</span>{" "}
-                    <span className="font-medium">{formatCurrency(selectedTenant.room.deposit_amount || 0)}</span>
-                  </p>
-                </div>
+                <p className="text-sm pt-1 border-t">
+                  <span className="text-muted-foreground">Security Deposit: </span>
+                  <span className="font-medium">{formatCurrency(selectedTenant.room?.deposit_amount || 0)}</span>
+                </p>
               </div>
             )}
           </div>

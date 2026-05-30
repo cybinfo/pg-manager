@@ -746,7 +746,7 @@ export const LIBRARY_SEAT_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     section:library_sections(id, name, library:libraries(id, name)),
-    current_member:library_members!fk_seats_current_member(id, name, member_code, phone, person:people(id, name))
+    current_member:library_members!fk_seats_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
   `,
   joinFields: ["section", "current_member"],
   redirectOnNotFound: "/library-sections",

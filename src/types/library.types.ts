@@ -146,7 +146,9 @@ export interface LibrarySeat extends AuditableEntity {
   section?: (Pick<LibrarySection, "id" | "name"> & {
     library?: Pick<Library, "id" | "name"> | null
   }) | null
-  current_member?: Pick<LibraryMember, "id" | "name" | "member_code"> | null
+  current_member?: (Pick<LibraryMember, "id" | "name" | "member_code" | "phone"> & {
+    person?: Pick<Person, "id" | "name" | "photo_url" | "phone"> | null
+  }) | null
 }
 
 // ============================================================================

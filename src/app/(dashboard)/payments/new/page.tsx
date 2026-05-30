@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent } from "@/components/ui/card"
@@ -35,6 +36,7 @@ interface Tenant {
   id: string
   name: string
   phone: string
+  photo_url: string | null
   monthly_rent: number
   property_id: string
   property: {
@@ -51,6 +53,7 @@ interface RawTenant {
   id: string
   name: string
   phone: string
+  photo_url: string | null
   monthly_rent: number
   property_id: string
   property: {
@@ -386,24 +389,19 @@ function NewPaymentForm() {
           </FormField>
 
           {selectedTenant && (
-            <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Monthly Rent</span>
-                <span className="font-medium">{formatCurrency(selectedTenant.monthly_rent)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Phone</span>
-                <span>{selectedTenant.phone}</span>
-              </div>
-              {selectedTenant.property && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Property / Room</span>
-                  <span>
+            <div className="mt-2 flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Avatar name={selectedTenant.name} src={selectedTenant.photo_url} size="lg" />
+              <div className="flex-1">
+                <p className="font-semibold">{selectedTenant.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedTenant.phone}</p>
+                {selectedTenant.property && (
+                  <p className="text-sm text-muted-foreground">
                     {selectedTenant.property.name}
-                    {selectedTenant.room ? ` · Rm ${selectedTenant.room.room_number}` : ""}
-                  </span>
-                </div>
-              )}
+                    {selectedTenant.room && ` • Rm ${selectedTenant.room.room_number}`}
+                  </p>
+                )}
+              </div>
+              <p className="text-sm font-medium shrink-0">{formatCurrency(selectedTenant.monthly_rent)}/mo</p>
             </div>
           )}
 

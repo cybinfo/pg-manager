@@ -51,7 +51,6 @@ import {
   Wrench,
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { PG_ROOM_STATUS_COLORS } from "@/lib/status"
 import { Avatar } from "@/components/ui/avatar"
 import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
@@ -323,9 +322,15 @@ export default function PropertyDetailPage() {
               <div className="p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">Room {room.room_number}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${PG_ROOM_STATUS_COLORS[room.status] || PG_ROOM_STATUS_COLORS.available}`}>
-                    {room.status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
-                  </span>
+                  <StatusBadge
+                    status={
+                      room.status === "available" ? "success" :
+                      room.status === "partially_occupied" ? "warning" :
+                      room.status === "maintenance" ? "muted" : "error"
+                    }
+                    label={room.status.replace("_", " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    size="sm"
+                  />
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">

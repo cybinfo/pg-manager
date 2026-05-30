@@ -25,6 +25,8 @@ import {
   NotFoundState,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { Avatar } from "@/components/ui/avatar"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Grid3X3,
@@ -284,13 +286,22 @@ export default function LibrarySectionDetailPage() {
                 </div>
               </div>
               <div className="text-right">
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${OCCUPANCY_STATUS_COLORS[seat.status]}`}>
-                  {seat.status}
-                </span>
+                <StatusBadge
+                  status={
+                    seat.status === "available" ? "success" :
+                    seat.status === "occupied" ? "warning" :
+                    seat.status === "reserved" ? "info" : "muted"
+                  }
+                  label={seat.status}
+                  size="sm"
+                />
                 {seat.current_member && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {(seat.current_member as { name?: string })?.name}
-                  </p>
+                  <div className="flex items-center justify-end gap-1 mt-1">
+                    <Avatar name={(seat.current_member as { name?: string })?.name || ""} size="xs" />
+                    <span className="text-xs text-muted-foreground">
+                      {(seat.current_member as { name?: string })?.name}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

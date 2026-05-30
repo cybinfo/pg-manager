@@ -41,7 +41,6 @@ import {
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PermissionGate } from "@/components/auth"
-import { OCCUPANCY_STATUS_COLORS } from "@/lib/status"
 import type {
   Library as LibraryType,
   LibrarySection,
@@ -342,9 +341,14 @@ export default function LibraryDetailPage() {
                     {locker.size} • {locker.monthly_rent ? <Currency amount={locker.monthly_rent} /> : "—"}/mo
                   </p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${OCCUPANCY_STATUS_COLORS[locker.status]}`}>
-                  {locker.status}
-                </span>
+                <StatusBadge
+                  status={
+                    locker.status === "available" ? "success" :
+                    locker.status === "maintenance" ? "muted" : "warning"
+                  }
+                  label={locker.status}
+                  size="sm"
+                />
               </div>
             </Link>
           )}
