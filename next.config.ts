@@ -1,16 +1,19 @@
 import type { NextConfig } from "next";
 import withPWA from "@ducanh2912/next-pwa";
 
+const isDev = process.env.NODE_ENV === "development"
+
 // Security headers for all routes
 const securityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
-  {
+  // HSTS only in production — sending it on localhost permanently breaks HTTP dev access
+  ...(!isDev ? [{
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
-  },
+  }] : []),
   {
     key: "X-XSS-Protection",
     value: "1; mode=block",
@@ -49,7 +52,8 @@ const securityHeaders = [
       "frame-ancestors 'self'",
       "form-action 'self'",
       "base-uri 'self'",
-      "upgrade-insecure-requests",
+      // Only upgrade insecure requests in production (breaks localhost dev on HTTP)
+      ...(!isDev ? ["upgrade-insecure-requests"] : []),
     ].join("; "),
   },
 ];
