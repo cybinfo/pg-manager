@@ -351,7 +351,16 @@ export function SortableMasonry({
 
   // Edit mode: all sections (including hidden) shown with drag + eye controls
   if (isEditMode) {
-    const editCols = splitIntoColumns(orderedChildren, columns)
+    // Start from the same balanced distribution as normal mode so the layout
+    // doesn't shift when entering customize — then append hidden items at the end
+    const baseEditCols: Array<Array<{ id: string; element: React.ReactElement | undefined }>> = balancedCols
+      ? balancedCols.map(col => [...col])
+      : splitIntoColumns(visibleChildren, columns)
+    hiddenChildren.forEach(item => {
+      const shortestIdx = baseEditCols.reduce((mi, col, i) => col.length < baseEditCols[mi].length ? i : mi, 0)
+      baseEditCols[shortestIdx].push(item)
+    })
+    const editCols = baseEditCols
     return (
       <div className="relative">
         <div className="flex items-center justify-end gap-2 mb-4">
