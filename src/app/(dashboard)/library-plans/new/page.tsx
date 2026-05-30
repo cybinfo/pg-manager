@@ -12,14 +12,13 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
-import { CreditCard, Loader2 } from "lucide-react"
+import { CreditCard } from "lucide-react"
 import { requiredField, requiredAmount, requiredPositiveInt } from "@/lib/validation"
 import { TIME_SLOT_OPTIONS } from "@/types/library.types"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPlanPage() {
@@ -123,22 +122,9 @@ function NewLibraryPlanContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <CreditCard className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Plan Details</CardTitle>
-                <CardDescription>
-                  Define plan hours, validity, and pricing
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Plan Details" description="Define plan hours, validity, and pricing" icon={CreditCard}>
+          <div className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Plan Name" htmlFor="name" required error={errors.name}>
@@ -259,24 +245,17 @@ function NewLibraryPlanContent() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href="/library-plans">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Plan"
-            )}
+            {saving ? "Creating..." : "Create Plan"}
           </Button>
         </div>
       </form>

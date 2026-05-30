@@ -16,11 +16,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { requiredField, requiredSelect } from "@/lib/validation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
-import { Armchair, Loader2 } from "lucide-react"
-import { DetailHero } from "@/components/ui"
+import { Armchair } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 interface Section {
@@ -164,22 +163,8 @@ function NewLibrarySeatContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Armchair className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Seat Details</CardTitle>
-                <CardDescription>
-                  Enter seat information and features
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Seat Details" description="Enter seat information and features" icon={Armchair}>
             {/* Section Selection */}
             <FormField label="Section" required error={errors.section_id}>
               <Combobox
@@ -258,24 +243,16 @@ function NewLibrarySeatContent() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={preselectedSection ? `/library-sections/${preselectedSection}` : "/library-seats"}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Seat"
-            )}
+            {saving ? "Creating..." : "Create Seat"}
           </Button>
         </div>
       </form>

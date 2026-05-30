@@ -14,10 +14,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { requiredField } from "@/lib/validation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
-import { DetailHero } from "@/components/ui"
+import { Library, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPage() {
@@ -111,22 +110,9 @@ function NewLibraryContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Library className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Library Details</CardTitle>
-                <CardDescription>
-                  Enter the basic information about your library
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Library Details" description="Enter the basic information about your library" icon={Library}>
+          <div className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Library Name" required error={errors.name}>
@@ -303,24 +289,17 @@ function NewLibraryContent() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href="/library">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Library"
-            )}
+            {saving ? "Creating..." : "Create Library"}
           </Button>
         </div>
       </form>

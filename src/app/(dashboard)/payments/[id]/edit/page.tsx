@@ -13,15 +13,15 @@ import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { ArrowLeft, Receipt, Loader2 } from "lucide-react"
+import { Receipt } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredAmount, requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
 import { DatePicker } from "@/components/ui/date-picker"
+import { DetailHero, DetailSection } from "@/components/ui"
 
 export default function EditPaymentPage({
   params,
@@ -97,127 +97,105 @@ function EditPaymentContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Payment</h1>
-          <p className="text-muted-foreground">{receiptNumber}</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Payment"
+        subtitle={receiptNumber}
+        backHref={backHref}
+        backLabel="All Payments"
+        icon={Receipt}
+        breadcrumbs={[
+          { label: "Payments", href: "/payments" },
+          { label: "Edit Payment" },
+        ]}
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <Receipt className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <CardTitle>Payment Details</CardTitle>
-                <CardDescription>Update payment information</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Amount & Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Amount (Rs.)" htmlFor="amount" required error={errors.amount}>
-                <Input
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  placeholder="e.g., 5000"
-                  value={formData.amount as string}
-                  onChange={handleChange}
-                  onBlur={() => validateField("amount")}
-                  disabled={saving}
-                  min={1}
-                  step="0.01"
-                />
-              </FormField>
-              <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
-                <DatePicker
-                  id="payment_date"
-                  value={formData.payment_date as string}
-                  onChange={(val) => {
-                    handleChange({ target: { name: "payment_date", value: val } } as React.ChangeEvent<HTMLInputElement>)
-                    validateField("payment_date")
-                  }}
-                  disabled={saving}
-                />
-              </FormField>
-            </div>
-
-            {/* Method & Status */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Payment Method" htmlFor="payment_method">
-                <Select
-                  value={formData.payment_method as string}
-                  onChange={handleChange}
-                  name="payment_method"
-                  disabled={saving}
-                  options={PAYMENT_METHOD_OPTIONS}
-                />
-              </FormField>
-              <FormField label="Status" htmlFor="status">
-                <Select
-                  value={formData.status as string}
-                  onChange={handleChange}
-                  name="status"
-                  disabled={saving}
-                  options={PAYMENT_STATUS_OPTIONS}
-                />
-              </FormField>
-            </div>
-
-            {/* Reference Number */}
-            <FormField label="Reference Number" htmlFor="transaction_reference" hint="Optional: UPI reference, cheque number, or transaction ID">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Payment Details" description="Update payment information" icon={Receipt}>
+          {/* Amount & Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Amount (Rs.)" htmlFor="amount" required error={errors.amount}>
               <Input
-                id="transaction_reference"
-                name="transaction_reference"
-                placeholder="UPI ID, Cheque No., Transaction ID..."
-                value={formData.transaction_reference as string}
+                id="amount"
+                name="amount"
+                type="number"
+                placeholder="e.g., 5000"
+                value={formData.amount as string}
                 onChange={handleChange}
+                onBlur={() => validateField("amount")}
+                disabled={saving}
+                min={1}
+                step="0.01"
+              />
+            </FormField>
+            <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
+              <DatePicker
+                id="payment_date"
+                value={formData.payment_date as string}
+                onChange={(val) => {
+                  handleChange({ target: { name: "payment_date", value: val } } as React.ChangeEvent<HTMLInputElement>)
+                  validateField("payment_date")
+                }}
                 disabled={saving}
               />
             </FormField>
+          </div>
 
-            {/* Notes */}
-            <FormField label="Notes" htmlFor="notes">
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="Any additional notes..."
-                value={formData.notes as string}
+          {/* Method & Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Payment Method" htmlFor="payment_method">
+              <Select
+                value={formData.payment_method as string}
                 onChange={handleChange}
+                name="payment_method"
                 disabled={saving}
-                rows={3}
+                options={PAYMENT_METHOD_OPTIONS}
               />
             </FormField>
-          </CardContent>
-        </Card>
+            <FormField label="Status" htmlFor="status">
+              <Select
+                value={formData.status as string}
+                onChange={handleChange}
+                name="status"
+                disabled={saving}
+                options={PAYMENT_STATUS_OPTIONS}
+              />
+            </FormField>
+          </div>
 
-        <div className="flex justify-end gap-4 mt-6">
+          {/* Reference Number */}
+          <FormField label="Reference Number" htmlFor="transaction_reference" hint="Optional: UPI reference, cheque number, or transaction ID">
+            <Input
+              id="transaction_reference"
+              name="transaction_reference"
+              placeholder="UPI ID, Cheque No., Transaction ID..."
+              value={formData.transaction_reference as string}
+              onChange={handleChange}
+              disabled={saving}
+            />
+          </FormField>
+
+          {/* Notes */}
+          <FormField label="Notes" htmlFor="notes">
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional notes..."
+              value={formData.notes as string}
+              onChange={handleChange}
+              disabled={saving}
+              rows={3}
+            />
+          </FormField>
+        </DetailSection>
+
+        <div className="flex justify-end gap-3">
           <Link href={`/payments/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

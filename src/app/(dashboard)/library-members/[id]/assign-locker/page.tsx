@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { FormField } from "@/components/ui/form-components"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Lock, Loader2, Check, Package, AlertCircle } from "lucide-react"
+import { Lock, Loader2, Check, Package, AlertCircle } from "lucide-react"
+import { DetailHero, DetailSection, NotFoundState } from "@/components/ui"
 import { showError } from "@/lib/toast-helpers"
 import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { handleClientError } from "@/lib/error-handler"
@@ -244,58 +244,50 @@ export default function AssignLockerToMemberPage({
   }
 
   if (!member) {
-    return null
+    return <NotFoundState title="Member not found" backHref="/library-members" backLabel="All Members" />
   }
+
+  const backHref = `/library-members/${memberId}`
+  const memberName = member.name
 
   return (
     <ModuleGuard module="lockers">
       <PermissionGuard permission="library_members.edit">
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={`/library-members/${memberId}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Assign Locker</h1>
-          <p className="text-muted-foreground">
-            Select a locker for {member.name}
-            {member.member_code && <span className="font-mono ml-1">({member.member_code})</span>}
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Assign Locker"
+        subtitle={memberName}
+        backHref={backHref}
+        backLabel="Back to Member"
+        icon={Lock}
+        breadcrumbs={[
+          { label: "Members", href: "/library-members" },
+          { label: memberName, href: backHref },
+          { label: "Assign Locker" },
+        ]}
+      />
 
       {lockers.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">No Available Lockers</h3>
-              <p className="text-muted-foreground mb-4">
-                There are no available lockers in {member.library?.name || "this library"}.
-              </p>
-              <Link href={`/library-members/${memberId}`}>
-                <Button variant="outline">Go Back</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <DetailSection title="No Available Lockers" icon={AlertCircle}>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground mb-4">
+              There are no available lockers in {member.library?.name || "this library"}.
+            </p>
+            <Link href={backHref}>
+              <Button variant="outline">Go Back</Button>
+            </Link>
+          </div>
+        </DetailSection>
       ) : (
         <form onSubmit={handleSubmit}>
           {/* Locker Selection */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Select Locker
-              </CardTitle>
-              <CardDescription>
-                {lockers.length} locker{lockers.length !== 1 ? "s" : ""} available in {member.library?.name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <DetailSection
+            title="Select Locker"
+            description={`${lockers.length} locker${lockers.length !== 1 ? "s" : ""} available in ${member.library?.name}`}
+            icon={Lock}
+            className="mb-6"
+          >
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {lockers.map((locker) => {
                   const isSelected = selectedLockerId === locker.id
@@ -345,19 +337,16 @@ export default function AssignLockerToMemberPage({
                   )
                 })}
               </div>
-            </CardContent>
-          </Card>
+          </DetailSection>
 
           {/* Assignment Details */}
           {selectedLockerId && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Assignment Details</CardTitle>
-                <CardDescription>
-                  Configure the assignment period and pricing
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+            <DetailSection
+              title="Assignment Details"
+              description="Configure the assignment period and pricing"
+              className="mb-6"
+            >
+              <div className="space-y-6">
                 {/* Dates */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField label="Start Date" htmlFor="start_date" required>
@@ -409,11 +398,11 @@ export default function AssignLockerToMemberPage({
                     </FormField>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </DetailSection>
           )}
 
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end gap-3">
             <Link href={`/library-members/${memberId}`}>
               <Button type="button" variant="outline" disabled={loading}>
                 Cancel

@@ -6,8 +6,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Wrench, ArrowLeft } from "lucide-react"
+import { Wrench } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -17,8 +16,8 @@ import { getNowISO } from "@/lib/date-helpers"
 
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 
@@ -203,31 +202,18 @@ function EditServiceProviderContent({
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-      {/* Back Link */}
-      <Link
-        href={backHref}
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Back to Provider
-      </Link>
+    <div className="space-y-6">
+      <DetailHero
+        title="Edit Provider"
+        subtitle="Update service provider details"
+        backHref={backHref}
+        backLabel="All Providers"
+        icon={Wrench}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Services", href:"/expenses/services"}, {label:"Providers", href:"/expenses/services/providers"}, {label:"Edit Provider"}]}
+      />
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                    <Wrench className="h-5 w-5 text-warning" />
-                  </div>
-                  <div>
-                    <CardTitle>Edit Provider</CardTitle>
-                    <CardDescription>Update service provider details</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DetailSection title="Edit Provider" description="Update service provider details" icon={Wrench}>
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
@@ -426,11 +412,10 @@ function EditServiceProviderContent({
                     Active (available for selection)
                   </Label>
                 </div>
-              </CardContent>
-            </Card>
+            </DetailSection>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -442,7 +427,7 @@ function EditServiceProviderContent({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-      </form>
+          </form>
     </div>
   )
 }

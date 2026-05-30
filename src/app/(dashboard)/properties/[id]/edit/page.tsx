@@ -6,12 +6,11 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
-  ArrowLeft,
   Building2,
-  Loader2,
   Globe,
   Users,
 } from "lucide-react"
+import { DetailHero } from "@/components/ui"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -273,18 +272,17 @@ function EditPropertyContent() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Property</h1>
-          <p className="text-muted-foreground">Update property details and website settings</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Property"
+        subtitle={formData.name || "Update property details and website settings"}
+        backHref={backHref}
+        backLabel="All Properties"
+        icon={Building2}
+        breadcrumbs={[
+          { label: "Properties", href: "/properties" },
+          { label: "Edit Property" },
+        ]}
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b overflow-x-auto">
@@ -361,21 +359,14 @@ function EditPropertyContent() {
           />
         )}
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={`/properties/${params.id}`}>
             <Button type="button" variant="outline" disabled={loading}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

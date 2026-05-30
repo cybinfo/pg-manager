@@ -13,12 +13,11 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredSelect } from "@/lib/validation"
-import { Lock, Loader2 } from "lucide-react"
-import { DetailHero } from "@/components/ui"
+import { Lock } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import { LOCKER_SIZE_OPTIONS } from "@/lib/constants/form-options"
 import type { LibraryOption } from "@/types/library.types"
@@ -153,22 +152,8 @@ function NewLibraryLockerContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Lock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Locker Details</CardTitle>
-                <CardDescription>
-                  Enter locker information and pricing
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Locker Details" description="Enter locker information and pricing" icon={Lock}>
             {/* Library Selection */}
             <FormField label="Library" required error={errors.library_id}>
               <Combobox
@@ -263,24 +248,16 @@ function NewLibraryLockerContent() {
                 </FormField>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={preselectedLibrary ? `/library/${preselectedLibrary}` : "/library-lockers"}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Locker"
-            )}
+            {saving ? "Creating..." : "Create Locker"}
           </Button>
         </div>
       </form>

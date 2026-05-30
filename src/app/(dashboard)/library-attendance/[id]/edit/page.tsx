@@ -15,9 +15,9 @@ import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { FormField } from "@/components/ui/form-components"
-import { ArrowLeft, Clock, Loader2 } from "lucide-react"
+import { Clock } from "lucide-react"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
@@ -119,110 +119,85 @@ function EditAttendanceContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Attendance &rsaquo; {memberName} &rsaquo; Edit
-          </p>
-          <h1 className="text-3xl font-bold">Edit Attendance</h1>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Attendance"
+        subtitle={`${memberName} — Edit`}
+        backHref={backHref}
+        backLabel="All Attendance"
+        icon={Clock}
+        breadcrumbs={[{ label: "Attendance", href: "/library-attendance" }, { label: "Edit Attendance" }]}
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <Clock className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <CardTitle>Attendance Details</CardTitle>
-                <CardDescription>
-                  Update check-in/check-out times. Hours are recalculated automatically.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Check-in Time" htmlFor="check_in_time" required error={errors.check_in_time}>
-                <Input
-                  id="check_in_time"
-                  name="check_in_time"
-                  type="datetime-local"
-                  value={formData.check_in_time as string}
-                  onChange={handleChange}
-                  onBlur={() => validateField("check_in_time")}
-                  disabled={saving}
-                />
-              </FormField>
-              <FormField label="Check-out Time" htmlFor="check_out_time">
-                <Input
-                  id="check_out_time"
-                  name="check_out_time"
-                  type="datetime-local"
-                  value={formData.check_out_time as string}
-                  onChange={handleChange}
-                  disabled={saving}
-                />
-              </FormField>
-            </div>
-
-            {/* Computed hours display */}
-            {computedHours !== null && (
-              <div className="p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Calculated Duration:</span>
-                  <span className="font-semibold">{computedHours.toFixed(2)} hours</span>
-                </div>
-              </div>
-            )}
-
-            {formData.check_out_time && computedHours === null && (
-              <div className="p-3 bg-destructive/10 rounded-lg">
-                <p className="text-sm text-destructive">
-                  Check-out time must be after check-in time.
-                </p>
-              </div>
-            )}
-
-            <FormField label="Notes" htmlFor="notes">
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="Any additional notes about this attendance..."
-                value={formData.notes as string}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection
+          title="Attendance Details"
+          description="Update check-in/check-out times. Hours are recalculated automatically."
+          icon={Clock}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Check-in Time" htmlFor="check_in_time" required error={errors.check_in_time}>
+              <Input
+                id="check_in_time"
+                name="check_in_time"
+                type="datetime-local"
+                value={formData.check_in_time as string}
                 onChange={handleChange}
+                onBlur={() => validateField("check_in_time")}
                 disabled={saving}
-                rows={3}
               />
             </FormField>
-          </CardContent>
-        </Card>
+            <FormField label="Check-out Time" htmlFor="check_out_time">
+              <Input
+                id="check_out_time"
+                name="check_out_time"
+                type="datetime-local"
+                value={formData.check_out_time as string}
+                onChange={handleChange}
+                disabled={saving}
+              />
+            </FormField>
+          </div>
 
-        <div className="flex justify-end gap-4 mt-6">
+          {/* Computed hours display */}
+          {computedHours !== null && (
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Calculated Duration:</span>
+                <span className="font-semibold">{computedHours.toFixed(2)} hours</span>
+              </div>
+            </div>
+          )}
+
+          {formData.check_out_time && computedHours === null && (
+            <div className="p-3 bg-destructive/10 rounded-lg">
+              <p className="text-sm text-destructive">
+                Check-out time must be after check-in time.
+              </p>
+            </div>
+          )}
+
+          <FormField label="Notes" htmlFor="notes">
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional notes about this attendance..."
+              value={formData.notes as string}
+              onChange={handleChange}
+              disabled={saving}
+              rows={3}
+            />
+          </FormField>
+        </DetailSection>
+
+        <div className="flex justify-end gap-3">
           <Link href={`/library-attendance/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

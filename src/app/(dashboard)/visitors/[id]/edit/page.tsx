@@ -13,13 +13,13 @@ import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { ArrowLeft, Users, Loader2 } from "lucide-react"
+import { Users } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageLoading } from "@/components/ui/loading"
 import { VISITOR_TYPE_LABELS } from "@/types/visitors.types"
 import { PermissionGuard } from "@/components/auth"
+import { DetailHero, DetailSection } from "@/components/ui"
 
 const VISITOR_TYPE_OPTIONS = Object.entries(VISITOR_TYPE_LABELS).map(([value, label]) => ({
   value,
@@ -95,111 +95,89 @@ function EditVisitorContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Visitor</h1>
-          <p className="text-muted-foreground">{visitorName}</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Visitor"
+        subtitle={visitorName}
+        backHref={backHref}
+        backLabel="All Visitors"
+        icon={Users}
+        breadcrumbs={[
+          { label: "Visitors", href: "/visitors" },
+          { label: "Edit Visitor" },
+        ]}
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-info/10 rounded-lg">
-                <Users className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <CardTitle>Visit Details</CardTitle>
-                <CardDescription>Update visitor and visit information</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Visitor Type */}
-            <FormField label="Visitor Type">
-              <Select
-                value={formData.visitor_type as string}
-                onChange={handleChange}
-                name="visitor_type"
-                disabled={saving}
-                options={VISITOR_TYPE_OPTIONS}
-              />
-            </FormField>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Visit Details" description="Update visitor and visit information" icon={Users}>
+          {/* Visitor Type */}
+          <FormField label="Visitor Type">
+            <Select
+              value={formData.visitor_type as string}
+              onChange={handleChange}
+              name="visitor_type"
+              disabled={saving}
+              options={VISITOR_TYPE_OPTIONS}
+            />
+          </FormField>
 
-            {/* Purpose */}
-            <FormField label="Purpose">
+          {/* Purpose */}
+          <FormField label="Purpose">
+            <Input
+              id="purpose"
+              name="purpose"
+              placeholder="Purpose of visit"
+              value={formData.purpose as string}
+              onChange={handleChange}
+              disabled={saving}
+            />
+          </FormField>
+
+          {/* Check-in & Check-out */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Check-in Time">
               <Input
-                id="purpose"
-                name="purpose"
-                placeholder="Purpose of visit"
-                value={formData.purpose as string}
+                id="check_in_time"
+                name="check_in_time"
+                type="datetime-local"
+                value={formData.check_in_time as string}
                 onChange={handleChange}
                 disabled={saving}
               />
             </FormField>
-
-            {/* Check-in & Check-out */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Check-in Time">
-                <Input
-                  id="check_in_time"
-                  name="check_in_time"
-                  type="datetime-local"
-                  value={formData.check_in_time as string}
-                  onChange={handleChange}
-                  disabled={saving}
-                />
-              </FormField>
-              <FormField label="Check-out Time" hint="Leave empty if still checked in">
-                <Input
-                  id="check_out_time"
-                  name="check_out_time"
-                  type="datetime-local"
-                  value={formData.check_out_time as string}
-                  onChange={handleChange}
-                  disabled={saving}
-                />
-              </FormField>
-            </div>
-
-            {/* Notes */}
-            <FormField label="Notes">
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="Any additional notes..."
-                value={formData.notes as string}
+            <FormField label="Check-out Time" hint="Leave empty if still checked in">
+              <Input
+                id="check_out_time"
+                name="check_out_time"
+                type="datetime-local"
+                value={formData.check_out_time as string}
                 onChange={handleChange}
                 disabled={saving}
-                rows={3}
               />
             </FormField>
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="flex justify-end gap-4 mt-6">
+          {/* Notes */}
+          <FormField label="Notes">
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional notes..."
+              value={formData.notes as string}
+              onChange={handleChange}
+              disabled={saving}
+              rows={3}
+            />
+          </FormField>
+        </DetailSection>
+
+        <div className="flex justify-end gap-3">
           <Link href={`/visitors/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

@@ -6,8 +6,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { ShoppingBag, ArrowLeft } from "lucide-react"
+import { ShoppingBag } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -18,8 +17,8 @@ import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -281,31 +280,18 @@ function EditDailySpendContent({
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href={backHref}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Entry
-          </Link>
+    <div className="space-y-6">
+      <DetailHero
+        title="Edit Entry"
+        subtitle="Update expense details"
+        backHref={backHref}
+        backLabel="All Daily Spend"
+        icon={ShoppingBag}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Daily Spend", href:"/expenses/daily-spend"}, {label:"Edit Entry"}]}
+      />
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                    <ShoppingBag className="h-5 w-5 text-warning" />
-                  </div>
-                  <div>
-                    <CardTitle>Edit Entry</CardTitle>
-                    <CardDescription>Update expense details</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DetailSection title="Edit Entry" description="Update expense details" icon={ShoppingBag}>
                 {/* Date */}
                 <FormField label="Date" required>
                   <DatePicker
@@ -440,11 +426,10 @@ function EditDailySpendContent({
                     rows={2}
                   />
                 </FormField>
-              </CardContent>
-            </Card>
+            </DetailSection>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -460,3 +445,4 @@ function EditDailySpendContent({
     </div>
   )
 }
+

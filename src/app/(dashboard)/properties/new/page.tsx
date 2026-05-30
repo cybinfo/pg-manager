@@ -4,9 +4,9 @@ import Link from "next/link"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
-import { ArrowLeft, Building2, Loader2 } from "lucide-react"
+import { Building2 } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { requiredField } from "@/lib/validation"
 
 // Shared form components
@@ -76,38 +76,21 @@ function NewPropertyContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/properties">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Property</h1>
-          <p className="text-muted-foreground">
-            Add a new PG building or property
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Add Property"
+        subtitle="Add a new PG building or property"
+        backHref="/properties"
+        backLabel="All Properties"
+        icon={Building2}
+        breadcrumbs={[
+          { label: "Properties", href: "/properties" },
+          { label: "Add Property" },
+        ]}
+      />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Property Details</CardTitle>
-                <CardDescription>
-                  Enter the basic information about your property
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Property Details" description="Enter the basic information about your property" icon={Building2}>
             <FormField label="Property Name" htmlFor="name" required error={errors.name}>
               <Input
                 id="name"
@@ -181,24 +164,16 @@ function NewPropertyContent() {
                 </FormField>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href="/properties">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Property"
-            )}
+            {saving ? "Creating..." : "Create Property"}
           </Button>
         </div>
       </form>

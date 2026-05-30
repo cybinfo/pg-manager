@@ -8,10 +8,10 @@ import { useAuth } from "@/lib/auth"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
 import { requiredSelect, requiredField, requiredAmount } from "@/lib/validation"
-import { ArrowLeft, Home, Loader2 } from "lucide-react"
+import { Home } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Select } from "@/components/ui/form-components"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageLoading } from "@/components/ui/loading"
@@ -151,34 +151,21 @@ function EditRoomContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Room</h1>
-          <p className="text-muted-foreground">Update room details</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Room"
+        subtitle="Update room details"
+        backHref={backHref}
+        backLabel="All Rooms"
+        icon={Home}
+        breadcrumbs={[
+          { label: "Rooms", href: "/rooms" },
+          { label: "Edit Room" },
+        ]}
+      />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Home className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Room Details</CardTitle>
-                <CardDescription>Update the room information</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Room Details" description="Update the room information" icon={Home}>
             {/* Property Selection */}
             <FormField label="Property" required error={errors.property_id}>
               <Select
@@ -321,24 +308,16 @@ function EditRoomContent() {
                 disabled={saving}
               />
             </div>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={`/rooms/${params.id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

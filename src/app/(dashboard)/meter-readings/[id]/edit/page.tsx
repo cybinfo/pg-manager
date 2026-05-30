@@ -8,9 +8,9 @@ import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { FormField } from "@/components/ui/form-components"
-import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
+import { Gauge, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { Textarea } from "@/components/ui/textarea"
@@ -125,156 +125,117 @@ function EditMeterReadingContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Meter Reading</h1>
-          <p className="text-muted-foreground">Update reading details</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Meter Reading"
+        subtitle="Update reading details"
+        backHref={backHref}
+        backLabel="All Meter Readings"
+        icon={Gauge}
+        breadcrumbs={[{ label: "Meter Readings", href: "/meter-readings" }, { label: "Edit Reading" }]}
+      />
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Meter Info (Read-only) */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${meterType === "electricity" ? "bg-warning/10" : meterType === "water" ? "bg-info/10" : "bg-warning/10"}`}>
-                {meterType === "electricity" && <Zap className="h-5 w-5 text-warning" />}
-                {meterType === "water" && <Droplets className="h-5 w-5 text-info" />}
-                {meterType === "gas" && <Gauge className="h-5 w-5 text-warning" />}
+        <DetailSection
+          title="Meter Information"
+          description="This reading is linked to the following meter"
+          icon={meterType === "electricity" ? Zap : meterType === "water" ? Droplets : Gauge}
+        >
+          <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{(meter?.meter_number as string) || "Unknown Meter"}</span>
+              <span className="text-sm text-muted-foreground capitalize">({meterType})</span>
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div className="flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                {(property?.name as string) || "Unknown Property"}
               </div>
-              <div>
-                <CardTitle>Meter Information</CardTitle>
-                <CardDescription>This reading is linked to the following meter</CardDescription>
+              <div className="flex items-center gap-1">
+                <Home className="h-3 w-3" />
+                Room {(room?.room_number as string) || "Unknown"}
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{(meter?.meter_number as string) || "Unknown Meter"}</span>
-                <span className="text-sm text-muted-foreground capitalize">({meterType})</span>
-              </div>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <div className="flex items-center gap-1">
-                  <Building2 className="h-3 w-3" />
-                  {(property?.name as string) || "Unknown Property"}
-                </div>
-                <div className="flex items-center gap-1">
-                  <Home className="h-3 w-3" />
-                  Room {(room?.room_number as string) || "Unknown"}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
         {/* Reading Details */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Gauge className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Reading Details</CardTitle>
-                <CardDescription>Update the reading value</CardDescription>
-              </div>
+        <DetailSection title="Reading Details" description="Update the reading value" icon={Gauge}>
+          <FormField label="Reading Date" required>
+            <DatePicker
+              id="reading_date"
+              value={formData.reading_date as string}
+              onChange={(val) => handleChange({ target: { name: "reading_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
+              disabled={saving}
+            />
+          </FormField>
+
+          {/* Previous Reading (Read-only) */}
+          {previousReading !== null && (
+            <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
+              <p className="text-sm text-info">
+                <strong>Previous Reading:</strong> {formatNumber(previousReading)}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField label="Reading Date" required>
-              <DatePicker
-                id="reading_date"
-                value={formData.reading_date as string}
-                onChange={(val) => handleChange({ target: { name: "reading_date", value: val } } as React.ChangeEvent<HTMLInputElement>)}
+          )}
+
+          <FormField label="Current Reading" required error={errors.reading_value}>
+            <div className="relative">
+              <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="reading_value"
+                name="reading_value"
+                type="number"
+                min={previousReading || 0}
+                step="0.01"
+                placeholder="e.g., 12345"
+                value={formData.reading_value as string}
+                onChange={handleChange}
+                required
                 disabled={saving}
+                className="pl-9"
               />
-            </FormField>
+            </div>
+          </FormField>
 
-            {/* Previous Reading (Read-only) */}
-            {previousReading !== null && (
-              <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
-                <p className="text-sm text-info">
-                  <strong>Previous Reading:</strong> {formatNumber(previousReading)}
-                </p>
-              </div>
-            )}
-
-            <FormField label="Current Reading" required error={errors.reading_value}>
-              <div className="relative">
-                <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="reading_value"
-                  name="reading_value"
-                  type="number"
-                  min={previousReading || 0}
-                  step="0.01"
-                  placeholder="e.g., 12345"
-                  value={formData.reading_value as string}
-                  onChange={handleChange}
-                  required
-                  disabled={saving}
-                  className="pl-9"
-                />
-              </div>
-            </FormField>
-
-            {/* Calculated Units */}
-            {calculatedUnits !== null && (
-              <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-success/20 rounded-lg">
-                    <Calculator className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-success">Units Consumed</p>
-                    <p className="text-2xl font-bold text-success">
-                      {formatNumber(calculatedUnits)} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m3" : "units"}
-                    </p>
-                  </div>
+          {/* Calculated Units */}
+          {calculatedUnits !== null && (
+            <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-success/20 rounded-lg">
+                  <Calculator className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-success">Units Consumed</p>
+                  <p className="text-2xl font-bold text-success">
+                    {formatNumber(calculatedUnits)} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m3" : "units"}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            <FormField label="Notes">
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="Any additional notes..."
-                value={formData.notes as string}
-                onChange={handleChange}
-                disabled={saving}
-                className="min-h-[80px]"
-              />
-            </FormField>
-          </CardContent>
-        </Card>
+          <FormField label="Notes">
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional notes..."
+              value={formData.notes as string}
+              onChange={handleChange}
+              disabled={saving}
+              className="min-h-[80px]"
+            />
+          </FormField>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <Link href={`/meter-readings/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Gauge className="mr-2 h-4 w-4" />
-                Save Changes
-              </>
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

@@ -15,11 +15,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { Users, Loader2, Clock } from "lucide-react"
+import { Users, Clock } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { PermissionGuard } from "@/components/auth"
@@ -182,22 +181,8 @@ function AddToWaitlistContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Waitlist Details</CardTitle>
-                <CardDescription>
-                  Enter the contact information for the prospective member
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Waitlist Details" description="Enter the contact information for the prospective member" icon={Users}>
             {/* Library Selection */}
             <FormField label="Library" htmlFor="library_id" required error={errors.library_id}>
               <Combobox
@@ -283,22 +268,16 @@ function AddToWaitlistContent() {
                 disabled={saving}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href="/library-waitlist">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding...
-              </>
-            ) : (
+            {saving ? "Adding..." : (
               <>
                 <Users className="mr-2 h-4 w-4" />
                 Add to Waitlist

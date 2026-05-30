@@ -14,9 +14,9 @@ import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Select, FormField } from "@/components/ui/form-components"
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { CreditCard } from "lucide-react"
 import { requiredAmount, requiredDate } from "@/lib/validation"
 import { DatePicker } from "@/components/ui/date-picker"
 import { PageLoading } from "@/components/ui/loading"
@@ -105,38 +105,18 @@ function EditLibraryPaymentContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Payment</h1>
-          <p className="text-muted-foreground">
-            {receiptNumber}
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Payment"
+        subtitle={receiptNumber}
+        backHref={backHref}
+        backLabel="All Payments"
+        icon={CreditCard}
+        breadcrumbs={[{ label: "Library Payments", href: "/library-payments" }, { label: "Edit Payment" }]}
+      />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <CreditCard className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <CardTitle>Payment Details</CardTitle>
-                <CardDescription>
-                  Update payment information
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Payment Details" description="Update payment information" icon={CreditCard}>
             {/* Payment Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
@@ -216,24 +196,16 @@ function EditLibraryPaymentContent({
                 rows={3}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={`/library-payments/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

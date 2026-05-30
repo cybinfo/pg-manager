@@ -6,8 +6,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Hammer, ArrowLeft } from "lucide-react"
+import { Hammer } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -17,8 +16,8 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -292,31 +291,18 @@ function EditServicePaymentContent({
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-      {/* Back Link */}
-      <Link
-        href={backHref}
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Back to Payment
-      </Link>
+    <div className="space-y-6">
+      <DetailHero
+        title="Edit Service Payment"
+        subtitle="Update payment details"
+        backHref={backHref}
+        backLabel="All Services"
+        icon={Hammer}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Services", href:"/expenses/services"}, {label:"Edit Service"}]}
+      />
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Hammer className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <CardTitle>Edit Service Payment</CardTitle>
-                    <CardDescription>Update payment details</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DetailSection title="Edit Service Payment" description="Update payment details" icon={Hammer}>
                 {/* Provider & Category */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Provider Details</h3>
@@ -546,11 +532,10 @@ function EditServicePaymentContent({
                     rows={2}
                   />
                 </FormField>
-              </CardContent>
-            </Card>
+            </DetailSection>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -562,7 +547,7 @@ function EditServicePaymentContent({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-      </form>
+          </form>
     </div>
   )
 }

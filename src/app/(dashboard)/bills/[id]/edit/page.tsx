@@ -14,9 +14,9 @@ import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { ArrowLeft, FileText, Loader2 } from "lucide-react"
+import { FileText } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredDate } from "@/lib/validation"
@@ -100,36 +100,21 @@ function EditBillContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Bill</h1>
-          <p className="text-muted-foreground">{billNumber}</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Bill"
+        subtitle={billNumber}
+        backHref={backHref}
+        backLabel="All Bills"
+        icon={FileText}
+        breadcrumbs={[
+          { label: "Bills", href: "/bills" },
+          { label: "Edit Bill" },
+        ]}
+      />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Bill Details</CardTitle>
-                <CardDescription>
-                  Update bill dates, status, and notes. Line items and amounts cannot be changed.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Bill Details" description="Update bill dates, status, and notes. Line items and amounts cannot be changed." icon={FileText}>
             {/* Status & Due Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Status" htmlFor="status">
@@ -183,24 +168,16 @@ function EditBillContent({
                 rows={3}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={`/bills/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

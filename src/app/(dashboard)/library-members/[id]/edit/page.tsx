@@ -14,10 +14,10 @@ import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredPhone } from "@/lib/validation"
-import { ArrowLeft, Users, Loader2, ExternalLink } from "lucide-react"
+import { Users, ExternalLink } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
@@ -152,38 +152,18 @@ function EditLibraryMemberContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Member</h1>
-          <p className="text-muted-foreground">
-            {memberCode} • {library?.name as string}
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Member"
+        subtitle={memberCode && library?.name ? `${memberCode} • ${library.name as string}` : undefined}
+        backHref={backHref}
+        backLabel="All Members"
+        icon={Users}
+        breadcrumbs={[{ label: "Members", href: "/library-members" }, { label: "Edit Member" }]}
+      />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Member Details</CardTitle>
-                <CardDescription>
-                  Update member information
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Member Details" description="Update member information" icon={Users}>
             {/* Photo Upload */}
             <div className="flex justify-center">
               <ProfilePhotoUpload
@@ -316,24 +296,16 @@ function EditLibraryMemberContent({
                 rows={3}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={`/library-members/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

@@ -6,8 +6,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Building2, ArrowLeft } from "lucide-react"
+import { Building2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -17,8 +16,8 @@ import { getNowISO } from "@/lib/date-helpers"
 
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 
@@ -200,31 +199,18 @@ function EditVendorContent({
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-      {/* Back Link */}
-      <Link
-        href={backHref}
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Back to Vendor
-      </Link>
+    <div className="space-y-6">
+      <DetailHero
+        title="Edit Vendor"
+        subtitle="Update vendor details"
+        backHref={backHref}
+        backLabel="All Vendors"
+        icon={Building2}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Vendors", href:"/expenses/vendors"}, {label:"Edit Vendor"}]}
+      />
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <CardTitle>Edit Vendor</CardTitle>
-                    <CardDescription>Update vendor details</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DetailSection title="Edit Vendor" description="Update vendor details" icon={Building2}>
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
@@ -410,11 +396,10 @@ function EditVendorContent({
                     Active (available for selection)
                   </Label>
                 </div>
-              </CardContent>
-            </Card>
+            </DetailSection>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -426,7 +411,7 @@ function EditVendorContent({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-      </form>
+          </form>
     </div>
   )
 }

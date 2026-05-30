@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   LogOut,
   Loader2,
@@ -28,7 +27,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate} from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import { Textarea } from "@/components/ui/textarea"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -376,19 +375,8 @@ function InitiateCheckoutForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Tenant Selection */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Select Tenant</CardTitle>
-                <CardDescription>Choose the tenant for checkout</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Select Tenant" description="Choose the tenant for checkout" icon={User}>
+          <div className="space-y-4">
             <FormField label="Tenant" required>
               {tenants.length === 0 ? (
                 <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg text-center">
@@ -451,23 +439,12 @@ function InitiateCheckoutForm() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
         {/* Dates */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-info/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <CardTitle>Exit Details</CardTitle>
-                <CardDescription>Notice and exit dates</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Exit Details" description="Notice and exit dates" icon={Calendar}>
+          <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Notice Given Date" required hint="When did the tenant give notice?">
                 <DatePicker
@@ -529,23 +506,12 @@ function InitiateCheckoutForm() {
                 className="resize-none"
               />
             </FormField>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
         {/* Deductions */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-destructive/10 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <CardTitle>Deductions</CardTitle>
-                <CardDescription>Damages, cleaning, or other charges</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Deductions" description="Damages, cleaning, or other charges" icon={AlertCircle}>
+          <div className="space-y-4">
             {/* Existing Deductions */}
             {deductions.length > 0 && (
               <div className="space-y-2">
@@ -593,25 +559,13 @@ function InitiateCheckoutForm() {
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
         {/* Settlement Summary */}
         {selectedTenant && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <IndianRupee className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <CardTitle>Settlement Summary</CardTitle>
-                  <CardDescription>Calculated amounts</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+          <DetailSection title="Settlement Summary" description="Calculated amounts" icon={IndianRupee}>
+            <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Pending Dues</span>
                   <span className="font-medium">{formatCurrency(amounts.totalDues)}</span>
@@ -632,9 +586,8 @@ function InitiateCheckoutForm() {
                     {formatCurrency(Math.abs(amounts.finalAmount))}
                   </span>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </DetailSection>
         )}
 
         <div className="flex justify-end gap-4">

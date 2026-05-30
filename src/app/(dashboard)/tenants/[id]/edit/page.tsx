@@ -19,7 +19,6 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
 import { requiredSelect, requiredAmount } from "@/lib/validation"
 import {
-  Loader2,
   Home,
   Shield,
   FileText,
@@ -374,7 +373,7 @@ function EditTenantContent() {
         </DetailSection>
 
         {/* Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <Link href={`/tenants/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
@@ -382,10 +381,7 @@ function EditTenantContent() {
           </Link>
           <Button type="submit" disabled={saving}>
             {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
+              "Saving..."
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />

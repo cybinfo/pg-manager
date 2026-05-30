@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
@@ -17,7 +17,7 @@ import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITY } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { PageSkeleton } from "@/components/ui/loading"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import type { PropertyOption } from "@/types/properties.types"
 
@@ -303,23 +303,7 @@ function NewComplaintForm() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Location */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                {formData.entity_type === "library" ? (
-                  <Library className="h-5 w-5 text-primary" />
-                ) : (
-                  <Building2 className="h-5 w-5 text-primary" />
-                )}
-              </div>
-              <div>
-                <CardTitle>Location</CardTitle>
-                <CardDescription>Where is the issue?</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Location" description="Where is the issue?" icon={MessageSquare}>
             {/* Entity Type Selection */}
             {libraries.length > 0 && (
               <div className="space-y-2">
@@ -438,23 +422,10 @@ function NewComplaintForm() {
                 </FormField>
               </>
             )}
-          </CardContent>
-        </Card>
+        </DetailSection>
 
         {/* Issue Details */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-warning/10 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <CardTitle>Issue Details</CardTitle>
-                <CardDescription>Describe the problem</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Issue Details" description="Describe the problem" icon={AlertTriangle}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Category" htmlFor="category" required>
                 <Select
@@ -516,22 +487,16 @@ function NewComplaintForm() {
                 ))}
               </ul>
             </div>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <Link href="/complaints">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : (
+            {saving ? "Submitting..." : (
               <>
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Log Complaint

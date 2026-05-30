@@ -16,11 +16,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { requiredField, requiredSelect } from "@/lib/validation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
-import { Grid3X3, Loader2 } from "lucide-react"
-import { DetailHero } from "@/components/ui"
+import { Grid3X3 } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import type { LibraryOption } from "@/types/library.types"
 
@@ -163,22 +162,8 @@ function NewLibrarySectionContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Grid3X3 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Section Details</CardTitle>
-                <CardDescription>
-                  Enter section information and seating configuration
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Section Details" description="Enter section information and seating configuration" icon={Grid3X3}>
             {/* Library Selection */}
             <FormField label="Library" required error={errors.library_id}>
               <Combobox
@@ -292,24 +277,16 @@ function NewLibrarySectionContent() {
                 </FormField>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={preselectedLibrary ? `/library/${preselectedLibrary}` : "/library-sections"}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Section"
-            )}
+            {saving ? "Creating..." : "Create Section"}
           </Button>
         </div>
       </form>

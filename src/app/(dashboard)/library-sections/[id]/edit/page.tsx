@@ -15,9 +15,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { requiredField } from "@/lib/validation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
+import { Grid3X3 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
@@ -107,156 +107,127 @@ function EditLibrarySectionContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Section</h1>
-          <p className="text-muted-foreground">
-            {library?.name as string} • {formData.name}
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Section"
+        subtitle={`${library?.name as string} • ${formData.name}`}
+        backHref={backHref}
+        backLabel="All Sections"
+        icon={Grid3X3}
+        breadcrumbs={[{ label: "Sections", href: "/library-sections" }, { label: "Edit Section" }]}
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Grid3X3 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Section Details</CardTitle>
-                <CardDescription>
-                  Update section information
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Section Name" required error={errors.name}>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="e.g., AC Hall, Silent Zone"
-                  value={formData.name as string}
-                  onChange={handleChange}
-                  required
-                  disabled={saving}
-                />
-              </FormField>
-              <FormField label="Section Number">
-                <Input
-                  id="section_number"
-                  name="section_number"
-                  placeholder="e.g., A, B, C"
-                  value={formData.section_number as string}
-                  onChange={handleChange}
-                  disabled={saving}
-                  maxLength={10}
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Floor">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Section Details" description="Update section information" icon={Grid3X3}>
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Section Name" required error={errors.name}>
               <Input
-                id="floor"
-                name="floor"
-                type="number"
-                placeholder="e.g., 0, 1, 2"
-                value={formData.floor as number}
+                id="name"
+                name="name"
+                placeholder="e.g., AC Hall, Silent Zone"
+                value={formData.name as string}
                 onChange={handleChange}
+                required
                 disabled={saving}
-                min={0}
               />
             </FormField>
+            <FormField label="Section Number">
+              <Input
+                id="section_number"
+                name="section_number"
+                placeholder="e.g., A, B, C"
+                value={formData.section_number as string}
+                onChange={handleChange}
+                disabled={saving}
+                maxLength={10}
+              />
+            </FormField>
+          </div>
 
-            {/* Features */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-3">Features</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="is_ac"
-                    checked={formData.is_ac as boolean}
-                    onCheckedChange={(checked) => handleCheckboxChange("is_ac", checked as boolean)}
-                    disabled={saving}
-                  />
-                  <Label htmlFor="is_ac" className="cursor-pointer">
-                    Air Conditioned
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="has_power_outlets"
-                    checked={formData.has_power_outlets as boolean}
-                    onCheckedChange={(checked) => handleCheckboxChange("has_power_outlets", checked as boolean)}
-                    disabled={saving}
-                  />
-                  <Label htmlFor="has_power_outlets" className="cursor-pointer">
-                    Power Outlets
-                  </Label>
-                </div>
+          <FormField label="Floor">
+            <Input
+              id="floor"
+              name="floor"
+              type="number"
+              placeholder="e.g., 0, 1, 2"
+              value={formData.floor as number}
+              onChange={handleChange}
+              disabled={saving}
+              min={0}
+            />
+          </FormField>
+
+          {/* Features */}
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-3">Features</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_ac"
+                  checked={formData.is_ac as boolean}
+                  onCheckedChange={(checked) => handleCheckboxChange("is_ac", checked as boolean)}
+                  disabled={saving}
+                />
+                <Label htmlFor="is_ac" className="cursor-pointer">
+                  Air Conditioned
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has_power_outlets"
+                  checked={formData.has_power_outlets as boolean}
+                  onCheckedChange={(checked) => handleCheckboxChange("has_power_outlets", checked as boolean)}
+                  disabled={saving}
+                />
+                <Label htmlFor="has_power_outlets" className="cursor-pointer">
+                  Power Outlets
+                </Label>
               </div>
             </div>
+          </div>
 
-            {/* Pricing */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-3">Pricing (Optional)</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Hourly Rate (Rs.)">
-                  <Input
-                    id="hourly_rate"
-                    name="hourly_rate"
-                    type="number"
-                    placeholder="e.g., 50"
-                    value={formData.hourly_rate as string}
-                    onChange={handleChange}
-                    disabled={saving}
-                    min={0}
-                    step="0.01"
-                  />
-                </FormField>
-                <FormField label="Monthly Rate (Rs.)">
-                  <Input
-                    id="monthly_rate"
-                    name="monthly_rate"
-                    type="number"
-                    placeholder="e.g., 1000"
-                    value={formData.monthly_rate as string}
-                    onChange={handleChange}
-                    disabled={saving}
-                    min={0}
-                    step="0.01"
-                  />
-                </FormField>
-              </div>
+          {/* Pricing */}
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-3">Pricing (Optional)</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label="Hourly Rate (Rs.)">
+                <Input
+                  id="hourly_rate"
+                  name="hourly_rate"
+                  type="number"
+                  placeholder="e.g., 50"
+                  value={formData.hourly_rate as string}
+                  onChange={handleChange}
+                  disabled={saving}
+                  min={0}
+                  step="0.01"
+                />
+              </FormField>
+              <FormField label="Monthly Rate (Rs.)">
+                <Input
+                  id="monthly_rate"
+                  name="monthly_rate"
+                  type="number"
+                  placeholder="e.g., 1000"
+                  value={formData.monthly_rate as string}
+                  onChange={handleChange}
+                  disabled={saving}
+                  min={0}
+                  step="0.01"
+                />
+              </FormField>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={`/library-sections/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

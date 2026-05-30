@@ -7,16 +7,15 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { FormField, Select } from "@/components/ui/form-components"
 import {
   Loader2,
-  ArrowLeft,
   Receipt,
   Wallet,
   FileText,
 } from "lucide-react"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
@@ -192,34 +191,17 @@ function EditExpenseContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Edit Expense</h1>
-          <p className="text-muted-foreground">Update expense details</p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Expense"
+        subtitle="Update expense details"
+        backHref={backHref}
+        backLabel="All Expenses"
+        icon={Receipt}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Edit Expense"}]}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-destructive/10 rounded-lg">
-                <Receipt className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <CardTitle>Expense Details</CardTitle>
-                <CardDescription>Basic information about the expense</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Expense Details" description="Basic information about the expense" icon={Receipt}>
             <div className="grid gap-4 md:grid-cols-2">
               <FormField label="Category" required>
                 <Select
@@ -285,23 +267,9 @@ function EditExpenseContent() {
                 onChange={handleChange}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        {/* Vendor & Payment */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-info/10 rounded-lg">
-                <Wallet className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <CardTitle>Payment Information</CardTitle>
-                <CardDescription>Vendor and payment details</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Payment Information" description="Vendor and payment details" icon={Wallet}>
             <div className="grid gap-4 md:grid-cols-2">
               <FormField label="Vendor / Payee">
                 <Input
@@ -333,23 +301,9 @@ function EditExpenseContent() {
                 options={EXPENSE_PAYMENT_MODE_OPTIONS}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted rounded-lg">
-                <FileText className="h-5 w-5 text-foreground" />
-              </div>
-              <div>
-                <CardTitle>Additional Notes</CardTitle>
-                <CardDescription>Any extra information about this expense</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+        <DetailSection title="Additional Notes" description="Any extra information about this expense" icon={FileText}>
             <Textarea
               id="notes"
               name="notes"
@@ -359,19 +313,17 @@ function EditExpenseContent() {
               rows={3}
               className="resize-none"
             />
-          </CardContent>
-        </Card>
+        </DetailSection>
 
         {/* Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <Link href={`/expenses/${params.id}`}>
             <Button type="button" variant="outline">
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={submitting}>
-            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Save Changes
+            {submitting ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

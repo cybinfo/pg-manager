@@ -14,9 +14,9 @@ import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormField } from "@/components/ui/form-components"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { ArrowLeft, Lock, Loader2, Users } from "lucide-react"
+import { Lock, Loader2, Users } from "lucide-react"
+import { DetailHero, DetailSection, NotFoundState } from "@/components/ui"
 import { DatePicker } from "@/components/ui/date-picker"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -229,8 +229,11 @@ export default function AssignLockerPage({
   }
 
   if (!locker) {
-    return null
+    return <NotFoundState title="Locker not found" backHref="/library-lockers" backLabel="All Lockers" />
   }
+
+  const backHref = `/library-lockers/${id}`
+  const lockerNumber = `#${locker.locker_number}`
 
   const memberOptions: ComboboxOption[] = members.map((m) => ({
     value: m.id,
@@ -241,38 +244,27 @@ export default function AssignLockerPage({
     <ModuleGuard module="lockers">
       <PermissionGuard permission="library_lockers.edit">
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={`/library-lockers/${id}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Assign Locker</h1>
-          <p className="text-muted-foreground">
-            Locker #{locker.locker_number} • {locker.library?.name}
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Assign Locker"
+        subtitle={`${lockerNumber}${locker.library?.name ? ` • ${locker.library.name}` : ""}`}
+        backHref={backHref}
+        backLabel="Back to Locker"
+        icon={Lock}
+        breadcrumbs={[
+          { label: "Lockers", href: "/library-lockers" },
+          { label: lockerNumber, href: backHref },
+          { label: "Assign Member" },
+        ]}
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Lock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Assignment Details</CardTitle>
-                <CardDescription>
-                  Assign this locker to a library member
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <DetailSection
+          title="Assignment Details"
+          description="Assign this locker to a library member"
+          icon={Lock}
+        >
+          <div className="space-y-6">
             {/* Locker Info */}
             <div className="p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-3 mb-2">
@@ -361,10 +353,10 @@ export default function AssignLockerPage({
                 </FormField>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3 mt-6">
           <Link href={`/library-lockers/${id}`}>
             <Button type="button" variant="outline" disabled={loading}>
               Cancel

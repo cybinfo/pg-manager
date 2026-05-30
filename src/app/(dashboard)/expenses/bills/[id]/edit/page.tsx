@@ -6,8 +6,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Receipt, ArrowLeft } from "lucide-react"
+import { Receipt } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -17,8 +16,8 @@ import { getNowISO } from "@/lib/date-helpers"
 
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -272,31 +271,18 @@ function EditBillPaymentContent({
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-      {/* Back Link */}
-      <Link
-        href={backHref}
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Back to Bill
-      </Link>
+    <div className="space-y-6">
+      <DetailHero
+        title="Edit Bill"
+        subtitle="Update bill details"
+        backHref={backHref}
+        backLabel="All Bills"
+        icon={Receipt}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Bills", href:"/expenses/bills"}, {label:"Edit Bill"}]}
+      />
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
-                    <Receipt className="h-5 w-5 text-info" />
-                  </div>
-                  <div>
-                    <CardTitle>Edit Bill</CardTitle>
-                    <CardDescription>Update bill details</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DetailSection title="Edit Bill" description="Update bill details" icon={Receipt}>
                 {/* Vendor Selection */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Vendor Details</h3>
@@ -607,11 +593,10 @@ function EditBillPaymentContent({
                     rows={2}
                   />
                 </FormField>
-              </CardContent>
-            </Card>
+            </DetailSection>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -623,7 +608,7 @@ function EditBillPaymentContent({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-      </form>
+          </form>
     </div>
   )
 }

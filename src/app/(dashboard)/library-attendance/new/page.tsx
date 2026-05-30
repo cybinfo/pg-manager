@@ -17,11 +17,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
 import type { ValidatorResult } from "@/lib/validation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
@@ -283,22 +282,9 @@ function NewLibraryAttendanceContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Check-In Details</CardTitle>
-                <CardDescription>
-                  Select a member and record their check-in time
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Check-In Details" description="Select a member and record their check-in time" icon={Clock}>
+          <div className="space-y-6">
             {/* Member Selection */}
             <FormField label="Select Member" htmlFor="member_id" required error={errors.member_id}>
               {members.length > 0 ? (
@@ -423,10 +409,10 @@ function NewLibraryAttendanceContent() {
                 rows={2}
               />
             </FormField>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href="/library-attendance">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
@@ -436,14 +422,7 @@ function NewLibraryAttendanceContent() {
             type="submit"
             disabled={saving || members.length === 0 || (selectedMember?.hours_balance ?? 0) <= 0}
           >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Checking In...
-              </>
-            ) : (
-              "Check In"
-            )}
+            {saving ? "Checking In..." : "Check In"}
           </Button>
         </div>
       </form>

@@ -32,7 +32,6 @@ import {
   Plus,
   Trash2,
   Heart,
-  Loader2,
   Camera,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -661,7 +660,7 @@ function EditPersonContent() {
         </DetailSection>
 
         {/* Submit Buttons */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <Link href={`/people/${params.id}`}>
             <Button type="button" variant="outline">
               Cancel
@@ -669,10 +668,7 @@ function EditPersonContent() {
           </Link>
           <Button type="submit" disabled={loading}>
             {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
+              "Saving..."
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />

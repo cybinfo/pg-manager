@@ -30,6 +30,7 @@ import { Loader2, Clock, RefreshCw, Calendar, AlertTriangle, Trash2, Plus, BookO
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
+import { NotFoundState } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { formatDate, formatNumber } from "@/lib/format"
 import { getTodayISO, computeEndDate, computeDefaultStartDate } from "@/lib/date-helpers"
@@ -261,7 +262,7 @@ export default function RenewLibraryMemberPage({
   }
 
   if (!member) {
-    return null
+    return <NotFoundState title="Member not found" backHref="/library-members" backLabel="All Members" />
   }
 
   const displayName = member.person?.name || member.name

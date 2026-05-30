@@ -14,15 +14,14 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
-import { CreditCard, Loader2 } from "lucide-react"
+import { CreditCard } from "lucide-react"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import { DatePicker } from "@/components/ui/date-picker"
 import { getTodayISO } from "@/lib/date-helpers"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_TYPE_OPTIONS } from "@/lib/status"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 
 interface Member {
@@ -224,22 +223,8 @@ function NewLibraryPaymentContent() {
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <CreditCard className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <CardTitle>Payment Details</CardTitle>
-                <CardDescription>
-                  Enter payment information
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Payment Details" description="Enter payment information" icon={CreditCard}>
             {/* Member Selection */}
             <FormField label="Member" required error={errors.member_id} hint={selectedMember ? `Hours Balance: ${selectedMember.hours_balance.toFixed(1)}h` : undefined}>
               <Combobox
@@ -322,24 +307,16 @@ function NewLibraryPaymentContent() {
                 rows={3}
               />
             </FormField>
-          </CardContent>
-        </Card>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href={preselectedMember ? `/library-members/${preselectedMember}` : "/library-payments"}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Recording...
-              </>
-            ) : (
-              "Record Payment"
-            )}
+            {saving ? "Recording..." : "Record Payment"}
           </Button>
         </div>
       </form>

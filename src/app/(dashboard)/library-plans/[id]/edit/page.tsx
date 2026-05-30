@@ -17,9 +17,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
 import { requiredField, requiredAmount } from "@/lib/validation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { CreditCard } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOT_OPTIONS } from "@/types/library.types"
 import { PermissionGuard } from "@/components/auth"
@@ -111,176 +111,147 @@ function EditLibraryPlanContent({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Edit Plan</h1>
-          <p className="text-muted-foreground">
-            {record?.name as string}
-          </p>
-        </div>
-      </div>
+      <DetailHero
+        title="Edit Plan"
+        subtitle={record?.name as string}
+        backHref={backHref}
+        backLabel="All Plans"
+        icon={CreditCard}
+        breadcrumbs={[{ label: "Plans", href: "/library-plans" }, { label: "Edit Plan" }]}
+      />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <CreditCard className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Plan Details</CardTitle>
-                <CardDescription>
-                  Update plan hours, validity, and pricing
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Plan Name" required error={errors.name}>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="e.g., 9 Hours, Monthly"
-                  value={formData.name as string}
-                  onChange={handleChange}
-                  required
-                  disabled={saving}
-                />
-              </FormField>
-              <FormField label="Price (Rs.)" required error={errors.base_price}>
-                <Input
-                  id="base_price"
-                  name="base_price"
-                  type="number"
-                  placeholder="e.g., 1000"
-                  value={formData.base_price as string}
-                  onChange={handleChange}
-                  required
-                  disabled={saving}
-                  min={0}
-                  step="0.01"
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Description">
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Brief description of the plan..."
-                value={formData.description as string}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <DetailSection title="Plan Details" description="Update plan hours, validity, and pricing" icon={CreditCard}>
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Plan Name" required error={errors.name}>
+              <Input
+                id="name"
+                name="name"
+                placeholder="e.g., 9 Hours, Monthly"
+                value={formData.name as string}
                 onChange={handleChange}
+                required
                 disabled={saving}
-                rows={2}
               />
             </FormField>
+            <FormField label="Price (Rs.)" required error={errors.base_price}>
+              <Input
+                id="base_price"
+                name="base_price"
+                type="number"
+                placeholder="e.g., 1000"
+                value={formData.base_price as string}
+                onChange={handleChange}
+                required
+                disabled={saving}
+                min={0}
+                step="0.01"
+              />
+            </FormField>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Hours Included" hint="Leave empty for unlimited hours">
-                <Input
-                  id="hours_included"
-                  name="hours_included"
-                  type="number"
-                  placeholder="Leave empty for unlimited"
-                  value={formData.hours_included as string}
-                  onChange={handleChange}
-                  disabled={saving}
-                  min={1}
-                />
-              </FormField>
-              <FormField label="Validity (Days)" required error={errors.validity_days}>
-                <Input
-                  id="validity_days"
-                  name="validity_days"
-                  type="number"
-                  placeholder="e.g., 30"
-                  value={formData.validity_days as string}
-                  onChange={handleChange}
-                  required
-                  disabled={saving}
-                  min={1}
-                />
-              </FormField>
-            </div>
+          <FormField label="Description">
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Brief description of the plan..."
+              value={formData.description as string}
+              onChange={handleChange}
+              disabled={saving}
+              rows={2}
+            />
+          </FormField>
 
-            {/* Time Slot Restrictions */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-2">Allowed Time Slots</h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                Leave all unchecked to allow all time slots
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {TIME_SLOT_OPTIONS.map((slot) => (
-                  <div key={slot.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`slot-${slot.value}`}
-                      checked={(formData.allowed_slots as string[]).includes(slot.value)}
-                      onCheckedChange={(checked) => handleSlotChange(slot.value, checked as boolean)}
-                      disabled={saving}
-                    />
-                    <Label htmlFor={`slot-${slot.value}`} className="cursor-pointer text-sm">
-                      {slot.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Hours Included" hint="Leave empty for unlimited hours">
+              <Input
+                id="hours_included"
+                name="hours_included"
+                type="number"
+                placeholder="Leave empty for unlimited"
+                value={formData.hours_included as string}
+                onChange={handleChange}
+                disabled={saving}
+                min={1}
+              />
+            </FormField>
+            <FormField label="Validity (Days)" required error={errors.validity_days}>
+              <Input
+                id="validity_days"
+                name="validity_days"
+                type="number"
+                placeholder="e.g., 30"
+                value={formData.validity_days as string}
+                onChange={handleChange}
+                required
+                disabled={saving}
+                min={1}
+              />
+            </FormField>
+          </div>
 
-            {/* Status & Order */}
-            <div className="border-t pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Sort Order">
-                  <Input
-                    id="sort_order"
-                    name="sort_order"
-                    type="number"
-                    placeholder="e.g., 0, 1, 2"
-                    value={formData.sort_order as string}
-                    onChange={handleChange}
-                    disabled={saving}
-                    min={0}
-                  />
-                </FormField>
-                <div className="flex items-center space-x-2 pt-8">
+          {/* Time Slot Restrictions */}
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-2">Allowed Time Slots</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Leave all unchecked to allow all time slots
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {TIME_SLOT_OPTIONS.map((slot) => (
+                <div key={slot.value} className="flex items-center space-x-2">
                   <Checkbox
-                    id="is_active"
-                    checked={formData.is_active as boolean}
-                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked as boolean }))}
+                    id={`slot-${slot.value}`}
+                    checked={(formData.allowed_slots as string[]).includes(slot.value)}
+                    onCheckedChange={(checked) => handleSlotChange(slot.value, checked as boolean)}
                     disabled={saving}
                   />
-                  <Label htmlFor="is_active" className="cursor-pointer">
-                    Plan is active
+                  <Label htmlFor={`slot-${slot.value}`} className="cursor-pointer text-sm">
+                    {slot.label}
                   </Label>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Status & Order */}
+          <div className="border-t pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label="Sort Order">
+                <Input
+                  id="sort_order"
+                  name="sort_order"
+                  type="number"
+                  placeholder="e.g., 0, 1, 2"
+                  value={formData.sort_order as string}
+                  onChange={handleChange}
+                  disabled={saving}
+                  min={0}
+                />
+              </FormField>
+              <div className="flex items-center space-x-2 pt-8">
+                <Checkbox
+                  id="is_active"
+                  checked={formData.is_active as boolean}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked as boolean }))}
+                  disabled={saving}
+                />
+                <Label htmlFor="is_active" className="cursor-pointer">
+                  Plan is active
+                </Label>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-end gap-3">
           <Link href="/library-plans">
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

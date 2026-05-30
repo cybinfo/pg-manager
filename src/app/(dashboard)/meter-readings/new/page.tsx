@@ -8,7 +8,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
+import { DetailSection } from "@/components/ui"
 import {
   ArrowLeft, Gauge, Loader2, Building2, Home, Calculator,
   IndianRupee, Users, Zap, Droplets, Plus, FileText,
@@ -399,8 +399,8 @@ function NewMeterReadingContent() {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+        <DetailSection title="No Meters Assigned" icon={Gauge}>
+          <div className="flex flex-col items-center justify-center py-8">
             <Gauge className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No meters assigned to rooms</h3>
             <p className="text-muted-foreground text-center mb-4">
@@ -412,8 +412,8 @@ function NewMeterReadingContent() {
                 Add Meter
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
       </div>
     )
   }

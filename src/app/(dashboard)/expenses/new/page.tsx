@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/auth"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
@@ -19,7 +18,7 @@ import {
 } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
-import { DetailHero } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
@@ -173,19 +172,8 @@ function NewExpenseContent() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-destructive/10 rounded-lg">
-                <Receipt className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <CardTitle>Expense Details</CardTitle>
-                <CardDescription>Basic information about the expense</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Expense Details" description="Basic information about the expense" icon={Receipt}>
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <FormField label="Category" htmlFor="expense_type_id" required error={errors.expense_type_id}>
                 <Select
@@ -250,23 +238,12 @@ function NewExpenseContent() {
                 onChange={handleChange}
               />
             </FormField>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
         {/* Vendor & Payment */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-info/10 rounded-lg">
-                <Wallet className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <CardTitle>Payment Information</CardTitle>
-                <CardDescription>Vendor and payment details</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailSection title="Payment Information" description="Vendor and payment details" icon={Wallet}>
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <FormField label="Vendor / Payee" htmlFor="vendor_name">
                 <Input
@@ -298,34 +275,21 @@ function NewExpenseContent() {
                 options={EXPENSE_PAYMENT_MODE_OPTIONS}
               />
             </FormField>
-          </CardContent>
-        </Card>
+          </div>
+        </DetailSection>
 
         {/* Notes */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted rounded-lg">
-                <FileText className="h-5 w-5 text-foreground" />
-              </div>
-              <div>
-                <CardTitle>Additional Notes</CardTitle>
-                <CardDescription>Any extra information about this expense</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              id="notes"
-              name="notes"
-              placeholder="Add any additional notes here..."
-              value={formData.notes as string}
-              onChange={handleChange}
-              rows={3}
-              className="resize-none"
-            />
-          </CardContent>
-        </Card>
+        <DetailSection title="Additional Notes" description="Any extra information about this expense" icon={FileText}>
+          <Textarea
+            id="notes"
+            name="notes"
+            placeholder="Add any additional notes here..."
+            value={formData.notes as string}
+            onChange={handleChange}
+            rows={3}
+            className="resize-none"
+          />
+        </DetailSection>
 
         {/* Actions */}
         <div className="flex justify-end gap-4">

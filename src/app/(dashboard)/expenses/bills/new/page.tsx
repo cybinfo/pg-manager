@@ -8,8 +8,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Receipt, ArrowLeft } from "lucide-react"
+import { Receipt } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -18,8 +17,8 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
+import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -240,33 +239,18 @@ function NewBillPaymentContent() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href={backHref}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Bills
-          </Link>
+    <div className="space-y-6">
+      <DetailHero
+        title="New Bill Payment"
+        subtitle="Record a vendor bill or recurring expense"
+        backHref={backHref}
+        backLabel="All Bills"
+        icon={Receipt}
+        breadcrumbs={[{label:"Expenses", href:"/expenses"}, {label:"Bills", href:"/expenses/bills"}, {label:"Add Bill"}]}
+      />
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
-                    <Receipt className="h-5 w-5 text-info" />
-                  </div>
-                  <div>
-                    <CardTitle>New Bill Payment</CardTitle>
-                    <CardDescription>
-                      Record a vendor bill or recurring expense
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <DetailSection title="New Bill Payment" description="Record a vendor bill or recurring expense" icon={Receipt}>
                 {/* Vendor Selection */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Vendor Details</h3>
@@ -566,11 +550,10 @@ function NewBillPaymentContent() {
                     rows={2}
                   />
                 </FormField>
-              </CardContent>
-            </Card>
+            </DetailSection>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -586,3 +569,4 @@ function NewBillPaymentContent() {
     </div>
   )
 }
+
