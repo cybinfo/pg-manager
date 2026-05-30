@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { DetailSection, DetailListSection } from "@/components/ui"
 import { FileText, CreditCard } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -120,21 +119,21 @@ export function BillBreakdown({
         icon={CreditCard}
         items={payments}
         keyExtractor={(payment, _) => payment.id}
+        itemSpacing="md"
         renderItem={(payment) => (
-          <div className="flex justify-between items-center py-3 border-b last:border-0">
-            <div>
-              <p className="font-medium text-success">+{formatCurrency(payment.amount)}</p>
-              <p className="text-sm text-muted-foreground">
-                {formatDate(payment.payment_date)} via {payment.payment_method}
-              </p>
-              {payment.receipt_number && (
-                <p className="text-xs text-muted-foreground">Ref: {payment.receipt_number}</p>
-              )}
+          <Link href={`/payments/${payment.id}`}>
+            <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+              <div>
+                <p className="font-medium text-success">+{formatCurrency(payment.amount)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(payment.payment_date)} via {payment.payment_method}
+                </p>
+                {payment.receipt_number && (
+                  <p className="text-xs text-muted-foreground font-mono">Ref: {payment.receipt_number}</p>
+                )}
+              </div>
             </div>
-            <Link href={`/payments/${payment.id}`}>
-              <Button variant="outline" size="sm">View</Button>
-            </Link>
-          </div>
+          </Link>
         )}
         initialLimit={5}
         viewAllHref={`/payments?bill=${billId}`}

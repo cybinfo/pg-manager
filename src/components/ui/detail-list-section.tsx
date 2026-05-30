@@ -33,6 +33,8 @@ interface DetailListSectionProps<T> {
 
   // Additional actions (shown in header)
   actions?: React.ReactNode
+  // Spacing between items: "none" for border-row style, "sm"/"md" for card style
+  itemSpacing?: "none" | "sm" | "md"
   className?: string
 }
 
@@ -52,6 +54,7 @@ export function DetailListSection<T>({
   emptyText = "No items yet",
   emptyAction,
   actions,
+  itemSpacing = "none",
   className,
 }: DetailListSectionProps<T>) {
   const [isExpanded, setIsExpanded] = React.useState(false)
@@ -148,10 +151,11 @@ export function DetailListSection<T>({
         </div>
       ) : (
         // List with items
-        <div className="space-y-0">
+        <div className={itemSpacing === "none" ? "space-y-0" : itemSpacing === "sm" ? "space-y-2" : "space-y-3"}>
           <div
             className={cn(
-              "space-y-0 transition-all duration-200",
+              itemSpacing === "none" ? "space-y-0" : itemSpacing === "sm" ? "space-y-2" : "space-y-3",
+              "transition-all duration-200",
               isExpanded && "animate-fade-in"
             )}
           >
