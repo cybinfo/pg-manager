@@ -19,7 +19,7 @@ import { useDetailPage, PEOPLE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoading } from "@/components/ui/loading"
-import { DetailHero, InfoCard, DetailSection, InfoRow, DetailListSection, DetailPageTemplate } from "@/components/ui"
+import { DetailHero, InfoCard, DetailSection, InfoRow, DetailListSection, DetailPageTemplate, NotFoundState } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   User,
@@ -343,12 +343,7 @@ export default function PersonDetailPage() {
   }
 
   if (!person) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+    return <NotFoundState title="Person not found" backHref="/people" backLabel="All People" />
   }
 
   const getStatus = () => {

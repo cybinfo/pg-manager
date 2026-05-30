@@ -2,15 +2,14 @@
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { usePeopleDuplicates, DuplicatePerson, DuplicateGroup } from "@/lib/hooks/usePeopleDuplicates"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PageHeader } from "@/components/ui"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
-  ArrowLeft,
   AlertTriangle,
   Phone,
   Mail,
@@ -47,8 +46,6 @@ const MATCH_TYPE_COLORS: Record<string, string> = {
 
 export default function DuplicatesPage() {
   const router = useRouter()
-  const { backHref } = useBackNavigation({ defaultHref: "/people" })
-
   const {
     loading,
     refreshing,
@@ -84,23 +81,15 @@ export default function DuplicatesPage() {
     <FeatureGuard module="people" feature="mergeDetection">
     <PermissionGuard permission="tenants.view">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link href={backHref}>
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Duplicate Detection</h1>
-              <p className="text-muted-foreground">
-                {duplicateGroups.length > 0
-                  ? `Found ${duplicateGroups.length} potential duplicate groups`
-                  : "No duplicates detected"}
-              </p>
-            </div>
-          </div>
+        <PageHeader
+          title="Duplicate Detection"
+          backHref="/people"
+          breadcrumbs={[
+            { label: "People", href: "/people" },
+            { label: "Duplicate Detection" },
+          ]}
+        />
+        <div className="flex justify-end">
           <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             Refresh

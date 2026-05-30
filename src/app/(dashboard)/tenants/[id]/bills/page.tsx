@@ -15,6 +15,7 @@ import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { BILL_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import { NotFoundState } from "@/components/ui"
 import { Column } from "@/components/ui/data-table"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { TenantLink } from "@/components/ui/entity-link"
@@ -224,12 +225,7 @@ export default function TenantBillsPage() {
   const config = buildBillConfig(tenantId)
 
   if (notFound) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Tenant not found" backHref="/tenants" backLabel="All Tenants" />
   }
 
   // Wait for parent context before rendering the template so breadcrumbs/title are correct

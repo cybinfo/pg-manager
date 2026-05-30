@@ -6,6 +6,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Users, UserCheck, UserMinus, Clock, ArrowLeft } from "lucide-react"
+import { NotFoundState } from "@/components/ui"
 import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -172,12 +173,7 @@ export default function RoomTenantsPage() {
   }), [roomId])
 
   if (notFound) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Room not found" backHref="/rooms" backLabel="All Rooms" />
   }
 
   if (parentLoading) return null

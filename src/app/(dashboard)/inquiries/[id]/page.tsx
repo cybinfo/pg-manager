@@ -20,6 +20,7 @@ import {
   DetailSection,
   InfoRow,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -147,12 +148,7 @@ export default function InquiryDetailPage() {
   }
 
   if (!inquiry) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+    return <NotFoundState title="Inquiry not found" backHref="/inquiries" backLabel="All Inquiries" />
   }
 
   const whatsappMessage = `Hi ${inquiry.name}, thank you for your inquiry about ${inquiry.property?.name || "our PG"}. I'd like to discuss your requirements and schedule a visit. When would be a good time?`

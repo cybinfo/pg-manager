@@ -17,6 +17,7 @@ import {
   DetailSection,
   InfoRow,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -177,12 +178,7 @@ export default function RefundDetailPage() {
   }
 
   if (loading) return <PageLoading message="Loading refund details..." />
-  if (!refund) return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+  if (!refund) return <NotFoundState title="Refund not found" backHref="/refunds" backLabel="All Refunds" />
 
   const tenantPhoto = refund.tenant?.person?.photo_url || refund.tenant?.profile_photo || refund.tenant?.photo_url
 

@@ -26,6 +26,7 @@ import {
   Input,
   Progress,
   Textarea,
+  NotFoundState,
 } from "@/components/ui"
 import { Select, FormField } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -373,12 +374,7 @@ function LibrarySubscriptionDetailContent() {
   }
 
   if (!subscription) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested subscription could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Subscription not found" backHref="/library-subscriptions" backLabel="All Subscriptions" />
   }
 
   const payments = (related.payments || []) as LibraryPayment[]

@@ -16,6 +16,7 @@ import {
   DetailSection,
   InfoRow,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -300,12 +301,7 @@ export default function StaffDetailPage() {
   }
 
   if (!staff) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+    return <NotFoundState title="Staff member not found" backHref="/staff" backLabel="All Staff" />
   }
 
   const saving = isSaving || roleLoading

@@ -9,11 +9,12 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Payment } from "@/types/payments.types"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   DetailHero,
   InfoCard,
   DetailPageTemplate,
+  DetailSection,
+  NotFoundState,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -125,12 +126,7 @@ export default function PaymentReceiptPage() {
   }
 
   if (!payment) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+    return <NotFoundState title="Payment not found" backHref="/payments" backLabel="All Payments" />
   }
 
   const owner = ownerInfo || { business_name: null, name: "PG Manager", phone: null }
@@ -218,8 +214,7 @@ export default function PaymentReceiptPage() {
 
       {/* Receipt */}
       <DetailPageTemplate layoutKey="payment-detail" entityType="payment" record={payment}>
-        <Card className="max-w-2xl mx-auto print:shadow-none print:border-0" ref={receiptRef}>
-        <CardContent className="p-8">
+        <DetailSection title="Payment Receipt" className="max-w-2xl mx-auto print:shadow-none print:border-0">
           {/* Header */}
           <div className="text-center border-b pb-6 mb-6">
             <div className="flex justify-center mb-2">
@@ -364,8 +359,7 @@ export default function PaymentReceiptPage() {
               <p className="mt-1">This is a computer-generated receipt and does not require a signature.</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </DetailSection>
 
       </DetailPageTemplate>
 

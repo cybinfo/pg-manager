@@ -18,7 +18,7 @@ import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
-import { DetailHero, DetailSection } from "@/components/ui"
+import { DetailHero, DetailSection, NotFoundState } from "@/components/ui"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -271,12 +271,7 @@ function EditDailySpendContent({
   }
 
   if (!entry) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Entry not found" backHref="/expenses/daily-spend" backLabel="All Daily Spend" />
   }
 
   return (

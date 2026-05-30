@@ -11,6 +11,7 @@ import {
   DetailHero,
   InfoCard,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -131,12 +132,7 @@ ManageKar`
   }
 
   if (!bill) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Bill not found" backHref="/bills" backLabel="All Bills" />
   }
 
   const isOverdue = new Date(bill.due_date) < new Date() && bill.balance_due > 0

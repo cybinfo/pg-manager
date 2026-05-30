@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  ArrowLeft,
   Loader2,
   Shield,
   Check,
@@ -24,7 +23,7 @@ import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-gro
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
 import { PageLoading } from "@/components/ui/loading"
-import { DetailSection, DetailPageTemplate, InfoBanner } from "@/components/ui"
+import { DetailSection, DetailPageTemplate, InfoBanner, DetailHero, NotFoundState } from "@/components/ui"
 import { PermissionGate } from "@/components/auth"
 
 interface Role {
@@ -239,12 +238,7 @@ export default function EditRolePage() {
   }
 
   if (!role) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Role not found" backHref="/staff/roles" backLabel="All Roles" />
   }
 
   const isSystemRole = role.is_system_role
@@ -254,51 +248,33 @@ export default function EditRolePage() {
       {ConfirmDialogElement}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link href={backHref}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${isSystemRole ? "bg-info/10" : "bg-purple-100"}`}>
-              {isSystemRole ? (
-                <Lock className="h-5 w-5 text-info" />
-              ) : (
-                <Shield className="h-5 w-5 text-purple-600" />
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold">{role.name}</h1>
-                {isSystemRole && (
-                  <span className="px-2 py-0.5 bg-info/10 text-info rounded text-xs font-medium">
-                    System Role
-                  </span>
-                )}
-              </div>
-              <p className="text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                {userCount} staff member{userCount !== 1 ? "s" : ""} assigned
-              </p>
-            </div>
-          </div>
-        </div>
-        {!isSystemRole && (
-          <PermissionGate permission="staff.delete" hide>
-            <Button
-              variant="outline"
-              className="text-destructive hover:text-destructive"
-              onClick={handleDelete}
-              disabled={saving || userCount > 0}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Role
-            </Button>
-          </PermissionGate>
-        )}
-      </div>
+      <DetailHero
+        title="Role Details"
+        subtitle={role.name || "Staff Role"}
+        backHref="/staff/roles"
+        backLabel="All Roles"
+        icon={Shield}
+        breadcrumbs={[
+          { label: "Staff", href: "/staff" },
+          { label: "Roles", href: "/staff/roles" },
+          { label: role?.name || "Role" },
+        ]}
+        actions={
+          !isSystemRole ? (
+            <PermissionGate permission="staff.delete" hide>
+              <Button
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={handleDelete}
+                disabled={saving || userCount > 0}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Role
+              </Button>
+            </PermissionGate>
+          ) : undefined
+        }
+      />
 
       {isSystemRole && (
         <InfoBanner variant="info">

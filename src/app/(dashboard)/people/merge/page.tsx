@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { usePeopleMerge, PersonWithStats } from "@/lib/hooks/usePeopleMerge"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -11,8 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Avatar } from "@/components/ui/avatar"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PageHeader } from "@/components/ui"
 import {
-  ArrowLeft,
   Search,
   Merge,
   ArrowRight,
@@ -39,7 +38,6 @@ import { logger } from "@/lib/logger"
 export default function PersonMergePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { backHref } = useBackNavigation({ defaultHref: "/people" })
   const preselectedId = searchParams.get("id")
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
@@ -137,20 +135,14 @@ export default function PersonMergePage() {
     <PermissionGuard permission="tenants.update">
       <div className="space-y-6">
         {ConfirmDialogElement}
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href={backHref}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Merge Duplicate People</h1>
-            <p className="text-muted-foreground">
-              Combine duplicate person records into one
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Merge Duplicate People"
+          backHref="/people"
+          breadcrumbs={[
+            { label: "People", href: "/people" },
+            { label: "Merge" },
+          ]}
+        />
 
         {/* Instructions */}
         <Card className="bg-warning/10 border-warning/30">

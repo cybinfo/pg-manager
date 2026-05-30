@@ -18,10 +18,11 @@ import { Progress } from "@/components/ui/progress"
 import { Combobox } from "@/components/ui/combobox"
 import { FormField } from "@/components/ui/form-components"
 import {
-  ArrowLeft, Upload, CheckCircle, XCircle, AlertTriangle,
+  Upload, CheckCircle, XCircle, AlertTriangle,
   Loader2, Download, Users,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { PageHeader } from "@/components/ui"
 import { withCreatedBy } from "@/lib/audit/audit-utils"
 import { getTodayISO } from "@/lib/date-helpers"
 import { parseCSV, validateRow } from "@/lib/import/library-members"
@@ -351,20 +352,14 @@ function BulkImportContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/library-members">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Bulk Import Members</h1>
-          <p className="text-muted-foreground">
-            Upload a CSV file to import multiple members at once
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Bulk Import Members"
+        backHref="/library-members"
+        breadcrumbs={[
+          { label: "Members", href: "/library-members" },
+          { label: "Bulk Import" },
+        ]}
+      />
 
       {/* Step 1: Library Selection */}
       <Card>

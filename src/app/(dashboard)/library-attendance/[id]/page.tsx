@@ -22,6 +22,7 @@ import {
   DetailSection,
   InfoRow,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
@@ -157,12 +158,7 @@ export default function LibraryAttendanceDetailPage() {
   }
 
   if (!attendance) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+    return <NotFoundState title="Attendance record not found" backHref="/library-attendance" backLabel="All Attendance" />
   }
 
   const displayName = attendance.member?.person?.name || attendance.member?.name || "Unknown"

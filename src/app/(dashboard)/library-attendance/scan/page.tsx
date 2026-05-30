@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCircle } from "lucide-react"
+import { Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCircle } from "lucide-react"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
@@ -22,6 +22,7 @@ import { formatTime } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
 import { FeatureGuard } from "@/components/auth"
+import { PageHeader } from "@/components/ui"
 import { parseTimeSlots } from "@/lib/time-slots"
 
 interface QRPayload {
@@ -304,20 +305,14 @@ export default function QRScannerPage() {
   return (
     <FeatureGuard module="attendance" feature="qrCheckin">
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/library-attendance">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">QR Check-in Scanner</h1>
-          <p className="text-muted-foreground">
-            Scan member QR codes for quick check-in
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="QR Check-in Scanner"
+        backHref="/library-attendance"
+        breadcrumbs={[
+          { label: "Attendance", href: "/library-attendance" },
+          { label: "QR Scanner" },
+        ]}
+      />
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Scanner */}

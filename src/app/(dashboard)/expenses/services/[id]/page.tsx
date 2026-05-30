@@ -29,6 +29,7 @@ import {
   DetailPageTemplate,
   DetailSection,
   InfoRow,
+  NotFoundState,
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
@@ -68,12 +69,7 @@ export default function ServicePaymentDetailPage({
   if (loading) return <PageLoading />
 
   if (!payment) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Service not found" backHref="/expenses/services" backLabel="All Services" />
   }
 
   const warrantyExpiry = payment.warranty_expiry

@@ -19,6 +19,7 @@ import {
   InfoRow,
   DetailListSection,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
@@ -199,12 +200,7 @@ export default function LibraryMemberDetailPage() {
   }
 
   if (!member) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+    return <NotFoundState title="Member not found" backHref="/library-members" backLabel="All Members" />
   }
 
   const memberships = (related.memberships || []) as LibraryMembership[]

@@ -32,6 +32,7 @@ import {
   DetailPageTemplate,
   DetailSection,
   InfoRow,
+  NotFoundState,
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
@@ -73,12 +74,7 @@ export default function DailySpendDetailPage({
   if (loading) return <PageLoading />
 
   if (!entry) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Entry not found" backHref="/expenses/daily-spend" backLabel="All Daily Spend" />
   }
 
   const paymentModeLabel = PAYMENT_METHODS[entry.payment_mode] || entry.payment_mode

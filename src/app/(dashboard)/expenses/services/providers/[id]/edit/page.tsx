@@ -17,7 +17,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Input, Select, FormField, Textarea, Label } from "@/components/ui"
-import { DetailHero, DetailSection } from "@/components/ui"
+import { DetailHero, DetailSection, NotFoundState } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 
@@ -193,12 +193,7 @@ function EditServiceProviderContent({
   }
 
   if (!provider) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Provider not found" backHref="/expenses/services/providers" backLabel="All Providers" />
   }
 
   return (

@@ -34,6 +34,7 @@ import {
   DetailPageTemplate,
   DetailSection,
   InfoRow,
+  NotFoundState,
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
@@ -99,12 +100,7 @@ export default function BillPaymentDetailPage({
   if (loading) return <PageLoading />
 
   if (!bill) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Bill not found" backHref="/expenses/bills" backLabel="All Bills" />
   }
 
   const billStatusIcons: Record<string, React.ElementType> = {

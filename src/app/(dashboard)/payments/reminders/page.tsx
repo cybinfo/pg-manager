@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
-  ArrowLeft,
   Bell,
   Search,
   User,
@@ -22,6 +21,7 @@ import {
 import { showSuccess } from "@/lib/toast-helpers"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PageHeader } from "@/components/ui"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
 import { formatDate } from "@/lib/format"
 import { FeatureGuard, PermissionGuard } from "@/components/auth"
@@ -60,20 +60,14 @@ export default function PaymentRemindersPage() {
     <FeatureGuard module="payments" feature="paymentReminders">
       <PermissionGuard permission="payments.view">
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/payments">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Payment Reminders</h1>
-          <p className="text-muted-foreground">
-            Send payment reminders to tenants with pending dues
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Payment Reminders"
+        backHref="/payments"
+        breadcrumbs={[
+          { label: "Payments", href: "/payments" },
+          { label: "Payment Reminders" },
+        ]}
+      />
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">

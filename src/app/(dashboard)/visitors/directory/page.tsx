@@ -26,7 +26,6 @@ import {
   Check,
   Phone,
   Building2,
-  ArrowLeft,
   Calendar,
   History,
   MoreVertical,
@@ -36,6 +35,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PageHeader } from "@/components/ui"
 import { Select } from "@/components/ui/form-components"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
@@ -146,21 +146,15 @@ export default function VisitorDirectoryPage() {
   return (
     <PermissionGuard permission="visitors.view">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link href="/visitors">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Visitor Directory</h1>
-              <p className="text-muted-foreground">
-                Manage all unique visitors and their contact information
-              </p>
-            </div>
-          </div>
+        <PageHeader
+          title="Visitor Directory"
+          backHref="/visitors"
+          breadcrumbs={[
+            { label: "Visitors", href: "/visitors" },
+            { label: "Visitor Directory" },
+          ]}
+        />
+        <div className="flex justify-end">
           <Link href="/visitors/new">
             <Button>
               <User className="mr-2 h-4 w-4" />

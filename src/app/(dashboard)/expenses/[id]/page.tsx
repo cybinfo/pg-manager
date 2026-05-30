@@ -11,6 +11,7 @@ import {
   DetailSection,
   InfoRow,
   DetailPageTemplate,
+  NotFoundState,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -55,12 +56,7 @@ export default function ExpenseDetailPage() {
   }
 
   if (!expense) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Expense not found" backHref="/expenses" backLabel="All Expenses" />
   }
 
   return (

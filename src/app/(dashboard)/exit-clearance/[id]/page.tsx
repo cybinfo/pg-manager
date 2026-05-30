@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
+import { NotFoundState } from "@/components/ui"
 import {
   Loader2,
   CheckCircle,
@@ -366,12 +367,7 @@ export default function ExitClearanceDetailPage() {
   }
 
   if (loading) return <PageLoading message="Loading exit clearance..." />
-  if (!clearance) return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-      <h2 className="text-lg font-semibold">Not Found</h2>
-      <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-    </div>
-  )
+  if (!clearance) return <NotFoundState title="Exit clearance not found" backHref="/exit-clearance" backLabel="All Exit Clearances" />
 
   const finalAmount = computeFinalAmount()
   const isRefund = isRefundDue(finalAmount)

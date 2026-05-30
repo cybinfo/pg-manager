@@ -26,7 +26,7 @@ import { PAYMENT_METHODS } from "@/lib/status"
 
 import { PermissionGuard, PermissionGate, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { DetailSection, InfoRow, DetailPageTemplate } from "@/components/ui"
+import { DetailSection, InfoRow, DetailPageTemplate, NotFoundState } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
 
@@ -65,12 +65,7 @@ export default function MiscTransactionDetailPage({
   if (loading) return <PageLoading />
 
   if (!transaction) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <h2 className="text-lg font-semibold">Not Found</h2>
-        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-      </div>
-    )
+    return <NotFoundState title="Transaction not found" backHref="/expenses/misc" backLabel="All Misc" />
   }
 
   const isMoneyIn = transaction.transaction_type === "in"

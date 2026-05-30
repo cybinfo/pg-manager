@@ -11,11 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
-import { ArrowLeft, CreditCard, Loader2, Users, IndianRupee, CheckCircle2 } from "lucide-react"
+import { CreditCard, Loader2, Users, IndianRupee, CheckCircle2 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PageHeader } from "@/components/ui"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PAYMENT_METHODS } from "@/lib/status/billing"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -178,18 +179,14 @@ function BulkPaymentForm() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/payments">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Bulk Payment</h1>
-          <p className="text-muted-foreground">Record payments for multiple tenants at once</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Bulk Payment"
+        backHref="/payments"
+        breadcrumbs={[
+          { label: "Payments", href: "/payments" },
+          { label: "Bulk Payment" },
+        ]}
+      />
 
       {tenantDues.length === 0 ? (
         <Card>
