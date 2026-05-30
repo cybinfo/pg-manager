@@ -86,7 +86,7 @@ function useLayoutStorage(key: string) {
   return { getStoredOrder, saveOrder, clearOrder, getStoredHidden, saveHidden, clearHidden }
 }
 
-// ─── SortableItem ─────────────────────────────────────────────────────────────
+// ─── SortableItem (visible sections) ─────────────────────────────────────────
 
 interface SortableItemProps {
   id: string
@@ -133,6 +133,59 @@ function SortableItem({ id, children, isEditMode, onToggleHide }: SortableItemPr
 
       <div className="ring-2 ring-dashed ring-teal-500/30 rounded-lg">
         {children}
+      </div>
+    </div>
+  )
+}
+
+// ─── HiddenSortableItem (hidden zone in edit mode) ────────────────────────────
+
+interface HiddenSortableItemProps {
+  id: string
+  children: React.ReactNode
+  onUnhide: () => void
+}
+
+function HiddenSortableItem({ id, children, onUnhide }: HiddenSortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn("relative group", isDragging && "opacity-60 shadow-2xl")}
+    >
+      {/* Eye toggle — top left, unhides the section */}
+      <button
+        onClick={onUnhide}
+        title="Show section"
+        className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-card/95 backdrop-blur-sm rounded-md shadow-md border p-1.5 hover:bg-primary/5"
+      >
+        <Eye className="h-4 w-4 text-muted-foreground" />
+      </button>
+
+      {/* Drag handle — top right */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab"
+      >
+        <div className="bg-card/95 backdrop-blur-sm rounded-md shadow-md border p-1.5 hover:bg-primary/5 active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </div>
+
+      <div className="ring-2 ring-dashed ring-muted-foreground/25 rounded-lg">
+        <div className="opacity-40 pointer-events-none select-none">
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -337,6 +390,21 @@ export function SortableMasonry({
 
   // Recompute balanced cols from scratch whenever visibility changes.
   // Uses stored heights so the distribution is always optimal — no in-place patching.
+  // Reorders hidden items within the shared order array without affecting visible items
+  const handleDragEndHidden = React.useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setOrder(prevOrder => {
+      const newOrder = arrayMove(
+        prevOrder,
+        prevOrder.indexOf(active.id as string),
+        prevOrder.indexOf(over.id as string)
+      )
+      saveOrder(newOrder)
+      return newOrder
+    })
+  }, [saveOrder])
+
   const handleToggleHide = React.useCallback((id: string) => {
     setHiddenIds(prev => {
       const isHiding = !prev.includes(id)
@@ -352,27 +420,27 @@ export function SortableMasonry({
     })
   }, [saveHidden, childrenWithIds, orderedChildren, columns])
 
-  // ── Hidden zone renderer (shared by edit + normal mode) ──────────────────
-  // Uses the same computeCols so hidden section layout matches the main grid algorithm.
+  // ── Hidden zone renderer ─────────────────────────────────────────────────
+  // editMode=true  → items are draggable (HiddenSortableItem) with Eye/grip controls
+  // editMode=false → items are static with an Unhide button only
 
-  const renderHiddenZone = () => {
+  const renderHiddenZone = (editMode: boolean) => {
     if (hiddenChildren.length === 0) return null
     const hiddenCols = computeCols(hiddenChildren, columns, lastHeightsRef.current)
-    return (
-      <div className="mt-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 border-t border-dashed" />
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Hidden sections</span>
-          <div className="flex-1 border-t border-dashed" />
-        </div>
-        <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap])}>
-          {hiddenCols.map((colItems, colIdx) => (
-            <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
-              {colItems.map(({ id, element }) => (
+    const hiddenItemIds = hiddenChildren.map(c => c.id)
+
+    const colsJsx = (
+      <div className={cn("flex flex-col md:flex-row items-start", gapStyles[gap])}>
+        {hiddenCols.map((colItems, colIdx) => (
+          <div key={colIdx} className={cn("w-full md:flex-1 flex flex-col", gapStyles[gap])}>
+            {colItems.map(({ id, element }) =>
+              editMode ? (
+                <HiddenSortableItem key={id} id={id} onUnhide={() => handleToggleHide(id)}>
+                  {element}
+                </HiddenSortableItem>
+              ) : (
                 <div key={id} className="relative">
-                  <div className="opacity-40 pointer-events-none select-none">
-                    {element}
-                  </div>
+                  <div className="opacity-40 pointer-events-none select-none">{element}</div>
                   <div className="absolute top-2 right-2 z-10">
                     <Button
                       size="sm"
@@ -385,10 +453,27 @@ export function SortableMasonry({
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          ))}
+              )
+            )}
+          </div>
+        ))}
+      </div>
+    )
+
+    return (
+      <div className="mt-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 border-t border-dashed" />
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Hidden sections</span>
+          <div className="flex-1 border-t border-dashed" />
         </div>
+        {editMode ? (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndHidden}>
+            <SortableContext items={hiddenItemIds} strategy={rectSortingStrategy}>
+              {colsJsx}
+            </SortableContext>
+          </DndContext>
+        ) : colsJsx}
       </div>
     )
   }
@@ -444,7 +529,7 @@ export function SortableMasonry({
           </SortableContext>
         </DndContext>
 
-        {renderHiddenZone()}
+        {renderHiddenZone(true)}
       </div>
     )
   }
@@ -495,7 +580,7 @@ export function SortableMasonry({
         ))}
       </div>
 
-      {showHidden && renderHiddenZone()}
+      {showHidden && renderHiddenZone(false)}
     </div>
   )
 }
