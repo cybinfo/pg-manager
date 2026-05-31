@@ -9,10 +9,11 @@
 import Link from "next/link"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { useBusinessOptions } from "@/lib/hooks/useBusinessOptions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FormField } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { requiredField } from "@/lib/validation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Library, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
@@ -29,6 +30,7 @@ export default function NewLibraryPage() {
 
 function NewLibraryContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/library" })
+  const businessOptions = useBusinessOptions()
 
   const {
     formData, setFormData,
@@ -41,6 +43,7 @@ function NewLibraryContent() {
     table: "libraries",
     initialData: {
       name: "",
+      business_id: "",
       code: "",
       address: "",
       city: "",
@@ -65,6 +68,7 @@ function NewLibraryContent() {
     transform: (data, userId): Record<string, unknown> => ({
       owner_id: userId,
       workspace_id: workspaceId,
+      business_id: (data.business_id as string) || null,
       name: data.name,
       code: data.code || null,
       address: data.address || null,
@@ -113,6 +117,17 @@ function NewLibraryContent() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Library Details" description="Enter the basic information about your library" icon={Library}>
           <div className="space-y-6">
+            <FormField label="Business" hint="Which business does this library belong to?">
+              <Select
+                name="business_id"
+                value={formData.business_id as string}
+                onChange={handleChange}
+                placeholder="Select business"
+                disabled={saving}
+                options={businessOptions}
+              />
+            </FormField>
+
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Library Name" required error={errors.name}>

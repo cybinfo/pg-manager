@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBusinessOptions } from "@/lib/hooks/useBusinessOptions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FormField } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Building2 } from "lucide-react"
 import { DetailHero, DetailSection } from "@/components/ui"
 import { requiredField } from "@/lib/validation"
@@ -23,6 +24,8 @@ export default function NewPropertyPage() {
 }
 
 function NewPropertyContent() {
+  const businessOptions = useBusinessOptions()
+
   const {
     formData, setFormData,
     handleChange,
@@ -34,6 +37,7 @@ function NewPropertyContent() {
     table: "properties",
     initialData: {
       name: "",
+      business_id: "",
       address_line1: "",
       address_line2: "",
       city: "",
@@ -53,13 +57,13 @@ function NewPropertyContent() {
       city: requiredField("City"),
     },
     transform: (data, userId) => {
-      // Combine address lines into single address field
       const fullAddress = [data.address_line1, data.address_line2]
         .filter(Boolean)
         .join(", ")
 
       return withCreatedBy({
         owner_id: userId,
+        business_id: (data.business_id as string) || null,
         name: data.name,
         address: fullAddress || null,
         city: data.city,
@@ -88,9 +92,19 @@ function NewPropertyContent() {
         ]}
       />
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Property Details" description="Enter the basic information about your property" icon={Building2}>
+            <FormField label="Business" htmlFor="business_id" hint="Which business does this property belong to?">
+              <Select
+                name="business_id"
+                value={formData.business_id as string}
+                onChange={handleChange}
+                placeholder="Select business"
+                disabled={saving}
+                options={businessOptions}
+              />
+            </FormField>
+
             <FormField label="Property Name" htmlFor="name" required error={errors.name}>
               <Input
                 id="name"
@@ -103,7 +117,6 @@ function NewPropertyContent() {
               />
             </FormField>
 
-            {/* Address Section - Using shared component */}
             <PropertyAddressInput
               line1={formData.address_line1 as string}
               line2={formData.address_line2 as string}
@@ -114,7 +127,6 @@ function NewPropertyContent() {
               disabled={saving}
             />
 
-            {/* Property Photos Section - Using shared components */}
             <div className="border-t pt-4 mt-4 space-y-4">
               <CoverImageUpload
                 value={formData.cover_image as string}

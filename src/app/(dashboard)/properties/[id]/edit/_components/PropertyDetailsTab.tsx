@@ -1,13 +1,15 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { FormField } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2 } from "lucide-react"
 import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
+import { useBusinessOptions } from "@/lib/hooks/useBusinessOptions"
 
 interface PropertyFormData {
   name: string
+  business_id: string
   address_line1: string
   address_line2: string
   city: string
@@ -21,12 +23,14 @@ interface PropertyFormData {
 
 interface PropertyDetailsTabProps {
   formData: PropertyFormData
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
   setFormData: (updater: (prev: PropertyFormData) => PropertyFormData) => void
   loading: boolean
 }
 
 export function PropertyDetailsTab({ formData, onChange, setFormData, loading }: PropertyDetailsTabProps) {
+  const businessOptions = useBusinessOptions()
+
   return (
     <Card>
       <CardHeader>
@@ -41,6 +45,17 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <FormField label="Business" htmlFor="business_id" hint="Which business does this property belong to?">
+          <Select
+            name="business_id"
+            value={formData.business_id}
+            onChange={onChange}
+            placeholder="Select business"
+            disabled={loading}
+            options={businessOptions}
+          />
+        </FormField>
+
         <FormField label="Property Name" htmlFor="name" required>
           <Input
             id="name"
@@ -53,7 +68,6 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
           />
         </FormField>
 
-        {/* Address Section - Using shared component */}
         <PropertyAddressInput
           line1={formData.address_line1}
           line2={formData.address_line2}
@@ -64,7 +78,6 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
           disabled={loading}
         />
 
-        {/* Property Photos Section - Using shared components */}
         <div className="border-t pt-4 mt-4 space-y-4">
           <CoverImageUpload
             value={formData.cover_image}

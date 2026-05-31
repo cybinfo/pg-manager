@@ -48,6 +48,7 @@ export function usePropertyEditForm() {
 
   const [formData, setFormData] = useState({
     name: "",
+    business_id: "",
     address_line1: "",
     address_line2: "",
     city: "",
@@ -100,6 +101,7 @@ export function usePropertyEditForm() {
 
       setFormData({
         name: data.name || "",
+        business_id: data.business_id || "",
         address_line1: data.address || "",
         address_line2: "",
         city: data.city || "",
@@ -146,7 +148,7 @@ export function usePropertyEditForm() {
     fetchProperty()
   }, [params.id, router])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -196,6 +198,7 @@ export function usePropertyEditForm() {
 
       const updateData: Record<string, unknown> = {
         name: formData.name,
+        business_id: formData.business_id || null,
         address: fullAddress || null,
         city: formData.city,
         state: formData.state || null,

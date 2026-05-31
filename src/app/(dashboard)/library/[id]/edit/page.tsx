@@ -13,7 +13,8 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FormField } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
+import { useBusinessOptions } from "@/lib/hooks/useBusinessOptions"
 import { requiredField } from "@/lib/validation"
 import { DetailHero, DetailSection } from "@/components/ui"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -33,6 +34,7 @@ function EditLibraryContent() {
   const params = useParams()
   const id = params.id as string
   const { backHref } = useBackNavigation({ defaultHref: "/library" })
+  const businessOptions = useBusinessOptions()
 
   const {
     formData, setFormData,
@@ -46,6 +48,7 @@ function EditLibraryContent() {
     id,
     initialData: {
       name: "",
+      business_id: "",
       code: "",
       address: "",
       city: "",
@@ -66,6 +69,7 @@ function EditLibraryContent() {
     errorMessage: "Failed to update library",
     mapToForm: (record) => ({
       name: (record.name as string) || "",
+      business_id: (record.business_id as string) || "",
       code: (record.code as string) || "",
       address: (record.address as string) || "",
       city: (record.city as string) || "",
@@ -87,6 +91,7 @@ function EditLibraryContent() {
     },
     transform: (data): Record<string, unknown> => ({
       name: data.name,
+      business_id: (data.business_id as string) || null,
       code: data.code || null,
       address: data.address || null,
       city: data.city,
@@ -128,6 +133,17 @@ function EditLibraryContent() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Library Details" description="Update the library information" icon={Library}>
+          <FormField label="Business" hint="Which business does this library belong to?">
+            <Select
+              name="business_id"
+              value={formData.business_id as string}
+              onChange={handleChange}
+              placeholder="Select business"
+              disabled={saving}
+              options={businessOptions}
+            />
+          </FormField>
+
           {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Library Name" required error={errors.name}>
