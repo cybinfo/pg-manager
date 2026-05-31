@@ -98,6 +98,7 @@ export interface GroupedNavItem extends NavItem {
 
 export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
+  { name: "Entities", href: "/entities", icon: Building2, permission: "properties.view", module: null },
   { name: "Businesses", href: "/businesses", icon: Briefcase, permission: "businesses.view", module: "businesses" },
   { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", module: "properties" },
   { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", module: "rooms" },
@@ -127,16 +128,16 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", module: "staff" },
   // Library Modules
   { name: "Library", href: "/library", icon: Library, permission: "library.view", module: "members", dividerBefore: true },
-  { name: "Sections", href: "/library-sections", icon: Layers, permission: "library_sections.view", module: "sections" },
-  { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", module: "seats" },
-  { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", module: "members" },
-  { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", module: "waitlist" },
-  { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", module: "attendance" },
-  { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", module: "lockers" },
-  { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen, permission: "library_members.view", module: "subscriptions" },
-  { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", module: "payments" },
-  { name: "Library Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", module: "reports" },
-  { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", module: "plans" },
+  { name: "Sections", href: "/entity-sections", icon: Layers, permission: "library_sections.view", module: "sections" },
+  { name: "Seats", href: "/entity-seats", icon: Armchair, permission: "library_seats.view", module: "seats" },
+  { name: "Members", href: "/entity-members", icon: Users, permission: "library_members.view", module: "members" },
+  { name: "Waitlist", href: "/entity-waitlist", icon: ListOrdered, permission: "library_waitlist.view", module: "waitlist" },
+  { name: "Attendance", href: "/entity-attendance", icon: Clock, permission: "library_attendance.view", module: "attendance" },
+  { name: "Lockers", href: "/entity-lockers", icon: Lock, permission: "library_lockers.view", module: "lockers" },
+  { name: "Subscriptions", href: "/entity-subscriptions", icon: BookOpen, permission: "library_members.view", module: "subscriptions" },
+  { name: "Library Payments", href: "/entity-payments", icon: CreditCard, permission: "library_payments.view", module: "payments" },
+  { name: "Library Reports", href: "/entity-reports", icon: BarChart3, permission: "library.view", module: "reports" },
+  { name: "Plans", href: "/entity-plans", icon: Receipt, permission: "library.view", module: "plans" },
 ]
 
 /**
@@ -147,6 +148,9 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
  */
 export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
+
+  // Entities (unified hub)
+  { name: "Entities", href: "/entities", icon: Building2, permission: "properties.view", module: null },
 
   // Businesses
   {
@@ -188,16 +192,16 @@ export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
     module: "members",
     children: [
       { name: "Libraries",     href: "/library",               icon: Library,     permission: "library.view",            module: "members" },
-      { name: "Sections",      href: "/library-sections",      icon: Grid3X3,     permission: "library_sections.view",   module: "sections" },
-      { name: "Seats",         href: "/library-seats",         icon: Armchair,    permission: "library_seats.view",      module: "seats" },
-      { name: "Members",       href: "/library-members",       icon: Users,       permission: "library_members.view",    module: "members" },
-      { name: "Waitlist",      href: "/library-waitlist",      icon: ListOrdered, permission: "library_waitlist.view",   module: "waitlist" },
-      { name: "Attendance",    href: "/library-attendance",    icon: Clock,       permission: "library_attendance.view", module: "attendance" },
-      { name: "Lockers",       href: "/library-lockers",       icon: Lock,        permission: "library_lockers.view",    module: "lockers" },
-      { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen,    permission: "library_members.view",    module: "subscriptions" },
-      { name: "Payments",      href: "/library-payments",      icon: CreditCard,  permission: "library_payments.view",   module: "payments" },
-      { name: "Plans",         href: "/library-plans",         icon: Receipt,     permission: "library.view",            module: "plans" },
-      { name: "Reports",       href: "/library-reports",       icon: BarChart3,   permission: "library.view",            module: "reports" },
+      { name: "Sections",      href: "/entity-sections",       icon: Grid3X3,     permission: "library_sections.view",   module: "sections" },
+      { name: "Seats",         href: "/entity-seats",          icon: Armchair,    permission: "library_seats.view",      module: "seats" },
+      { name: "Members",       href: "/entity-members",        icon: Users,       permission: "library_members.view",    module: "members" },
+      { name: "Waitlist",      href: "/entity-waitlist",       icon: ListOrdered, permission: "library_waitlist.view",   module: "waitlist" },
+      { name: "Attendance",    href: "/entity-attendance",     icon: Clock,       permission: "library_attendance.view", module: "attendance" },
+      { name: "Lockers",       href: "/entity-lockers",        icon: Lock,        permission: "library_lockers.view",    module: "lockers" },
+      { name: "Subscriptions", href: "/entity-subscriptions",  icon: BookOpen,    permission: "library_members.view",    module: "subscriptions" },
+      { name: "Payments",      href: "/entity-payments",       icon: CreditCard,  permission: "library_payments.view",   module: "payments" },
+      { name: "Plans",         href: "/entity-plans",          icon: Receipt,     permission: "library.view",            module: "plans" },
+      { name: "Reports",       href: "/entity-reports",        icon: BarChart3,   permission: "library.view",            module: "reports" },
     ],
   },
 
@@ -455,16 +459,28 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/architecture":{ path: "/architecture",permission: "properties.view",         module: "properties",   title: "Architecture",     icon: Grid3X3 },
   "/approvals":   { path: "/approvals",   permission: "tenants.view",            module: "approvals",    title: "Approvals",        icon: ClipboardCheck },
   "/staff":       { path: "/staff",       permission: "staff.view",              module: "staff",        title: "Staff",            icon: UserCog },
+  "/entities":    { path: "/entities",    permission: "properties.view",         module: null,           title: "Entities",         icon: Building2 },
   "/library":     { path: "/library",     permission: "library.view",            module: "members",      title: "Library",          icon: Library },
-  "/library-sections": { path: "/library-sections", permission: "library_sections.view", module: "sections", title: "Sections", icon: Layers },
-  "/library-members":  { path: "/library-members",  permission: "library_members.view",  module: "members",  title: "Members",  icon: Users },
-  "/library-waitlist": { path: "/library-waitlist", permission: "library_waitlist.view", module: "waitlist", title: "Waitlist", icon: ListOrdered },
-  "/library-attendance": { path: "/library-attendance", permission: "library_attendance.view", module: "attendance", title: "Attendance", icon: Clock },
-  "/library-lockers":  { path: "/library-lockers",  permission: "library_lockers.view",  module: "lockers",  title: "Lockers",  icon: Lock },
-  "/library-subscriptions": { path: "/library-subscriptions", permission: "library_members.view", module: "subscriptions", title: "Subscriptions", icon: BookOpen },
-  "/library-payments": { path: "/library-payments", permission: "library_payments.view", module: "payments",  title: "Library Payments", icon: CreditCard },
-  "/library-reports":  { path: "/library-reports",  permission: "library.view",           module: "reports",   title: "Library Reports",  icon: BarChart3 },
-  "/library-plans":    { path: "/library-plans",    permission: "library.view",           module: "plans",     title: "Plans",            icon: Receipt },
+  "/library-sections":      { path: "/library-sections",      permission: "library_sections.view",  module: "sections",     title: "Sections",         icon: Layers },
+  "/library-members":       { path: "/library-members",       permission: "library_members.view",   module: "members",      title: "Members",          icon: Users },
+  "/library-waitlist":      { path: "/library-waitlist",      permission: "library_waitlist.view",  module: "waitlist",     title: "Waitlist",         icon: ListOrdered },
+  "/library-attendance":    { path: "/library-attendance",    permission: "library_attendance.view", module: "attendance",   title: "Attendance",       icon: Clock },
+  "/library-lockers":       { path: "/library-lockers",       permission: "library_lockers.view",   module: "lockers",      title: "Lockers",          icon: Lock },
+  "/library-subscriptions": { path: "/library-subscriptions", permission: "library_members.view",  module: "subscriptions", title: "Subscriptions",   icon: BookOpen },
+  "/library-payments":      { path: "/library-payments",      permission: "library_payments.view",  module: "payments",     title: "Library Payments", icon: CreditCard },
+  "/library-reports":       { path: "/library-reports",       permission: "library.view",           module: "reports",      title: "Library Reports",  icon: BarChart3 },
+  "/library-plans":         { path: "/library-plans",         permission: "library.view",           module: "plans",        title: "Plans",            icon: Receipt },
+  // entity-* routes (canonical counterparts of library-* routes)
+  "/entity-sections":      { path: "/entity-sections",      permission: "library_sections.view",  module: "sections",      title: "Sections",         icon: Layers },
+  "/entity-seats":         { path: "/entity-seats",         permission: "library_seats.view",     module: "seats",         title: "Seats",            icon: Armchair },
+  "/entity-members":       { path: "/entity-members",       permission: "library_members.view",   module: "members",       title: "Members",          icon: Users },
+  "/entity-waitlist":      { path: "/entity-waitlist",      permission: "library_waitlist.view",  module: "waitlist",      title: "Waitlist",         icon: ListOrdered },
+  "/entity-attendance":    { path: "/entity-attendance",    permission: "library_attendance.view", module: "attendance",   title: "Attendance",       icon: Clock },
+  "/entity-lockers":       { path: "/entity-lockers",       permission: "library_lockers.view",   module: "lockers",       title: "Lockers",          icon: Lock },
+  "/entity-subscriptions": { path: "/entity-subscriptions", permission: "library_members.view",  module: "subscriptions",  title: "Subscriptions",    icon: BookOpen },
+  "/entity-payments":      { path: "/entity-payments",      permission: "library_payments.view",  module: "payments",      title: "Payments",         icon: CreditCard },
+  "/entity-reports":       { path: "/entity-reports",       permission: "library.view",           module: "reports",       title: "Reports",          icon: BarChart3 },
+  "/entity-plans":         { path: "/entity-plans",         permission: "library.view",           module: "plans",         title: "Plans",            icon: Receipt },
 }
 
 export function getRouteConfig(path: string): RouteConfig | undefined {
