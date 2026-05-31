@@ -24,9 +24,6 @@ import { Loader2 } from "lucide-react"
 export {
   columnWidths,
   type ColumnWidthKey,
-  type EditType,
-  type EditValidation,
-  type EditOption,
   type Column,
   type SortDirection,
   type SortConfig,

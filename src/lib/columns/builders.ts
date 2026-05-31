@@ -56,12 +56,6 @@ interface BaseColumnOptions {
   canHide?: boolean
   defaultVisible?: boolean
   mobilePriority?: 1 | 2 | 3
-  editable?: boolean
-  editType?: "text" | "number" | "select" | "date" | "boolean"
-  editOptions?: { value: string; label: string; disabled?: boolean }[]
-  editField?: string
-  editValidation?: { required?: boolean; min?: number; max?: number; minLength?: number; maxLength?: number }
-  editPlaceholder?: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,7 +85,7 @@ interface StatusColumnOptions extends BaseColumnOptions {
  * statusColumn((status) => getStatusInfo("tenant", status))
  *
  * // With options
- * statusColumn(REFUND_STATUS, { style: "badge", editable: true, editType: "select", editOptions: [...] })
+ * statusColumn(REFUND_STATUS, { style: "badge" })
  */
 export function statusColumn(
   configOrFn: Record<string, StatusConfigEntry> | GetStatusInfoFn,

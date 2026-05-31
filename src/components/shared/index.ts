@@ -10,5 +10,4 @@ export type {
   ListPagePermissions,
   ListPageActions,
   ListPageEmptyState,
-  ListPageInlineEditConfig,
 } from "./ListPageTemplate"

@@ -59,7 +59,6 @@ import { Pagination } from "@/components/ui/pagination"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ColumnManager, type ColumnVisibilityConfig } from "@/components/ui/column-manager"
 import { AdvancedFilterBuilder, type FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { InlineEditCell } from "@/components/ui/inline-edit"
 import {
   useListPage,
   ListPageConfig,
@@ -72,7 +71,6 @@ import { ExportButton } from "@/components/ui/export-button"
 import type { CSVColumn } from "@/lib/download-utils"
 import { useTableViews } from "@/lib/hooks/useTableViews"
 import { buildDetailHref } from "@/lib/hooks/useBackNavigation"
-import { useInlineEdit } from "@/lib/hooks/useInlineEdit"
 import { useRowSelection } from "@/lib/hooks/useRowSelection"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { SavedViewSelector } from "@/components/ui/saved-view-selector"
@@ -161,18 +159,6 @@ export interface ListPageEmptyState {
   title?: string
   /** Description text for empty state */
   description?: string
-}
-
-/**
- * Inline editing configuration.
- */
-export interface ListPageInlineEditConfig {
-  /** Enable inline editing for editable columns */
-  enabled?: boolean
-  /** Permission required to edit (e.g., "tenants.update"). Defaults to derived from view permission */
-  permission?: string
-  /** Custom callback for row updates. If not provided, uses default Supabase update */
-  onRowUpdate?: (id: string, updates: Record<string, unknown>) => Promise<boolean>
 }
 
 // ============================================
@@ -272,17 +258,6 @@ export interface ListPageTemplateProps<T extends Record<string, unknown> = Recor
   // --- Empty state props (grouped style, new API) ---
   emptyState?: ListPageEmptyState
 
-  // --- Inline edit props (flat style, original API) ---
-  /** @deprecated Use `inlineEdit.enabled` instead. Still fully supported for backward compatibility. */
-  enableInlineEdit?: boolean
-  /** @deprecated Use `inlineEdit.permission` or `permissions.edit` instead. Still fully supported for backward compatibility. */
-  editPermission?: string
-  /** @deprecated Use `inlineEdit.onRowUpdate` instead. Still fully supported for backward compatibility. */
-  onRowUpdate?: (id: string, updates: Record<string, unknown>) => Promise<boolean>
-
-  // --- Inline edit props (grouped style, new API) ---
-  inlineEdit?: ListPageInlineEditConfig
-
   // --- CSV Export ---
   /** Column definitions for CSV export. When provided, shows an Export CSV button in the header. */
   exportColumns?: CSVColumn<T>[]
@@ -378,14 +353,6 @@ export function ListPageTemplate({
   // Empty state (grouped - new)
   emptyState,
 
-  // Inline Editing (flat - original)
-  enableInlineEdit: flatEnableInlineEdit,
-  editPermission: flatEditPermission,
-  onRowUpdate: flatOnRowUpdate,
-
-  // Inline Editing (grouped - new)
-  inlineEdit,
-
   // CSV Export
   exportColumns,
   exportFilename,
@@ -415,10 +382,6 @@ export function ListPageTemplate({
   const EmptyIcon = flatEmptyIcon ?? emptyState?.icon
   const emptyTitle = flatEmptyTitle ?? emptyState?.title ?? `No ${title.toLowerCase()} yet`
   const emptyDescription = flatEmptyDescription ?? emptyState?.description ?? `Add your first ${title.toLowerCase().slice(0, -1)} to get started`
-
-  const enableInlineEdit = flatEnableInlineEdit ?? inlineEdit?.enabled ?? false
-  const editPermission = flatEditPermission ?? inlineEdit?.permission ?? permissions?.edit
-  const onRowUpdate = flatOnRowUpdate ?? inlineEdit?.onRowUpdate
 
   // Track if initial load is complete (to avoid unmounting DataTable during search)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
@@ -498,67 +461,10 @@ export function ListPageTemplate({
   // Feature check (must be before any conditional returns to respect hooks rules)
   const { isFeatureEnabled } = useFeatures()
 
-  // Inline Edit Setup
   // ============================================
-  const { hasPermission, workspaceId } = useAuthContext()
+  const { hasPermission } = useAuthContext()
 
-  // Derive edit permission from view permission (e.g., "tenants.view" -> "tenants.update")
-  const derivedEditPermission = editPermission || permission.replace(".view", ".update")
-  const canEdit = enableInlineEdit && hasPermission(derivedEditPermission)
-
-  // Use inline edit hook
-  const { updateRow: inlineUpdateRow, saving: inlineSaving } = useInlineEdit({
-    table: config.table,
-    workspaceId,
-    onSuccess: () => {
-      // Trigger a refetch to get updated data
-      // The hook doesn't expose refetch directly, but data updates via subscription or page reload
-    },
-  })
-
-  // Handle row update - use custom callback or default inline update
-  const handleRowUpdate = useCallback(
-    async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
-      if (onRowUpdate) {
-        return onRowUpdate(id, updates)
-      }
-      return inlineUpdateRow(id, updates)
-    },
-    [onRowUpdate, inlineUpdateRow]
-  )
-
-  // Enhance columns with inline edit capability
-  const enhancedColumns: Column<FlexibleRow>[] = useMemo(() => {
-    if (!canEdit) return columns
-
-    return columns.map((col) => {
-      // Skip non-editable columns
-      if (!col.editable) return col
-
-      // Create enhanced column with InlineEditCell wrapper
-      return {
-        ...col,
-        render: (row: FlexibleRow) => {
-          const fieldName = col.editField || col.key
-          const value = row[col.key]
-
-          return (
-            <InlineEditCell
-              value={value}
-              field={fieldName}
-              editType={col.editType || "text"}
-              editOptions={col.editOptions}
-              validation={col.editValidation}
-              placeholder={col.editPlaceholder}
-              disabled={inlineSaving}
-              onSave={(field, newValue) => handleRowUpdate(row.id, { [field]: newValue })}
-              renderDisplay={col.render ? () => col.render!(row) : undefined}
-            />
-          )
-        },
-      }
-    })
-  }, [columns, canEdit, inlineSaving, handleRowUpdate])
+  const enhancedColumns: Column<FlexibleRow>[] = columns
 
   // ============================================
   // Row Selection (for Bulk Actions)

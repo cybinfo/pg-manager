@@ -39,7 +39,6 @@ export * from "./useGroupedByMonth"
 export * from "./useMemberPortalData"
 
 // Detail page hooks
-export * from "./useInlineEdit"
 export * from "./useDetailPage"
 export * from "./useEntityMutation"
 // useTableViews re-exports SortConfig and TableViewConfig which conflict with useListPage
