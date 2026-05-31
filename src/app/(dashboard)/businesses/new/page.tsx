@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Briefcase, Loader2, Building2, Phone, Mail, Globe, FileText } from "lucide-react"
+import { Briefcase, Loader2, Phone, Mail, Globe, FileText, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,12 +38,12 @@ function NewBusinessContent() {
 
       <form onSubmit={doSubmit} className="space-y-6">
         {/* Identity */}
-        <DetailSection title="Business Identity" description="Brand name and basic details" icon={Briefcase}>
+        <DetailSection title="Business Details" icon={Briefcase}>
           <FormField label="Business Name" htmlFor="name" required>
             <Input
               id="name"
               name="name"
-              placeholder="e.g., Green Valley Hospitality"
+              placeholder="e.g., Greenhigh Homes"
               value={formData.name}
               onChange={handleChange}
               disabled={loading}
@@ -54,7 +54,7 @@ function NewBusinessContent() {
             <Input
               id="legal_name"
               name="legal_name"
-              placeholder="e.g., Green Valley Properties Pvt Ltd"
+              placeholder="e.g., Greenhigh Vincom Pvt. Ltd."
               value={formData.legal_name}
               onChange={handleChange}
               disabled={loading}
@@ -76,17 +76,17 @@ function NewBusinessContent() {
             <Textarea
               id="description"
               name="description"
-              placeholder="Brief description of your business"
+              placeholder="Brief description (optional)"
               value={formData.description}
               onChange={handleChange}
               disabled={loading}
-              rows={3}
+              rows={2}
             />
           </FormField>
         </DetailSection>
 
         {/* Legal & Tax */}
-        <DetailSection title="Legal & Tax Details" description="GST, PAN, and registration numbers" icon={FileText}>
+        <DetailSection title="Legal & Tax" icon={FileText}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="GST Number" htmlFor="gst_number">
               <Input
@@ -113,11 +113,11 @@ function NewBusinessContent() {
             </FormField>
           </div>
 
-          <FormField label="Registration Number" htmlFor="registration_number">
+          <FormField label="Registration / CIN Number" htmlFor="registration_number">
             <Input
               id="registration_number"
               name="registration_number"
-              placeholder="Business registration or CIN number"
+              placeholder="Registration or CIN number"
               value={formData.registration_number}
               onChange={handleChange}
               disabled={loading}
@@ -125,39 +125,91 @@ function NewBusinessContent() {
           </FormField>
         </DetailSection>
 
-        {/* Contact */}
-        <DetailSection title="Contact Details" description="How to reach this business" icon={Phone}>
-          <FormField label="Phone" htmlFor="phone">
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+91 98765 43210"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={loading}
-                className="pl-9"
-              />
-            </div>
+        {/* Registered Address */}
+        <DetailSection title="Registered Address" icon={MapPin}>
+          <FormField label="Address" htmlFor="reg_address">
+            <Input
+              id="reg_address"
+              name="reg_address"
+              placeholder="Street / locality"
+              value={formData.reg_address}
+              onChange={handleChange}
+              disabled={loading}
+            />
           </FormField>
 
-          <FormField label="Email" htmlFor="email">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <FormField label="City" htmlFor="reg_city">
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="business@example.com"
-                value={formData.email}
+                id="reg_city"
+                name="reg_city"
+                placeholder="City"
+                value={formData.reg_city}
                 onChange={handleChange}
                 disabled={loading}
-                className="pl-9"
               />
-            </div>
-          </FormField>
+            </FormField>
+
+            <FormField label="State" htmlFor="reg_state">
+              <Input
+                id="reg_state"
+                name="reg_state"
+                placeholder="State"
+                value={formData.reg_state}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </FormField>
+
+            <FormField label="Pincode" htmlFor="reg_pincode">
+              <Input
+                id="reg_pincode"
+                name="reg_pincode"
+                placeholder="Pincode"
+                value={formData.reg_pincode}
+                onChange={handleChange}
+                disabled={loading}
+                maxLength={6}
+              />
+            </FormField>
+          </div>
+        </DetailSection>
+
+        {/* Contact */}
+        <DetailSection title="Contact" icon={Phone}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Phone" htmlFor="phone">
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="pl-9"
+                />
+              </div>
+            </FormField>
+
+            <FormField label="Email" htmlFor="email">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="business@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="pl-9"
+                />
+              </div>
+            </FormField>
+          </div>
 
           <FormField label="Website" htmlFor="website">
             <div className="relative">

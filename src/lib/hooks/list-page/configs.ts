@@ -865,14 +865,3 @@ export const BUSINESS_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   }),
 }
 
-export const LOCATION_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "locations",
-  select: `
-    *,
-    business:businesses(id, name, logo_url)
-  `,
-  defaultOrderBy: "created_at",
-  defaultOrderDirection: "desc",
-  searchFields: ["name", "address", "city", "state", "pincode", "phone"],
-  joinFields: ["business"],
-}

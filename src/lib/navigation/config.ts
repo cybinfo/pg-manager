@@ -54,7 +54,6 @@ import {
   RefreshCw,
   ArrowLeftRight,
   Briefcase,
-  MapPin,
   type LucideIcon,
 } from "lucide-react"
 import type { ModuleKey } from "@/lib/features"
@@ -100,7 +99,6 @@ export interface GroupedNavItem extends NavItem {
 export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
   { name: "Businesses", href: "/businesses", icon: Briefcase, permission: "businesses.view", module: "businesses" },
-  { name: "Locations", href: "/locations", icon: MapPin, permission: "locations.view", module: "locations" },
   { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", module: "properties" },
   { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", module: "rooms" },
   { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", module: "tenants" },
@@ -159,7 +157,6 @@ export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
     module: "businesses",
     children: [
       { name: "My Businesses", href: "/businesses", icon: Briefcase, permission: "businesses.view", module: "businesses" },
-      { name: "Locations",     href: "/locations",  icon: MapPin,    permission: "locations.view",  module: "locations" },
     ],
   },
 
@@ -438,7 +435,6 @@ export interface RouteConfig {
 export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/dashboard":   { path: "/dashboard",   permission: null,                      module: null,           title: "Dashboard",        icon: LayoutDashboard },
   "/businesses":  { path: "/businesses",  permission: "businesses.view",         module: "businesses",   title: "Businesses",       icon: Briefcase },
-  "/locations":   { path: "/locations",   permission: "locations.view",          module: "locations",    title: "Locations",        icon: MapPin },
   "/properties":  { path: "/properties",  permission: "properties.view",         module: "properties",   title: "Properties",       icon: Building2 },
   "/rooms":       { path: "/rooms",       permission: "rooms.view",              module: "rooms",        title: "Rooms",            icon: Home },
   "/tenants":     { path: "/tenants",     permission: "tenants.view",            module: "tenants",      title: "Tenants",          icon: Users },

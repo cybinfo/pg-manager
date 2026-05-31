@@ -4,7 +4,7 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, BUSINESS_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
-import { Business, Location } from "@/types/business.types"
+import { Business } from "@/types/business.types"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -19,17 +19,13 @@ import { PageLoading } from "@/components/ui/loading"
 import { TableBadge } from "@/components/ui/data-table"
 import {
   Briefcase,
-  MapPin,
-  Phone,
-  Mail,
+  Building2,
+  Library,
   Globe,
   FileText,
   Pencil,
   Plus,
-  Building2,
-  Library,
-  CheckCircle,
-  XCircle,
+  LayoutDashboard,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
@@ -50,8 +46,18 @@ export default function BusinessDetailPage() {
   if (loading) return <PageLoading message="Loading business details..." />
   if (!business) return <NotFoundState title="Business not found" backHref="/businesses" backLabel="All Businesses" />
 
-  const locations = (related.locations || []) as Location[]
-  const activeLocations = locations.filter((l) => l.is_active)
+  const properties = (related.properties || []) as Business["properties"]
+  const libraries = (related.libraries || []) as Business["libraries"]
+  const entityCount = (properties?.length ?? 0) + (libraries?.length ?? 0)
+  const workspace = business.workspace
+
+  const typeLabel = business.business_type
+    ? (BUSINESS_ENTITY_TYPE_LABELS[business.business_type as keyof typeof BUSINESS_ENTITY_TYPE_LABELS] ?? business.business_type)
+    : null
+
+  const regAddress = [business.reg_address, business.reg_city, business.reg_state, business.reg_pincode]
+    .filter(Boolean)
+    .join(", ")
 
   return (
     <DetailPageTemplate
@@ -62,22 +68,12 @@ export default function BusinessDetailPage() {
       <DetailHero
         title={business.name}
         subtitle={
-          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
             {business.legal_name && <span>{business.legal_name}</span>}
-            {business.business_type && (
-              <TableBadge variant="info" className="capitalize">
-                {BUSINESS_ENTITY_TYPE_LABELS[business.business_type as keyof typeof BUSINESS_ENTITY_TYPE_LABELS] || business.business_type}
-              </TableBadge>
-            )}
-            {business.is_active ? (
-              <TableBadge variant="success">
-                <CheckCircle className="h-3 w-3 mr-1" />Active
-              </TableBadge>
-            ) : (
-              <TableBadge variant="muted">
-                <XCircle className="h-3 w-3 mr-1" />Inactive
-              </TableBadge>
-            )}
+            {typeLabel && <TableBadge variant="info">{typeLabel}</TableBadge>}
+            {business.is_active
+              ? <TableBadge variant="success">Active</TableBadge>
+              : <TableBadge variant="muted">Inactive</TableBadge>}
           </div>
         }
         backHref={backHref}
@@ -100,48 +96,47 @@ export default function BusinessDetailPage() {
 
       {/* Overview cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <InfoCard
-          label="Locations"
-          value={`${locations.length} (${activeLocations.length} active)`}
-          icon={MapPin}
-        />
-        <InfoCard
-          label="GST"
-          value={business.gst_number || "—"}
-          icon={FileText}
-        />
-        <InfoCard
-          label="PAN"
-          value={business.pan_number || "—"}
-          icon={FileText}
-        />
-        <InfoCard
-          label="Added"
-          value={formatDate(business.created_at)}
-          icon={Briefcase}
-        />
+        <InfoCard label="Entities" value={String(entityCount)} icon={Building2} />
+        <InfoCard label="GST" value={business.gst_number || "—"} icon={FileText} />
+        <InfoCard label="PAN" value={business.pan_number || "—"} icon={FileText} />
+        <InfoCard label="Added" value={formatDate(business.created_at)} icon={Briefcase} />
       </div>
 
-      {/* Business Details */}
+      {/* Section 1: Workspace */}
+      {workspace && (
+        <DetailSection title="Workspace" icon={LayoutDashboard}>
+          <InfoRow label="Workspace Name" value={workspace.name} />
+          <InfoRow
+            label="Type"
+            value={
+              <TableBadge variant="info" className="capitalize">
+                {workspace.type?.replace("_", " ") ?? "—"}
+              </TableBadge>
+            }
+          />
+          <InfoRow
+            label="Status"
+            value={
+              workspace.is_active
+                ? <TableBadge variant="success">Active</TableBadge>
+                : <TableBadge variant="muted">Inactive</TableBadge>
+            }
+          />
+        </DetailSection>
+      )}
+
+      {/* Section 2: Business Details */}
       <DetailSection title="Business Details" icon={Briefcase}>
         <InfoRow label="Business Name" value={business.name} />
-        <InfoRow label="Legal Name" value={business.legal_name || "—"} />
-        <InfoRow label="Business Type" value={business.business_type ? (BUSINESS_ENTITY_TYPE_LABELS[business.business_type as keyof typeof BUSINESS_ENTITY_TYPE_LABELS] || business.business_type) : "—"} />
-        {business.description && (
-          <InfoRow label="Description" value={business.description} />
+        {business.legal_name && <InfoRow label="Legal Name" value={business.legal_name} />}
+        {typeLabel && <InfoRow label="Business Type" value={typeLabel} />}
+        {business.description && <InfoRow label="Description" value={business.description} />}
+        {business.registration_number && (
+          <InfoRow label="Registration / CIN" value={business.registration_number} />
         )}
-        <InfoRow label="Registration No." value={business.registration_number || "—"} />
-      </DetailSection>
-
-      {/* Tax Details */}
-      <DetailSection title="Legal & Tax" icon={FileText}>
         <InfoRow label="GST Number" value={business.gst_number || "—"} />
         <InfoRow label="PAN Number" value={business.pan_number || "—"} />
-        <InfoRow label="Registration" value={business.registration_number || "—"} />
-      </DetailSection>
-
-      {/* Contact Details */}
-      <DetailSection title="Contact" icon={Phone}>
+        {regAddress && <InfoRow label="Registered Address" value={regAddress} />}
         {business.phone && (
           <InfoRow
             label="Phone"
@@ -173,48 +168,74 @@ export default function BusinessDetailPage() {
             }
           />
         )}
-        {!business.phone && !business.email && !business.website && (
-          <p className="text-sm text-muted-foreground">No contact details added yet.</p>
-        )}
       </DetailSection>
 
-      {/* Locations */}
+      {/* Section 3: Properties */}
       <DetailListSection
-        title="Locations"
-        icon={MapPin}
-        items={locations}
-        keyExtractor={(loc) => loc.id}
-        renderItem={(loc) => (
+        title="Properties"
+        icon={Building2}
+        items={properties ?? []}
+        keyExtractor={(p) => p.id}
+        renderItem={(p) => (
           <Link
-            href={`/locations/${loc.id}`}
+            href={`/properties/${p.id}`}
             className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <div>
-                <div className="font-medium text-sm flex items-center gap-2">
-                  {loc.name}
-                  {loc.is_primary && (
-                    <TableBadge variant="info" className="text-[10px]">Primary</TableBadge>
-                  )}
-                </div>
-                {loc.city && (
-                  <div className="text-xs text-muted-foreground">{loc.city}{loc.state && `, ${loc.state}`}</div>
-                )}
+                <div className="font-medium text-sm">{p.name}</div>
+                {p.city && <div className="text-xs text-muted-foreground">{p.city}</div>}
               </div>
             </div>
-            {!loc.is_active && <TableBadge variant="muted">Inactive</TableBadge>}
+            {!p.is_active && <TableBadge variant="muted">Inactive</TableBadge>}
           </Link>
         )}
-        viewAllHref={`/locations?business_id=${business.id}`}
-        viewAllLabel="All Locations"
-        emptyText="No locations added yet."
+        viewAllHref="/properties"
+        viewAllLabel="All Properties"
+        emptyText="No properties linked to this business yet."
         actions={
-          <PermissionGate permission="locations.create" hide>
-            <Link href={`/locations/new?business_id=${business.id}`}>
+          <PermissionGate permission="properties.create" hide>
+            <Link href="/properties/new">
               <Button variant="outline" size="sm">
                 <Plus className="h-4 w-4 mr-1" />
-                Add Location
+                Add Property
+              </Button>
+            </Link>
+          </PermissionGate>
+        }
+      />
+
+      {/* Libraries */}
+      <DetailListSection
+        title="Libraries"
+        icon={Library}
+        items={libraries ?? []}
+        keyExtractor={(l) => l.id}
+        renderItem={(l) => (
+          <Link
+            href={`/library/${l.id}`}
+            className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Library className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <div>
+                <div className="font-medium text-sm">{l.name}</div>
+                {l.city && <div className="text-xs text-muted-foreground">{l.city}</div>}
+              </div>
+            </div>
+            {!l.is_active && <TableBadge variant="muted">Inactive</TableBadge>}
+          </Link>
+        )}
+        viewAllHref="/library"
+        viewAllLabel="All Libraries"
+        emptyText="No libraries linked to this business yet."
+        actions={
+          <PermissionGate permission="library.create" hide>
+            <Link href="/library/new">
+              <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Add Library
               </Button>
             </Link>
           </PermissionGate>

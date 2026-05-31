@@ -885,46 +885,30 @@ export const LIBRARY_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
 
 export const BUSINESS_DETAIL_CONFIG: DetailPageConfig = {
   table: "businesses",
-  select: "*",
+  select: `
+    *,
+    workspace:workspaces(id, name, type, logo_url, is_active)
+  `,
+  joinFields: ["workspace"],
   redirectOnNotFound: "/businesses",
   notFoundMessage: "Business not found",
   relatedQueries: [
     {
-      key: "locations",
-      table: "locations",
-      select: "id, name, address, city, state, pincode, phone, email, is_active, is_primary, created_at",
-      foreignKey: "business_id",
-      orderBy: "is_primary",
-      orderDirection: "desc",
-    },
-  ],
-}
-
-export const LOCATION_DETAIL_CONFIG: DetailPageConfig = {
-  table: "locations",
-  select: `
-    *,
-    business:businesses(id, name, logo_url, gst_number, phone, email)
-  `,
-  joinFields: ["business"],
-  redirectOnNotFound: "/locations",
-  notFoundMessage: "Location not found",
-  relatedQueries: [
-    {
       key: "properties",
       table: "properties",
-      select: "id, name, address, city, is_active, created_at",
-      foreignKey: "location_id",
+      select: "id, name, city, is_active, created_at",
+      foreignKey: "business_id",
       orderBy: "name",
       orderDirection: "asc",
     },
     {
       key: "libraries",
       table: "libraries",
-      select: "id, name, address, city, is_active, created_at",
-      foreignKey: "location_id",
+      select: "id, name, city, is_active, created_at",
+      foreignKey: "business_id",
       orderBy: "name",
       orderDirection: "asc",
     },
   ],
 }
+

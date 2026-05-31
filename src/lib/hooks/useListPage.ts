@@ -89,7 +89,6 @@ export {
   APPROVALS_LIST_CONFIG,
   AUDIT_EVENT_LIST_CONFIG,
   BUSINESS_LIST_CONFIG,
-  LOCATION_LIST_CONFIG,
 } from "./list-page/configs"
 
 // Import types for use in this file
@@ -370,6 +369,7 @@ export function useListPage<T extends object>(
     }
 
     // Debounce the search to avoid too many requests
+    // eslint-disable-next-line react-hooks/immutability
     filtersHook.searchTimerRef.current = setTimeout(() => {
       paginationHook.setPageState(1)
       fetchData(1, paginationHook.pageSize, filtersHook.filters, query, undefined, filtersHook.advancedFiltersRef.current)
@@ -382,6 +382,7 @@ export function useListPage<T extends object>(
   // Sort setters - triggers server-side refetch
   const handleSortChange = useCallback((configs: SortConfig[]) => {
     filtersHook.setSortConfig(configs)
+    // eslint-disable-next-line react-hooks/immutability
     filtersHook.sortConfigRef.current = configs // Update ref immediately
     paginationHook.setPageState(1) // Reset to page 1 when sort changes
     // Refetch data with new sort
@@ -397,6 +398,7 @@ export function useListPage<T extends object>(
   // Group by setter - triggers refetch because grouping affects pagination
   const handleSetSelectedGroups = useCallback((groups: string[]) => {
     groupingHook.setSelectedGroups(groups)
+    // eslint-disable-next-line react-hooks/immutability
     groupingHook.selectedGroupsRef.current = groups // Update ref immediately
     paginationHook.setPageState(1)
     // Reset to page 1 when grouping changes
@@ -520,6 +522,7 @@ export function useListPage<T extends object>(
   }, [filtersHook.sortConfig, filtersHook.filters, filtersHook.advancedFilters, groupingHook.selectedGroups, paginationHook.pageSize, config.defaultPageSize, filtersHook.hiddenColumns])
 
   // Apply a view configuration (or reset to default if null)
+  // eslint-disable-next-line react-hooks/immutability -- intentional ref mutations for synchronous state sync
   const applyViewConfig = useCallback((viewConfig: import("./list-page/types").TableViewConfig | null) => {
     let newFilters: Record<string, string>
     let newGroups: string[]
@@ -533,9 +536,11 @@ export function useListPage<T extends object>(
       filtersHook.setFiltersState(newFilters)
       newAdvancedFilters = { filters: [], combineMode: "and" }
       filtersHook.setAdvancedFiltersState(newAdvancedFilters)
+      // eslint-disable-next-line react-hooks/immutability
       filtersHook.advancedFiltersRef.current = newAdvancedFilters
       newGroups = []
       groupingHook.setSelectedGroups(newGroups)
+      // eslint-disable-next-line react-hooks/immutability
       groupingHook.selectedGroupsRef.current = newGroups
       newPageSize = config.defaultPageSize || 25
       paginationHook.setPageSizeState(newPageSize)
@@ -561,20 +566,24 @@ export function useListPage<T extends object>(
       if (viewConfig.advancedFilters) {
         newAdvancedFilters = viewConfig.advancedFilters
         filtersHook.setAdvancedFiltersState(newAdvancedFilters)
+         
         filtersHook.advancedFiltersRef.current = newAdvancedFilters
       } else {
         newAdvancedFilters = { filters: [], combineMode: "and" }
         filtersHook.setAdvancedFiltersState(newAdvancedFilters)
+         
         filtersHook.advancedFiltersRef.current = newAdvancedFilters
       }
 
       if (viewConfig.groupBy) {
         newGroups = viewConfig.groupBy
         groupingHook.setSelectedGroups(newGroups)
+         
         groupingHook.selectedGroupsRef.current = newGroups
       } else {
         newGroups = []
         groupingHook.setSelectedGroups(newGroups)
+         
         groupingHook.selectedGroupsRef.current = newGroups
       }
 
@@ -607,6 +616,7 @@ export function useListPage<T extends object>(
   // Advanced filters methods
   const setAdvancedFilters = useCallback((group: FilterGroup) => {
     filtersHook.setAdvancedFiltersState(group)
+    // eslint-disable-next-line react-hooks/immutability
     filtersHook.advancedFiltersRef.current = group // Update ref immediately
     paginationHook.setPageState(1)
     // Refetch with the new advanced filters
@@ -617,6 +627,7 @@ export function useListPage<T extends object>(
   const clearAdvancedFilters = useCallback(() => {
     const emptyGroup: FilterGroup = { filters: [], combineMode: "and" }
     filtersHook.setAdvancedFiltersState(emptyGroup)
+    // eslint-disable-next-line react-hooks/immutability
     filtersHook.advancedFiltersRef.current = emptyGroup // Update ref immediately
     paginationHook.setPageState(1)
     fetchData(1, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, undefined, emptyGroup)

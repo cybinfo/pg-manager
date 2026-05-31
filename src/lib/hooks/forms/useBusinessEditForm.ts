@@ -18,6 +18,10 @@ export interface BusinessEditFormData {
   gst_number: string
   pan_number: string
   registration_number: string
+  reg_address: string
+  reg_city: string
+  reg_state: string
+  reg_pincode: string
   phone: string
   email: string
   website: string
@@ -40,6 +44,10 @@ export function useBusinessEditForm() {
     gst_number: "",
     pan_number: "",
     registration_number: "",
+    reg_address: "",
+    reg_city: "",
+    reg_state: "",
+    reg_pincode: "",
     phone: "",
     email: "",
     website: "",
@@ -67,6 +75,10 @@ export function useBusinessEditForm() {
           gst_number: data.gst_number || "",
           pan_number: data.pan_number || "",
           registration_number: data.registration_number || "",
+          reg_address: data.reg_address || "",
+          reg_city: data.reg_city || "",
+          reg_state: data.reg_state || "",
+          reg_pincode: data.reg_pincode || "",
           phone: data.phone || "",
           email: data.email || "",
           website: data.website || "",
@@ -112,6 +124,10 @@ export function useBusinessEditForm() {
           gst_number: formData.gst_number.trim().toUpperCase() || null,
           pan_number: formData.pan_number.trim().toUpperCase() || null,
           registration_number: formData.registration_number.trim() || null,
+          reg_address: formData.reg_address.trim() || null,
+          reg_city: formData.reg_city.trim() || null,
+          reg_state: formData.reg_state.trim() || null,
+          reg_pincode: formData.reg_pincode.trim() || null,
           phone: formData.phone.trim() || null,
           email: formData.email.trim().toLowerCase() || null,
           website: formData.website.trim() || null,
