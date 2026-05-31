@@ -10,12 +10,12 @@ import { getPeriodKey, formatPeriodLabel, type GroupByPeriod } from "@/lib/repor
 export interface RawSeat {
   id: string
   status: string
-  section?: { library_id?: string } | null
+  section?: { entity_id?: string } | null
 }
 
 export interface RawMember {
   id: string
-  library_id?: string
+  entity_id?: string
   status: string
   hours_balance?: number
   hours_used?: number
@@ -32,7 +32,7 @@ export interface RawPayment {
   payment_type?: string
   payment_method?: string
   payment_date: string
-  member?: { library_id?: string; name?: string; member_code?: string } | null
+  member?: { entity_id?: string; name?: string; member_code?: string } | null
 }
 
 export interface RawAttendance {
@@ -42,7 +42,7 @@ export interface RawAttendance {
   check_out_time?: string | null
   hours_spent?: number
   attendance_date: string
-  member?: { library_id?: string } | null
+  member?: { entity_id?: string } | null
 }
 
 export interface RawLibrary {
@@ -57,7 +57,7 @@ export interface RawMembership {
   member_id: string
   final_amount?: number | null
   status: string
-  member?: { library_id?: string } | null
+  member?: { entity_id?: string } | null
 }
 
 // ============================================================================
@@ -163,14 +163,14 @@ export interface PaymentReportInputs {
 function filterByLibrary<T extends Record<string, unknown>>(
   items: T[],
   selectedLibrary: string,
-  libraryIdField: string = "library_id"
+  libraryIdField: string = "entity_id"
 ): T[] {
   if (selectedLibrary === "all") return items
   return items.filter((item) => {
-    if (libraryIdField === "section.library_id")
-      return (item.section as Record<string, unknown> | undefined)?.library_id === selectedLibrary
-    if (libraryIdField === "member.library_id")
-      return (item.member as Record<string, unknown> | undefined)?.library_id === selectedLibrary
+    if (libraryIdField === "section.entity_id")
+      return (item.section as Record<string, unknown> | undefined)?.entity_id === selectedLibrary
+    if (libraryIdField === "member.entity_id")
+      return (item.member as Record<string, unknown> | undefined)?.entity_id === selectedLibrary
     return item[libraryIdField] === selectedLibrary
   })
 }
@@ -185,10 +185,10 @@ export function computeLibraryOverviewReport(
 ): LibraryReportResult {
   const { seats, members, payments, attendance, libraries, startDate, endDate, lastMonthStart, lastMonthEnd } = inputs
 
-  const filteredSeats = filterByLibrary(seats as unknown as Record<string, unknown>[], selectedLibrary, "section.library_id") as unknown as RawSeat[]
+  const filteredSeats = filterByLibrary(seats as unknown as Record<string, unknown>[], selectedLibrary, "section.entity_id") as unknown as RawSeat[]
   const filteredMembers = filterByLibrary(members as unknown as Record<string, unknown>[], selectedLibrary) as unknown as RawMember[]
-  const filteredPayments = filterByLibrary(payments as unknown as Record<string, unknown>[], selectedLibrary, "member.library_id") as unknown as RawPayment[]
-  const filteredAttendance = filterByLibrary(attendance as unknown as Record<string, unknown>[], selectedLibrary, "member.library_id") as unknown as RawAttendance[]
+  const filteredPayments = filterByLibrary(payments as unknown as Record<string, unknown>[], selectedLibrary, "member.entity_id") as unknown as RawPayment[]
+  const filteredAttendance = filterByLibrary(attendance as unknown as Record<string, unknown>[], selectedLibrary, "member.entity_id") as unknown as RawAttendance[]
 
   const now = new Date()
 
@@ -333,9 +333,9 @@ export function computeLibraryOverviewReport(
 
   // Library-wise stats (always uses unfiltered data so per-library rows always show)
   const libraryStats = libraries.map((library) => {
-    const libMembers = members.filter((m) => m.library_id === library.id)
-    const libPayments = payments.filter((p) => p.member?.library_id === library.id)
-    const libAttendance = attendance.filter((a) => a.member?.library_id === library.id)
+    const libMembers = members.filter((m) => m.entity_id === library.id)
+    const libPayments = payments.filter((p) => p.member?.entity_id === library.id)
+    const libAttendance = attendance.filter((a) => a.member?.entity_id === library.id)
 
     const libPeriodPayments = libPayments.filter((p) => {
       const paymentDate = new Date(p.payment_date)
@@ -377,9 +377,9 @@ export function computePaymentReport(
 ): PaymentReportResult {
   const { payments, members, memberships, startDate, endDate, groupBy } = inputs
 
-  const filteredPayments = filterByLibrary(payments as unknown as Record<string, unknown>[], selectedLibrary, "member.library_id") as unknown as RawPayment[]
+  const filteredPayments = filterByLibrary(payments as unknown as Record<string, unknown>[], selectedLibrary, "member.entity_id") as unknown as RawPayment[]
   const filteredMembers = filterByLibrary(members as unknown as Record<string, unknown>[], selectedLibrary) as unknown as RawMember[]
-  const filteredMemberships = filterByLibrary(memberships as unknown as Record<string, unknown>[], selectedLibrary, "member.library_id") as unknown as RawMembership[]
+  const filteredMemberships = filterByLibrary(memberships as unknown as Record<string, unknown>[], selectedLibrary, "member.entity_id") as unknown as RawMembership[]
 
   // Period payments
   const periodPayments = filteredPayments.filter((p) => {

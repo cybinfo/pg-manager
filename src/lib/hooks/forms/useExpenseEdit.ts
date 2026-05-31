@@ -28,7 +28,7 @@ export function useExpenseEdit() {
 
   const [formData, setFormData] = useState({
     expense_type_id: "",
-    property_id: "",
+    entity_id: "",
     amount: "",
     expense_date: "",
     vendor_name: "",
@@ -39,6 +39,7 @@ export function useExpenseEdit() {
   })
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
@@ -62,7 +63,7 @@ export function useExpenseEdit() {
 
       setFormData({
         expense_type_id: expense.expense_type_id,
-        property_id: expense.property_id || "",
+        entity_id: expense.entity_id || "",
         amount: String(expense.amount),
         expense_date: expense.expense_date,
         vendor_name: expense.vendor_name || "",
@@ -82,7 +83,8 @@ export function useExpenseEdit() {
       setExpenseTypes(typesData || [])
 
       const { data: propertiesData } = await supabase
-        .from("properties")
+        .from("entities")
+        .eq("type", "pg")
         .select("id, name")
         .order("name")
 
@@ -130,7 +132,7 @@ export function useExpenseEdit() {
         .from("expenses")
         .update({
           expense_type_id: formData.expense_type_id,
-          property_id: formData.property_id || null,
+          entity_id: formData.entity_id || null,
           amount: Number(formData.amount),
           expense_date: formData.expense_date,
           vendor_name: formData.vendor_name || null,

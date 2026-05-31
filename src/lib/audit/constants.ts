@@ -46,17 +46,17 @@ export const SOFT_DELETABLE_TABLES = [
   // Miscellaneous transactions
   "misc_transactions",
   "misc_transaction_categories",
-  // Library module tables
-  "libraries",
-  "library_sections",
-  "library_seats",
-  "library_members",
-  "library_memberships",
-  "library_attendance",
-  "library_lockers",
-  "library_locker_assignments",
-  "library_payments",
-  "library_waitlist",
+  // Entity module tables (unified)
+  "entities",
+  "entity_sections",
+  "entity_seats",
+  "entity_members",
+  "entity_memberships",
+  "entity_attendance",
+  "entity_lockers",
+  "entity_locker_assignments",
+  "entity_payments",
+  "entity_waitlist",
   // Tenant portal tables
   "tenant_documents",
 ] as const

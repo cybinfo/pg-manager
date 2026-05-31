@@ -75,11 +75,11 @@ import { TableBadge } from "@/components/ui/data-table"
 
 // Detail page configuration
 const LIBRARY_WAITLIST_DETAIL_CONFIG: DetailPageConfig<LibraryWaitlist> = {
-  table: "library_waitlist",
+  table: "entity_waitlist",
   select: `
     *,
     library:libraries(id, name),
-    converted_member:library_members(id, name, member_code),
+    converted_member:entity_members(id, name, member_code),
     person:people(id, photo_url)
   `,
   joinFields: ["library", "converted_member", "person"],
@@ -116,7 +116,7 @@ export default function WaitlistDetailPage({
     try {
       const supabase = createClient()
       const { error } = await supabase
-        .from("library_waitlist")
+        .from("entity_waitlist")
         .update({
           status: newStatus,
           updated_at: getNowISO(),
@@ -144,7 +144,7 @@ export default function WaitlistDetailPage({
     try {
       const supabase = createClient()
       const { error } = await supabase
-        .from("library_waitlist")
+        .from("entity_waitlist")
         .update({
           status: "contacted",
           last_contacted_at: getNowISO(),
@@ -331,7 +331,7 @@ export default function WaitlistDetailPage({
                 </AlertDialog>
               </>
             )}
-            <PermissionGate permission="library_waitlist.edit" hide>
+            <PermissionGate permission="entity_waitlist.edit" hide>
               <Link href={`/library-waitlist/${id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
@@ -339,7 +339,7 @@ export default function WaitlistDetailPage({
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_waitlist.edit" hide>
+            <PermissionGate permission="entity_waitlist.edit" hide>
               <Button
                 variant="destructive"
                 size="sm"
@@ -351,7 +351,7 @@ export default function WaitlistDetailPage({
                     destructive: true,
                     onConfirm: async () => {
                       try {
-                        const result = await softDelete("library_waitlist", id, user.id)
+                        const result = await softDelete("entity_waitlist", id, user.id)
                         if (!result.error) {
                           showSuccess("Waitlist entry deleted successfully")
                           router.push("/library-waitlist")
@@ -401,7 +401,7 @@ export default function WaitlistDetailPage({
         />
       </div>
 
-      <DetailPageTemplate layoutKey="library-waitlist-detail" entityType="library_waitlist" record={entry}>
+      <DetailPageTemplate layoutKey="library-waitlist-detail" entityType="entity_waitlist" record={entry}>
         {/* Contact Information */}
         <DetailSection
           title="Contact Information"

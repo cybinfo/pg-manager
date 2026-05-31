@@ -42,7 +42,7 @@ export interface TenantCreateInput {
   profile_photo?: string
 
   // Tenancy-specific assignment
-  property_id: string
+  entity_id: string
   room_id: string
   bed_id?: string
 
@@ -315,7 +315,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           photo_url: input.photo_url || null,
           profile_photo: input.profile_photo || null,
           // Tenancy-specific data
-          property_id: input.property_id,
+          entity_id: input.entity_id,
           room_id: input.room_id,
           bed_id: input.bed_id || null,
           check_in_date: input.check_in_date,
@@ -374,7 +374,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const stayData = {
           owner_id: context.actor_id,
           tenant_id: tenant.id,
-          property_id: input.property_id,
+          entity_id: input.entity_id,
           room_id: input.room_id,
           bed_id: input.bed_id || null,
           join_date: input.check_in_date,
@@ -601,7 +601,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .from("bills")
           .insert({
             tenant_id: tenant.id,
-            property_id: input.property_id,
+            entity_id: input.entity_id,
             bill_number: billNumber,
             bill_month: billMonth,
             billing_period_start: input.check_in_date,

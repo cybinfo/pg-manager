@@ -145,12 +145,12 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
         paymentsRes,
         attendanceRes,
       ] = await Promise.all([
-        supabase.from("libraries").select("id, name, total_seats, occupied_seats"),
-        fetchAllRows(supabase.from("library_seats").select("id, section_id, status, section:library_sections!library_seats_section_id_fkey(library_id)")),
-        fetchAllRows(supabase.from("library_members").select("id, library_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at")),
-        fetchAllRows(supabase.from("library_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:library_members!library_memberships_member_id_fkey(library_id)")),
-        fetchAllRows(supabase.from("library_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(library_id)")),
-        fetchAllRows(supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)")),
+        supabase.from("entities").eq("type", "library").select("id, name, total_seats, occupied_seats"),
+        fetchAllRows(supabase.from("entity_seats").select("id, section_id, status, section:entity_sections!entity_seats_section_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_members").select("id, entity_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at")),
+        fetchAllRows(supabase.from("entity_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:entity_members!entity_memberships_member_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:entity_members!entity_payments_member_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:entity_members!entity_attendance_member_id_fkey(entity_id)")),
       ])
 
       const librariesData = librariesRes.data || []
@@ -170,19 +170,19 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
 
       setLibraries(librariesData.map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })))
 
-      const filterByLibrary = (items: Record<string, unknown>[], libraryIdField: string = "library_id") => {
+      const filterByLibrary = (items: Record<string, unknown>[], libraryIdField: string = "entity_id") => {
         if (selectedLibrary === "all") return items
         return items.filter((item) => {
-          if (libraryIdField === "section.library_id") return (item.section as Record<string, unknown>)?.library_id === selectedLibrary
-          if (libraryIdField === "member.library_id") return (item.member as Record<string, unknown>)?.library_id === selectedLibrary
+          if (libraryIdField === "section.entity_id") return (item.section as Record<string, unknown>)?.entity_id === selectedLibrary
+          if (libraryIdField === "member.entity_id") return (item.member as Record<string, unknown>)?.entity_id === selectedLibrary
           return item[libraryIdField] === selectedLibrary
         })
       }
 
-      const filteredSeats = filterByLibrary(seatsData, "section.library_id")
+      const filteredSeats = filterByLibrary(seatsData, "section.entity_id")
       const filteredMembers = filterByLibrary(membersData)
-      const filteredPayments = filterByLibrary(paymentsData, "member.library_id")
-      const filteredAttendance = filterByLibrary(attendanceData, "member.library_id")
+      const filteredPayments = filterByLibrary(paymentsData, "member.entity_id")
+      const filteredAttendance = filterByLibrary(attendanceData, "member.entity_id")
 
       const now = new Date()
 
@@ -313,9 +313,9 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
       }
 
       const libraryStats = librariesData.map((library: { id: string; name: string; total_seats: number }) => {
-        const libMembers = membersData.filter((m) => m.library_id === library.id)
-        const libPayments = paymentsData.filter((p) => (p.member as Record<string, unknown>)?.library_id === library.id)
-        const libAttendance = attendanceData.filter((a) => (a.member as Record<string, unknown>)?.library_id === library.id)
+        const libMembers = membersData.filter((m) => m.entity_id === library.id)
+        const libPayments = paymentsData.filter((p) => (p.member as Record<string, unknown>)?.entity_id === library.id)
+        const libAttendance = attendanceData.filter((a) => (a.member as Record<string, unknown>)?.entity_id === library.id)
 
         const libPeriodPayments = libPayments.filter((p) => {
           const paymentDate = new Date((p as Record<string, unknown>).payment_date as string)
@@ -359,12 +359,12 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
 
     try {
       const [paymentsRes, membersRes, membershipsRes] = await Promise.all([
-        fetchAllRows(supabase.from("library_payments").select(
-          "id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(id, library_id, name, member_code)"
+        fetchAllRows(supabase.from("entity_payments").select(
+          "id, member_id, amount, payment_type, payment_method, payment_date, member:entity_members!entity_payments_member_id_fkey(id, entity_id, name, member_code)"
         )),
-        fetchAllRows(supabase.from("library_members").select("id, library_id, status")),
-        fetchAllRows(supabase.from("library_memberships").select(
-          "id, member_id, final_amount, status, member:library_members!library_memberships_member_id_fkey(library_id)"
+        fetchAllRows(supabase.from("entity_members").select("id, entity_id, status")),
+        fetchAllRows(supabase.from("entity_memberships").select(
+          "id, member_id, final_amount, status, member:entity_members!entity_memberships_member_id_fkey(entity_id)"
         )),
       ])
 
@@ -378,17 +378,17 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
         member: transformJoin(m.member),
       }))
 
-      const filterByLibrary = (items: Record<string, unknown>[], field: string = "library_id") => {
+      const filterByLibrary = (items: Record<string, unknown>[], field: string = "entity_id") => {
         if (selectedLibrary === "all") return items
         return items.filter((item) => {
-          if (field === "member.library_id") return (item.member as Record<string, unknown>)?.library_id === selectedLibrary
+          if (field === "member.entity_id") return (item.member as Record<string, unknown>)?.entity_id === selectedLibrary
           return item[field] === selectedLibrary
         })
       }
 
-      const filteredPayments = filterByLibrary(paymentsData, "member.library_id")
+      const filteredPayments = filterByLibrary(paymentsData, "member.entity_id")
       const filteredMembers = filterByLibrary(membersData)
-      const filteredMemberships = filterByLibrary(membershipsData, "member.library_id")
+      const filteredMemberships = filterByLibrary(membershipsData, "member.entity_id")
 
       const periodPayments = filteredPayments.filter((p: Record<string, unknown>) => {
         const paymentDate = new Date(p.payment_date as string)
@@ -507,13 +507,15 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
   }, [selectedLibrary, dateRange, paymentGroupBy])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReportData()
   }, [fetchReportData])
 
   // Invalidate payment report when overview filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPaymentReportData(null)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [selectedLibrary, dateRange])
 
   return {

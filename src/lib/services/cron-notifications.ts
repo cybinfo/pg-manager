@@ -526,7 +526,7 @@ export async function generateAutoBills(
       .from("tenants")
       .select(`
         id, name, phone, email, monthly_rent, security_deposit,
-        property_id, room_id,
+        entity_id, room_id,
         property:properties(name),
         room:rooms(room_number)
       `)
@@ -622,7 +622,7 @@ export async function generateAutoBills(
         const { error: billError } = await supabaseAdmin.from("bills").insert({
           owner_id: ownerId,
           tenant_id: tenant.id,
-          property_id: tenant.property_id,
+          entity_id: tenant.entity_id,
           bill_number: billNumber || `INV-${Date.now()}`,
           bill_date: today.toISOString().split("T")[0],
           due_date: dueDateStr,

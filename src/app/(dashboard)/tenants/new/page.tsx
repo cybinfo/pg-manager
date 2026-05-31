@@ -198,8 +198,8 @@ function NewTenantContent() {
                   value: p.id,
                   label: p.name,
                 }))}
-                value={formData.property_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, property_id: value }))}
+                value={formData.entity_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, entity_id: value }))}
                 placeholder="Select property..."
                 searchPlaceholder="Search properties..."
                 disabled={loading}

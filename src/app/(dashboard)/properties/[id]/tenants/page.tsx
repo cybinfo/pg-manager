@@ -143,7 +143,7 @@ export default function PropertyTenantsPage() {
     const fetchProperty = async () => {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from("properties")
+        .from("entities")
         .select("id, name, address")
         .eq("id", propertyId)
         .is("deleted_at", null)
@@ -162,7 +162,7 @@ export default function PropertyTenantsPage() {
 
   const config = useMemo(() => ({
     ...TENANT_LIST_CONFIG,
-    fixedFilters: [{ column: "property_id", operator: "eq" as const, value: propertyId }],
+    fixedFilters: [{ column: "entity_id", operator: "eq" as const, value: propertyId }],
   }), [propertyId])
 
   if (notFound) {
@@ -195,7 +195,7 @@ export default function PropertyTenantsPage() {
       enableColumnManager={true}
 exportColumns={exportColumns}
       exportFilename={`tenants-property-${propertyId}`}
-      createHref={`/tenants/new?property_id=${propertyId}`}
+      createHref={`/tenants/new?entity_id=${propertyId}`}
       createLabel="Add Tenant"
       createPermission="tenants.create"
       detailHref={(tenant) => `/tenants/${tenant.id}`}

@@ -86,7 +86,7 @@ export default function StaffDetailPage() {
 
   const [newRoleAssignment, setNewRoleAssignment] = useState({
     role_id: "",
-    property_id: "",
+    entity_id: "",
   })
 
   const [deniedPermissions, setDeniedPermissions] = useState<string[]>([])
@@ -107,7 +107,7 @@ export default function StaffDetailPage() {
           .select("id, name, description, is_system_role")
           .order("is_system_role", { ascending: false })
           .order("name"),
-        supabase.from("properties").select("id, name").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
       ])
 
       if (!allRolesRes.error) {
@@ -120,7 +120,7 @@ export default function StaffDetailPage() {
       if (!propertiesRes.error) {
         setProperties(propertiesRes.data || [])
         if (propertiesRes.data && propertiesRes.data.length === 1) {
-          setNewRoleAssignment((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
+          setNewRoleAssignment((prev) => ({ ...prev, entity_id: propertiesRes.data[0].id }))
         }
       }
     }
@@ -246,13 +246,13 @@ export default function StaffDetailPage() {
 
     const supabase = createClient()
 
-    const propertyId = newRoleAssignment.property_id === "" ? null : newRoleAssignment.property_id
+    const propertyId = newRoleAssignment.entity_id === "" ? null : newRoleAssignment.entity_id
 
     const { error } = await supabase.from("user_roles").insert({
       owner_id: user.id,
       staff_member_id: staff.id,
       role_id: newRoleAssignment.role_id,
-      property_id: propertyId,
+      entity_id: propertyId,
     })
 
     if (error) {
@@ -564,8 +564,8 @@ export default function StaffDetailPage() {
                   }))}
                 />
                 <Select
-                  value={newRoleAssignment.property_id}
-                  onChange={(e) => setNewRoleAssignment((prev) => ({ ...prev, property_id: e.target.value }))}
+                  value={newRoleAssignment.entity_id}
+                  onChange={(e) => setNewRoleAssignment((prev) => ({ ...prev, entity_id: e.target.value }))}
                   className="flex-1"
                   disabled={saving}
                   placeholder="All Properties"

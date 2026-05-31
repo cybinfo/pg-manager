@@ -232,7 +232,7 @@ export const EXPENSE_DETAIL_CONFIG: DetailPageConfig = {
 
 // Property Detail Config
 export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
-  table: "properties",
+  table: "entities",
   select: "*",
   redirectOnNotFound: "/properties",
   notFoundMessage: "Property not found",
@@ -677,17 +677,17 @@ export const LIBRARY_DETAIL_CONFIG: DetailPageConfig = {
   relatedQueries: [
     {
       key: "sections",
-      table: "library_sections",
+      table: "entity_sections",
       select: "id, name, section_number, floor, total_seats, occupied_seats, is_ac, is_active",
-      foreignKey: "library_id",
+      foreignKey: "entity_id",
       orderBy: "name",
       orderDirection: "asc",
     },
     {
       key: "members",
-      table: "library_members",
+      table: "entity_members",
       select: "id, name, member_code, phone, status, hours_balance, join_date, person:people(id, name, photo_url)",
-      foreignKey: "library_id",
+      foreignKey: "entity_id",
       joinFields: ["person"],
       filter: { status: ["active"] },
       orderBy: "name",
@@ -696,17 +696,17 @@ export const LIBRARY_DETAIL_CONFIG: DetailPageConfig = {
     },
     {
       key: "lockers",
-      table: "library_lockers",
-      select: "id, locker_number, size, status, monthly_rent, current_member:library_members!fk_lockers_current_member(id, name, person:people(id, name))",
-      foreignKey: "library_id",
+      table: "entity_lockers",
+      select: "id, locker_number, size, status, monthly_rent, current_member:entity_members!fk_lockers_current_member(id, name, person:people(id, name))",
+      foreignKey: "entity_id",
       joinFields: ["current_member"],
       orderBy: "locker_number",
       orderDirection: "asc",
     },
     {
       key: "recentPayments",
-      table: "library_payments",
-      select: "id, amount, payment_date, payment_type, member:library_members(id, name, person:people(id, name))",
+      table: "entity_payments",
+      select: "id, amount, payment_date, payment_type, member:entity_members(id, name, person:people(id, name))",
       foreignKey: "workspace_id",
       foreignKeyValue: "field:workspace_id",
       joinFields: ["member"],
@@ -719,7 +719,7 @@ export const LIBRARY_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Section Detail Config
 export const LIBRARY_SECTION_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_sections",
+  table: "entity_sections",
   select: `
     *,
     library:libraries(id, name, code)
@@ -730,8 +730,8 @@ export const LIBRARY_SECTION_DETAIL_CONFIG: DetailPageConfig = {
   relatedQueries: [
     {
       key: "seats",
-      table: "library_seats",
-      select: "id, seat_number, row_number, status, has_power_outlet, current_member:library_members!fk_seats_current_member(id, name, member_code, person:people(id, name))",
+      table: "entity_seats",
+      select: "id, seat_number, row_number, status, has_power_outlet, current_member:entity_members!fk_seats_current_member(id, name, member_code, person:people(id, name))",
       foreignKey: "section_id",
       joinFields: ["current_member"],
       orderBy: "seat_number",
@@ -742,11 +742,11 @@ export const LIBRARY_SECTION_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Seat Detail Config
 export const LIBRARY_SEAT_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_seats",
+  table: "entity_seats",
   select: `
     *,
-    section:library_sections(id, name, library:libraries(id, name)),
-    current_member:library_members!fk_seats_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
+    section:entity_sections(id, name, library:libraries(id, name)),
+    current_member:entity_members!fk_seats_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
   `,
   joinFields: ["section", "current_member"],
   redirectOnNotFound: "/library-sections",
@@ -755,13 +755,13 @@ export const LIBRARY_SEAT_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Member Detail Config
 export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_members",
+  table: "entity_members",
   select: `
     *,
     person:people(id, name, phone, email, photo_url, aadhaar_number, pan_number, date_of_birth, gender, phone_numbers, emergency_contacts, id_documents, permanent_address, permanent_city, permanent_state, permanent_pincode, current_address, current_city, occupation, blood_group, company_name),
     library:libraries(id, name, code),
-    assigned_seat:library_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:library_sections(id, name)),
-    locker:library_lockers!library_members_locker_id_fkey(id, locker_number, size)
+    assigned_seat:entity_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:entity_sections(id, name)),
+    locker:entity_lockers!library_members_locker_id_fkey(id, locker_number, size)
   `,
   joinFields: ["person", "library", "assigned_seat", "locker"],
   redirectOnNotFound: "/library-members",
@@ -769,7 +769,7 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
   relatedQueries: [
     {
       key: "memberships",
-      table: "library_memberships",
+      table: "entity_memberships",
       select: "id, plan_name, start_date, end_date, hours_included, hours_used, hours_remaining, final_amount, status",
       foreignKey: "member_id",
       orderBy: "start_date",
@@ -777,7 +777,7 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
     },
     {
       key: "attendance",
-      table: "library_attendance",
+      table: "entity_attendance",
       select: "id, attendance_date, check_in_time, check_out_time, hours_spent",
       foreignKey: "member_id",
       orderBy: "check_in_time",
@@ -786,7 +786,7 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
     },
     {
       key: "payments",
-      table: "library_payments",
+      table: "entity_payments",
       select: "id, amount, payment_date, payment_type, payment_method, receipt_number, membership_id, status",
       foreignKey: "member_id",
       orderBy: "payment_date",
@@ -795,8 +795,8 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
     },
     {
       key: "lockerAssignments",
-      table: "library_locker_assignments",
-      select: "id, start_date, end_date, rent_amount, deposit_amount, status, locker:library_lockers(id, locker_number)",
+      table: "entity_locker_assignments",
+      select: "id, start_date, end_date, rent_amount, deposit_amount, status, locker:entity_lockers(id, locker_number)",
       foreignKey: "member_id",
       joinFields: ["locker"],
       orderBy: "start_date",
@@ -807,11 +807,11 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Attendance Detail Config
 export const LIBRARY_ATTENDANCE_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_attendance",
+  table: "entity_attendance",
   select: `
     *,
-    member:library_members(id, name, member_code, phone, person:people(id, name, photo_url)),
-    seat:library_seats(id, seat_number, section:library_sections(id, name))
+    member:entity_members(id, name, member_code, phone, person:people(id, name, photo_url)),
+    seat:entity_seats(id, seat_number, section:entity_sections(id, name))
   `,
   joinFields: ["member", "seat"],
   redirectOnNotFound: "/library-attendance",
@@ -820,11 +820,11 @@ export const LIBRARY_ATTENDANCE_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Locker Detail Config
 export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_lockers",
+  table: "entity_lockers",
   select: `
     *,
     library:libraries(id, name),
-    current_member:library_members!fk_lockers_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
+    current_member:entity_members!fk_lockers_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
   `,
   joinFields: ["library", "current_member"],
   redirectOnNotFound: "/library-lockers",
@@ -832,8 +832,8 @@ export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
   relatedQueries: [
     {
       key: "assignments",
-      table: "library_locker_assignments",
-      select: "id, start_date, end_date, rent_amount, deposit_amount, deposit_returned, status, member:library_members(id, name, member_code, person:people(id, name))",
+      table: "entity_locker_assignments",
+      select: "id, start_date, end_date, rent_amount, deposit_amount, deposit_returned, status, member:entity_members(id, name, member_code, person:people(id, name))",
       foreignKey: "locker_id",
       joinFields: ["member"],
       orderBy: "start_date",
@@ -844,12 +844,12 @@ export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Subscription (Membership) Detail Config
 export const LIBRARY_SUBSCRIPTION_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_memberships",
+  table: "entity_memberships",
   select: `
     *,
-    member:library_members!library_memberships_member_id_fkey(id, name, member_code, phone, email,
+    member:entity_members!library_memberships_member_id_fkey(id, name, member_code, phone, email,
       person:people(id, name, photo_url, phone, email)),
-    plan:library_plans(id, name, hours_included, base_price)
+    plan:entity_plans(id, name, hours_included, base_price)
   `,
   joinFields: ["member", "plan"],
   redirectOnNotFound: "/library-subscriptions",
@@ -857,7 +857,7 @@ export const LIBRARY_SUBSCRIPTION_DETAIL_CONFIG: DetailPageConfig = {
   relatedQueries: [
     {
       key: "payments",
-      table: "library_payments",
+      table: "entity_payments",
       select: "id, amount, payment_date, payment_method, receipt_number, status, notes, payment_type, payment_reference",
       foreignKey: "membership_id",
       orderBy: "payment_date",
@@ -868,11 +868,11 @@ export const LIBRARY_SUBSCRIPTION_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Payment Detail Config
 export const LIBRARY_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
-  table: "library_payments",
+  table: "entity_payments",
   select: `
     *,
-    member:library_members(id, name, member_code, phone, person:people(id, photo_url)),
-    membership:library_memberships!library_payments_membership_id_fkey(id, plan_name, start_date, end_date)
+    member:entity_members(id, name, member_code, phone, person:people(id, photo_url)),
+    membership:entity_memberships!library_payments_membership_id_fkey(id, plan_name, start_date, end_date)
   `,
   joinFields: ["member", "membership"],
   redirectOnNotFound: "/library-payments",
@@ -895,7 +895,7 @@ export const BUSINESS_DETAIL_CONFIG: DetailPageConfig = {
   relatedQueries: [
     {
       key: "properties",
-      table: "properties",
+      table: "entities",
       select: "id, name, city, is_active, created_at",
       foreignKey: "business_id",
       orderBy: "name",

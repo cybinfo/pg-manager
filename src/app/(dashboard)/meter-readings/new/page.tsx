@@ -56,7 +56,7 @@ interface Meter {
   id: string
   meter_number: string
   meter_type: string
-  property_id: string
+  entity_id: string
   status: string
   property: { id: string; name: string } | null
   current_assignment: {
@@ -218,7 +218,7 @@ function NewMeterReadingContent() {
         supabase.from("charge_types").select("id, name, calculation_config").eq("owner_id", ownerId).in("name", ["Electricity", "Water", "Gas", "electricity", "water", "gas"]).order("name"),
         supabase.from("tenants").select("id, name, room_id").eq("status", "active"),
         supabase.from("meters").select(`
-          id, meter_number, meter_type, property_id, status,
+          id, meter_number, meter_type, entity_id, status,
           property:properties(id, name)
         `).eq("status", "active").order("meter_number"),
       ])

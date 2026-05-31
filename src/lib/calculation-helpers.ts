@@ -267,7 +267,7 @@ export function groupAndCount<T extends Record<string, unknown>>(
  * Group and sum items by a key
  *
  * @example
- * const revenueByProperty = groupAndSum(payments, "property_id", "amount")
+ * const revenueByProperty = groupAndSum(payments, "entity_id", "amount")
  * // { "prop-1": 50000, "prop-2": 30000 }
  */
 export function groupAndSum<T extends Record<string, unknown>>(

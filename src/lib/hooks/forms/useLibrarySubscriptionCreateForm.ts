@@ -71,7 +71,7 @@ export function useLibrarySubscriptionCreateForm() {
     async function fetchMembers() {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .select("id, name, member_code, owner_id, workspace_id, expiry_date, status, library:libraries(id, name), person:people(id, name, photo_url)")
         .is("deleted_at", null)
         .order("name")
@@ -89,11 +89,12 @@ export function useLibrarySubscriptionCreateForm() {
 
   useEffect(() => {
     if (!formData.member_id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingPlans(true)
     async function fetchPlans() {
       const supabase = createClient()
       const { data } = await supabase
-        .from("library_plans")
+        .from("entity_plans")
         .select("id, name, hours_included, validity_days, base_price")
         .eq("is_active", true)
         .order("sort_order")

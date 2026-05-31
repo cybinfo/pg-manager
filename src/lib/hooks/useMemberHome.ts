@@ -48,6 +48,7 @@ export function useMemberHome(
   useEffect(() => {
     if (memberLoading) return
     if (!member) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false)
       return
     }
@@ -62,26 +63,26 @@ export function useMemberHome(
         { data: monthAttendance },
       ] = await Promise.all([
         supabase
-          .from("library_attendance")
+          .from("entity_attendance")
           .select("id, attendance_date, check_in_time, check_out_time, hours_spent")
           .eq("member_id", member.id)
           .is("deleted_at", null)
           .order("check_in_time", { ascending: false })
           .limit(5),
         supabase
-          .from("library_payments")
+          .from("entity_payments")
           .select("id, amount, payment_date, payment_type, payment_method")
           .eq("member_id", member.id)
           .is("deleted_at", null)
           .order("payment_date", { ascending: false })
           .limit(3),
         supabase
-          .from("library_payments")
+          .from("entity_payments")
           .select("amount")
           .eq("member_id", member.id)
           .is("deleted_at", null),
         supabase
-          .from("library_attendance")
+          .from("entity_attendance")
           .select("hours_spent")
           .eq("member_id", member.id)
           .is("deleted_at", null)

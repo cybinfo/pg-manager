@@ -22,7 +22,7 @@ interface TenantRaw {
   notice_date: string | null
   expected_exit_date: string | null
   status: string
-  property_id: string
+  entity_id: string
   room_id: string
   property: { id: string; name: string }[] | null
   room: { id: string; room_number: string; deposit_amount: number }[] | null
@@ -38,7 +38,7 @@ export interface ExitClearanceTenant {
   notice_date: string | null
   expected_exit_date: string | null
   status: string
-  property_id: string
+  entity_id: string
   room_id: string
   property: {
     id: string
@@ -120,7 +120,7 @@ export function useExitClearanceCreateForm() {
           notice_date,
           expected_exit_date,
           status,
-          property_id,
+          entity_id,
           room_id,
           property:properties(id, name),
           photo_url,
@@ -147,7 +147,7 @@ export function useExitClearanceCreateForm() {
           expected_exit_date: t.expected_exit_date,
           status: t.status,
           photo_url: t.photo_url,
-          property_id: t.property_id,
+          entity_id: t.entity_id,
           room_id: t.room_id,
           property: transformJoin(t.property),
           room: transformJoin(t.room),
@@ -300,7 +300,7 @@ export function useExitClearanceCreateForm() {
 
       const workflowInput: ExitClearanceInput = {
         tenant_id: formData.tenant_id,
-        property_id: selectedTenant.property_id,
+        entity_id: selectedTenant.entity_id,
         room_id: selectedTenant.room_id,
         requested_exit_date: formData.expected_exit_date,
         exit_reason: "notice_period",

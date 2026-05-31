@@ -76,7 +76,7 @@ export default function LibraryAttendanceDetailPage() {
 
       // Update attendance record
       const { error: attendanceError } = await supabase
-        .from("library_attendance")
+        .from("entity_attendance")
         .update({
           check_out_time: checkOutTime,
           hours_spent: Math.round(hoursSpent * 100) / 100, // Round to 2 decimal places
@@ -93,14 +93,14 @@ export default function LibraryAttendanceDetailPage() {
       // Update member hours if they have hours balance
       if (attendance.member_id) {
         const { data: member } = await supabase
-          .from("library_members")
+          .from("entity_members")
           .select("hours_balance, hours_used")
           .eq("id", attendance.member_id)
           .single()
 
         if (member) {
           await supabase
-            .from("library_members")
+            .from("entity_members")
             .update({
               hours_used: (member.hours_used || 0) + hoursSpent,
               hours_balance: Math.max(0, (member.hours_balance || 0) - hoursSpent),
@@ -112,14 +112,14 @@ export default function LibraryAttendanceDetailPage() {
         // Update membership hours if applicable
         if (attendance.membership_id) {
           const { data: membership } = await supabase
-            .from("library_memberships")
+            .from("entity_memberships")
             .select("hours_used, hours_remaining")
             .eq("id", attendance.membership_id)
             .single()
 
           if (membership) {
             await supabase
-              .from("library_memberships")
+              .from("entity_memberships")
               .update({
                 hours_used: (membership.hours_used || 0) + hoursSpent,
                 hours_remaining: membership.hours_remaining !== null
@@ -135,7 +135,7 @@ export default function LibraryAttendanceDetailPage() {
       // Release seat if one was assigned
       if (attendance.seat_id) {
         await supabase
-          .from("library_seats")
+          .from("entity_seats")
           .update({
             status: "available",
             current_member_id: null,
@@ -224,7 +224,7 @@ export default function LibraryAttendanceDetailPage() {
                 </Button>
               </Link>
             )}
-            <PermissionGate permission="library_attendance.edit" hide>
+            <PermissionGate permission="entity_attendance.edit" hide>
               <Link href={`/library-attendance/${params.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
@@ -232,7 +232,7 @@ export default function LibraryAttendanceDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_attendance.edit" hide>
+            <PermissionGate permission="entity_attendance.edit" hide>
               <Button
                 variant="destructive"
                 size="sm"
@@ -244,7 +244,7 @@ export default function LibraryAttendanceDetailPage() {
                     destructive: true,
                     onConfirm: async () => {
                       try {
-                        const result = await softDelete("library_attendance", params.id as string, user.id)
+                        const result = await softDelete("entity_attendance", params.id as string, user.id)
                         if (!result.error) {
                           showSuccess("Attendance record deleted successfully")
                           router.push("/library-attendance")
@@ -294,7 +294,7 @@ export default function LibraryAttendanceDetailPage() {
         />
       </div>
 
-      <DetailPageTemplate layoutKey="library-attendance-detail" entityType="library_attendance" record={attendance}>
+      <DetailPageTemplate layoutKey="library-attendance-detail" entityType="entity_attendance" record={attendance}>
         {/* Member Info */}
         {attendance.member && (
           <DetailSection

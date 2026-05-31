@@ -3,7 +3,7 @@ import type { createClient } from "@/lib/supabase/client"
 type SupabaseClient = ReturnType<typeof createClient>
 
 export interface SubmitInquiryParams {
-  property_id: string
+  entity_id: string
   owner_id: string
   name: string
   phone: string
@@ -18,7 +18,7 @@ export async function submitInquiry(
   params: SubmitInquiryParams,
 ): Promise<void> {
   const { error } = await supabase.from("website_inquiries").insert({
-    property_id: params.property_id,
+    entity_id: params.entity_id,
     owner_id: params.owner_id,
     name: params.name,
     phone: params.phone,

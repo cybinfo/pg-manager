@@ -592,7 +592,7 @@ export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown
 // ============================================
 
 export const LIBRARY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "libraries",
+  table: "entities",
   select: `*`,
   defaultOrderBy: "name",
   defaultOrderDirection: "asc",
@@ -608,10 +608,10 @@ export const LIBRARY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
 }
 
 export const LIBRARY_SECTION_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_sections",
+  table: "entity_sections",
   select: `
     *,
-    library:libraries(id, name, code)
+    library:entities(id, name, code)
   `,
   defaultOrderBy: "name",
   defaultOrderDirection: "asc",
@@ -628,11 +628,11 @@ export const LIBRARY_SECTION_LIST_CONFIG: ListPageConfig<Record<string, unknown>
 }
 
 export const LIBRARY_SEAT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_seats",
+  table: "entity_seats",
   select: `
     *,
-    section:library_sections(id, name, library:libraries(id, name)),
-    current_member:library_members!fk_seats_current_member(id, name, member_code)
+    section:entity_sections(id, name, library:entities(id, name)),
+    current_member:entity_members!fk_seats_current_member(id, name, member_code)
   `,
   defaultOrderBy: "seat_number",
   defaultOrderDirection: "asc",
@@ -647,12 +647,12 @@ export const LIBRARY_SEAT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
 }
 
 export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_members",
+  table: "entity_members",
   select: `
     *,
     person:people(id, name, photo_url),
-    library:libraries(id, name),
-    assigned_seat:library_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:library_sections(id, name))
+    library:entities(id, name),
+    assigned_seat:entity_seats!entity_members_assigned_seat_id_fkey(id, seat_number, section:entity_sections(id, name))
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
@@ -671,11 +671,11 @@ export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
 }
 
 export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_memberships",
+  table: "entity_memberships",
   select: `
     *,
-    member:library_members!library_memberships_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
-    plan:library_plans(id, name, hours_included)
+    member:entity_members!entity_memberships_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
+    plan:entity_plans(id, name, hours_included)
   `,
   defaultOrderBy: "start_date",
   defaultOrderDirection: "desc",
@@ -699,11 +699,11 @@ export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unkno
 }
 
 export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_attendance",
+  table: "entity_attendance",
   select: `
     *,
-    member:library_members!library_attendance_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
-    seat:library_seats(id, seat_number)
+    member:entity_members!entity_attendance_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
+    seat:entity_seats(id, seat_number)
   `,
   defaultOrderBy: "check_in_time",
   defaultOrderDirection: "desc",
@@ -726,11 +726,11 @@ export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unkno
 }
 
 export const LIBRARY_LOCKER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_lockers",
+  table: "entity_lockers",
   select: `
     *,
-    library:libraries(id, name),
-    current_member:library_members!fk_lockers_current_member(id, name, member_code)
+    library:entities(id, name),
+    current_member:entity_members!fk_lockers_current_member(id, name, member_code)
   `,
   defaultOrderBy: "locker_number",
   defaultOrderDirection: "asc",
@@ -747,10 +747,10 @@ export const LIBRARY_LOCKER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
 }
 
 export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_payments",
+  table: "entity_payments",
   select: `
     *,
-    member:library_members(id, name, member_code, phone, person:people(id, name, photo_url))
+    member:entity_members(id, name, member_code, phone, person:people(id, name, photo_url))
   `,
   defaultOrderBy: "payment_date",
   defaultOrderDirection: "desc",
@@ -772,7 +772,7 @@ export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
 }
 
 export const LIBRARY_PLAN_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_plans",
+  table: "entity_plans",
   select: `*`,
   defaultOrderBy: "sort_order",
   defaultOrderDirection: "asc",
@@ -791,10 +791,10 @@ export const LIBRARY_PLAN_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
 // ============================================
 
 export const LIBRARY_WAITLIST_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_waitlist",
+  table: "entity_waitlist",
   select: `
     *,
-    library:libraries(id, name)
+    library:entities(id, name)
   `,
   joinFields: ["library"],
   searchFields: ["name", "phone", "email"],

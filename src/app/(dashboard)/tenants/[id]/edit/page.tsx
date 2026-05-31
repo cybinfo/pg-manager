@@ -44,7 +44,7 @@ interface Room {
   deposit_amount: number
   total_beds: number
   occupied_beds: number
-  property_id: string
+  entity_id: string
 }
 
 export default function EditTenantPage() {
@@ -78,13 +78,13 @@ function EditTenantContent() {
     table: "tenants",
     id,
     select: `
-      id, person_id, property_id, room_id, check_in_date,
+      id, person_id, entity_id, room_id, check_in_date,
       monthly_rent, security_deposit, status, police_verification_status,
       agreement_signed, notes,
       person:people(id, name, phone, email, photo_url, permanent_address, permanent_city, permanent_state)
     `,
     initialData: {
-      property_id: "",
+      entity_id: "",
       room_id: "",
       check_in_date: "",
       monthly_rent: "",
@@ -101,7 +101,7 @@ function EditTenantContent() {
       // Save original room ID for filtering
       setOriginalRoomId((rec.room_id as string) || "")
       return {
-        property_id: (rec.property_id as string) || "",
+        entity_id: (rec.entity_id as string) || "",
         room_id: (rec.room_id as string) || "",
         check_in_date: (rec.check_in_date as string) || "",
         monthly_rent: rec.monthly_rent?.toString() || "",
@@ -113,12 +113,12 @@ function EditTenantContent() {
       }
     },
     validationSchema: {
-      property_id: requiredSelect("Property"),
+      entity_id: requiredSelect("Property"),
       room_id: requiredSelect("Room"),
       monthly_rent: requiredAmount("Monthly Rent"),
     },
     transform: (data): Record<string, unknown> => ({
-      property_id: data.property_id,
+      entity_id: data.entity_id,
       room_id: data.room_id,
       check_in_date: data.check_in_date,
       monthly_rent: parseFloat(data.monthly_rent as string),
@@ -135,7 +135,7 @@ function EditTenantContent() {
     const fetchData = async () => {
       const supabase = createClient()
       const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
         supabase.from("rooms").select("*").order("room_number"),
       ])
       if (!propertiesRes.error) setProperties(propertiesRes.data || [])
@@ -146,16 +146,16 @@ function EditTenantContent() {
 
   // Filter rooms when property changes
   useEffect(() => {
-    if (formData.property_id && rooms.length > 0) {
+    if (formData.entity_id && rooms.length > 0) {
       const filtered = rooms.filter(
         (room) =>
-          room.property_id === formData.property_id &&
+          room.entity_id === formData.entity_id &&
           (room.occupied_beds < room.total_beds || room.id === originalRoomId)
       )
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvailableRooms(filtered)
     }
-  }, [formData.property_id, rooms, originalRoomId])
+  }, [formData.entity_id, rooms, originalRoomId])
 
   // Get person data from record
   const person = record ? transformJoin(record.person as Record<string, unknown>) as Record<string, unknown> | null : null
@@ -238,11 +238,11 @@ function EditTenantContent() {
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Property" required error={errors.property_id}>
+              <FormField label="Property" required error={errors.entity_id}>
                 <Select
-                  id="property_id"
-                  name="property_id"
-                  value={formData.property_id as string}
+                  id="entity_id"
+                  name="entity_id"
+                  value={formData.entity_id as string}
                   onChange={handleChange}
                   options={properties.map((p) => ({ value: p.id, label: p.name }))}
                   disabled={saving}

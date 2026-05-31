@@ -15,7 +15,7 @@ interface MemberData {
   id: string
   name: string
   member_code: string | null
-  library_id: string
+  entity_id: string
   library?: { id: string; name: string } | null
   locker_id?: string | null
 }
@@ -56,8 +56,8 @@ export function useMemberLockerAssignForm(memberId: string) {
       const supabase = createClient()
 
       const { data: memberData, error: memberError } = await supabase
-        .from("library_members")
-        .select("id, name, member_code, library_id, locker_id, library:libraries(id, name)")
+        .from("entity_members")
+        .select("id, name, member_code, entity_id, locker_id, library:libraries(id, name)")
         .eq("id", memberId)
         .is("deleted_at", null)
         .single()
@@ -84,9 +84,9 @@ export function useMemberLockerAssignForm(memberId: string) {
       })
 
       const { data: lockersData } = await supabase
-        .from("library_lockers")
+        .from("entity_lockers")
         .select("id, locker_number, size, floor, section, monthly_rent, deposit_amount")
-        .eq("library_id", memberData.library_id)
+        .eq("entity_id", memberData.entity_id)
         .eq("status", "available")
         .is("deleted_at", null)
         .order("locker_number")
@@ -102,6 +102,7 @@ export function useMemberLockerAssignForm(memberId: string) {
 
   useEffect(() => {
     if (selectedLocker) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({
         ...prev,
         rent_amount: selectedLocker.monthly_rent?.toString() || "",
@@ -162,7 +163,7 @@ export function useMemberLockerAssignForm(memberId: string) {
       )
 
       const { error: assignmentError } = await supabase
-        .from("library_locker_assignments")
+        .from("entity_locker_assignments")
         .insert(assignmentData)
 
       if (assignmentError) {
@@ -172,7 +173,7 @@ export function useMemberLockerAssignForm(memberId: string) {
       }
 
       const { error: lockerError } = await supabase
-        .from("library_lockers")
+        .from("entity_lockers")
         .update({
           status: "occupied",
           current_member_id: memberId,
@@ -189,7 +190,7 @@ export function useMemberLockerAssignForm(memberId: string) {
       }
 
       const { error: memberError } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .update({
           locker_id: selectedLockerId,
           updated_at: getNowISO(),

@@ -81,7 +81,7 @@ export const ROOM_TYPE_FILTER: FilterConfig = {
  * Used by: library-members, library-sections, library-lockers
  */
 export const LIBRARY_FILTER: FilterConfig = {
-  id: "library_id",
+  id: "entity_id",
   label: "Library",
   type: "select",
   placeholder: "All Libraries",

@@ -81,7 +81,7 @@ export async function createBillWithCharges(params: CreateBillParams): Promise<{
       withCreatedBy({
         owner_id: ownerId,
         tenant_id: tenantId,
-        property_id: propertyId,
+        entity_id: propertyId,
         bill_number: billNumber,
         bill_date: billDate,
         due_date: dueDate,

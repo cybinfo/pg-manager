@@ -10,7 +10,7 @@ import { EnquirySource, ENQUIRY_SOURCE_LABELS } from "@/types/visitors.types"
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 interface EnquiryFieldsProps {

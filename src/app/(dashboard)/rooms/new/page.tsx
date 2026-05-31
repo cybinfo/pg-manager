@@ -60,7 +60,7 @@ function NewRoomContent() {
   } = useFormPage({
     table: "rooms",
     initialData: {
-      property_id: "",
+      entity_id: "",
       room_number: "",
       room_type: "single",
       floor: "0",
@@ -85,7 +85,7 @@ function NewRoomContent() {
     errorMessage: "Failed to create room",
     useCreatedBy: false,
     validationSchema: {
-      property_id: requiredSelect("Property"),
+      entity_id: requiredSelect("Property"),
       room_number: requiredField("Room number"),
       rent_amount: requiredAmount("Monthly rent"),
     },
@@ -97,7 +97,7 @@ function NewRoomContent() {
 
       return withCreatedBy({
         owner_id: userId,
-        property_id: data.property_id,
+        entity_id: data.entity_id,
         room_number: data.room_number,
         room_type: data.room_type,
         floor: parseInt(data.floor as string) || 0,
@@ -119,7 +119,7 @@ function NewRoomContent() {
 
       // Fetch properties and owner config (for room_types) in parallel
       const [propertiesRes, configRes] = await Promise.all([
-        supabase.from("properties").select("id, name, website_config").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name, website_config").order("name"),
         user ? supabase.from("owner_config").select("room_types").eq("owner_id", user.id).single() : null,
       ])
 
@@ -143,7 +143,7 @@ function NewRoomContent() {
 
           setFormData((prev) => ({
             ...prev,
-            property_id: firstProperty.id,
+            entity_id: firstProperty.id,
             room_type: firstRoomType?.code || "single",
             rent_amount: (firstRoomType?.default_rent || 8000).toString(),
             deposit_amount: (firstRoomType?.default_deposit || 8000).toString(),
@@ -162,7 +162,7 @@ function NewRoomContent() {
     const propertyId = e.target.value
     setFormData((prev) => ({
       ...prev,
-      property_id: propertyId,
+      entity_id: propertyId,
     }))
   }
 
@@ -237,11 +237,11 @@ function NewRoomContent() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Room Details" description="Enter the room information" icon={Home}>
             {/* Property Selection */}
-            <FormField label="Property" htmlFor="property_id" required error={errors.property_id}>
+            <FormField label="Property" htmlFor="entity_id" required error={errors.entity_id}>
               <Select
-                id="property_id"
-                name="property_id"
-                value={formData.property_id as string}
+                id="entity_id"
+                name="entity_id"
+                value={formData.entity_id as string}
                 onChange={handlePropertyChange}
                 disabled={saving}
                 options={properties.map((property) => ({

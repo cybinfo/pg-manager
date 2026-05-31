@@ -23,7 +23,7 @@ export interface Room {
   deposit_amount: number
   total_beds: number
   occupied_beds: number
-  property_id: string
+  entity_id: string
   is_under_maintenance?: boolean
 }
 
@@ -46,7 +46,7 @@ export function useTenantCreateForm() {
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
 
   const [formData, setFormData] = useState({
-    property_id: "",
+    entity_id: "",
     room_id: "",
     name: "",
     check_in_date: getTodayISO(),
@@ -78,7 +78,7 @@ export function useTenantCreateForm() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
         supabase.from("rooms").select("*").order("room_number"),
       ])
 
@@ -88,7 +88,7 @@ export function useTenantCreateForm() {
       } else {
         setProperties(propertiesRes.data || [])
         if (propertiesRes.data && propertiesRes.data.length > 0) {
-          setFormData((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
+          setFormData((prev) => ({ ...prev, entity_id: propertiesRes.data[0].id }))
         }
       }
 
@@ -117,6 +117,7 @@ export function useTenantCreateForm() {
         .single()
 
       if (data && !data.is_blocked) {
+        // eslint-disable-next-line react-hooks/immutability
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
         showError("This person is blocked and cannot be added as a tenant")
@@ -129,12 +130,13 @@ export function useTenantCreateForm() {
 
   // Filter rooms when property changes
   useEffect(() => {
-    if (formData.property_id && rooms.length > 0) {
+    if (formData.entity_id && rooms.length > 0) {
       const filtered = rooms.filter(
         (room) =>
-          room.property_id === formData.property_id &&
+          room.entity_id === formData.entity_id &&
           room.occupied_beds < room.total_beds
       )
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvailableRooms(filtered)
 
       if (filtered.length > 0) {
@@ -153,13 +155,14 @@ export function useTenantCreateForm() {
         }))
       }
     }
-  }, [formData.property_id, rooms])
+  }, [formData.entity_id, rooms])
 
   // Update rent when room changes
   useEffect(() => {
     if (formData.room_id) {
       const selectedRoom = rooms.find((r) => r.id === formData.room_id)
       if (selectedRoom) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData((prev) => ({
           ...prev,
           monthly_rent: selectedRoom.rent_amount.toString(),
@@ -201,9 +204,9 @@ export function useTenantCreateForm() {
       }
     }
 
-    if (!formData.property_id || !formData.room_id || !formData.monthly_rent) {
+    if (!formData.entity_id || !formData.room_id || !formData.monthly_rent) {
       showError("Validation Error: Please fill in all required fields", `Missing: ${[
-        !formData.property_id && "Property",
+        !formData.entity_id && "Property",
         !formData.room_id && "Room",
         !formData.monthly_rent && "Rent"
       ].filter(Boolean).join(", ")}`)
@@ -224,9 +227,9 @@ export function useTenantCreateForm() {
       debugLog("User authenticated", { userId: user.id, email: user.email })
 
       const { data: propertyCheck, error: propertyError } = await supabase
-        .from("properties")
+        .from("entities")
         .select("id, name")
-        .eq("id", formData.property_id)
+        .eq("id", formData.entity_id)
         .eq("owner_id", user.id)
         .single()
 
@@ -234,7 +237,7 @@ export function useTenantCreateForm() {
         showDetailedError(propertyError || { message: "Property not found or doesn't belong to you" }, {
           operation: "verifying property ownership",
           table: "properties",
-          data: { property_id: formData.property_id, owner_id: user.id }
+          data: { entity_id: formData.entity_id, owner_id: user.id }
         })
         return
       }
@@ -243,7 +246,7 @@ export function useTenantCreateForm() {
 
       const { data: roomCheck, error: roomError } = await supabase
         .from("rooms")
-        .select("id, room_number, property_id, occupied_beds, total_beds")
+        .select("id, room_number, entity_id, occupied_beds, total_beds")
         .eq("id", formData.room_id)
         .single()
 
@@ -256,7 +259,7 @@ export function useTenantCreateForm() {
         return
       }
 
-      if (roomCheck.property_id !== formData.property_id) {
+      if (roomCheck.entity_id !== formData.entity_id) {
         showError("Room Mismatch Error", `Room ${roomCheck.room_number} doesn't belong to the selected property.`)
         return
       }
@@ -275,7 +278,7 @@ export function useTenantCreateForm() {
         phone: selectedPerson.phone || "",
         photo_url: selectedPerson.photo_url || undefined,
         profile_photo: selectedPerson.photo_url || undefined,
-        property_id: formData.property_id,
+        entity_id: formData.entity_id,
         room_id: formData.room_id,
         check_in_date: formData.check_in_date,
         monthly_rent: parseFloat(formData.monthly_rent),
@@ -352,10 +355,10 @@ export function useTenantCreateForm() {
 
   // Step completion flags
   const step1Complete = selectedPerson !== null
-  const step2Complete = !!(formData.property_id && formData.room_id && formData.monthly_rent)
+  const step2Complete = !!(formData.entity_id && formData.room_id && formData.monthly_rent)
   const step3Complete = step2Complete
 
-  const selectedProperty = properties.find(p => p.id === formData.property_id)
+  const selectedProperty = properties.find(p => p.id === formData.entity_id)
   const selectedRoom = availableRooms.find(r => r.id === formData.room_id)
   const verificationLabel = POLICE_VERIFICATION_STATUS_OPTIONS.find(
     o => o.value === formData.police_verification_status

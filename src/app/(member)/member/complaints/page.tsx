@@ -54,9 +54,9 @@ export default function MemberComplaintsPage() {
 
       // Get owner_id from library
       const { data: library } = await supabase
-        .from("libraries")
+        .from("entities").eq("type", "library")
         .select("owner_id")
-        .eq("id", member.library_id)
+        .eq("id", member.entity_id)
         .single()
 
       if (!library) {
@@ -68,7 +68,7 @@ export default function MemberComplaintsPage() {
         .from("complaints")
         .insert(withCreatedBy({
           owner_id: library.owner_id,
-          library_id: member.library_id,
+          entity_id: member.entity_id,
           property_id: null,
           category: formData.category,
           title: formData.title.trim(),

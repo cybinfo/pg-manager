@@ -78,7 +78,7 @@ export default function PropertyDetailPage() {
     try {
       const supabase = createClient()
       const { error } = await supabase
-        .from("properties")
+        .from("entities")
         .update({ is_under_maintenance: !property.is_under_maintenance })
         .eq("id", property.id)
       if (error) {

@@ -9,7 +9,7 @@ interface Tenant {
   id: string
   name: string
   phone: string
-  property_id: string
+  entity_id: string
   room: { room_number: string } | null
 }
 

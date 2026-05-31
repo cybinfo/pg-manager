@@ -54,7 +54,7 @@ function AddToWaitlistContent() {
   } = useFormPage({
     table: "library_waitlist",
     initialData: {
-      library_id: "",
+      entity_id: "",
       name: "",
       phone: "",
       email: "",
@@ -67,7 +67,7 @@ function AddToWaitlistContent() {
     successMessage: "Added to waitlist successfully!",
     errorMessage: "Failed to add to waitlist",
     validationSchema: {
-      library_id: requiredSelect("Library"),
+      entity_id: requiredSelect("Library"),
       name: requiredField("Name"),
       phone: requiredPhone("Phone"),
     },
@@ -87,7 +87,7 @@ function AddToWaitlistContent() {
       const { data: existing } = await supabase
         .from("library_waitlist")
         .select("id")
-        .eq("library_id", data.library_id)
+        .eq("entity_id", data.entity_id)
         .eq("phone", data.phone)
         .in("status", ["waiting", "contacted"])
         .is("deleted_at", null)
@@ -104,7 +104,7 @@ function AddToWaitlistContent() {
         {
           owner_id: workspace.owner_user_id,
           workspace_id: workspaceId,
-          library_id: data.library_id,
+          entity_id: data.entity_id,
           name: (data.name as string).trim(),
           phone: (data.phone as string).trim(),
           email: (data.email as string).trim() || null,
@@ -126,12 +126,12 @@ function AddToWaitlistContent() {
 
   const preselectedLibrary = searchParams.get("library")
 
-  // Pre-fill library_id from URL param
+  // Pre-fill entity_id from URL param
   useEffect(() => {
-    if (preselectedLibrary && !formData.library_id) {
-      setFormData((prev) => ({ ...prev, library_id: preselectedLibrary }))
+    if (preselectedLibrary && !formData.entity_id) {
+      setFormData((prev) => ({ ...prev, entity_id: preselectedLibrary }))
     }
-  }, [preselectedLibrary, formData.library_id, setFormData])
+  }, [preselectedLibrary, formData.entity_id, setFormData])
 
   useEffect(() => {
     async function fetchData() {
@@ -139,7 +139,7 @@ function AddToWaitlistContent() {
 
       // Fetch libraries
       const { data: librariesData } = await supabase
-        .from("libraries")
+        .from("entities").eq("type", "library")
         .select("id, name, total_seats, occupied_seats")
         .eq("is_active", true)
         .is("deleted_at", null)
@@ -184,11 +184,11 @@ function AddToWaitlistContent() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Waitlist Details" description="Enter the contact information for the prospective member" icon={Users}>
             {/* Library Selection */}
-            <FormField label="Library" htmlFor="library_id" required error={errors.library_id}>
+            <FormField label="Library" htmlFor="entity_id" required error={errors.entity_id}>
               <Combobox
                 options={libraryOptions}
-                value={formData.library_id as string}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
+                value={formData.entity_id as string}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, entity_id: value }))}
                 placeholder="Select a library..."
                 emptyText="No libraries found"
                 disabled={saving}

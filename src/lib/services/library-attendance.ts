@@ -54,7 +54,7 @@ export async function checkInLibraryMember(
 
   // Guard against duplicate active check-in (no check_out_time means currently checked in)
   const { data: activeCheckIn } = await supabase
-    .from("library_attendance")
+    .from("entity_attendance")
     .select("id")
     .eq("member_id", input.memberId)
     .is("check_out_time", null)
@@ -105,7 +105,7 @@ export async function checkInLibraryMember(
   )
 
   const { data: newAttendance, error } = await supabase
-    .from("library_attendance")
+    .from("entity_attendance")
     .insert(attendanceData)
     .select()
     .single()
@@ -117,7 +117,7 @@ export async function checkInLibraryMember(
   // Update seat status to occupied when a specific seat was assigned
   if (input.seatId) {
     const { error: seatError } = await supabase
-      .from("library_seats")
+      .from("entity_seats")
       .update({
         status: "occupied",
         current_member_id: input.memberId,

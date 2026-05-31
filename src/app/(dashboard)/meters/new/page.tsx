@@ -51,7 +51,7 @@ import type { PropertyOption } from "@/types/properties.types"
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 // ============================================
@@ -81,7 +81,7 @@ function NewMeterContent() {
   } = useFormPage({
     table: "meters",
     initialData: {
-      property_id: "",
+      entity_id: "",
       meter_number: "",
       meter_type: "electricity" as string,
       initial_reading: "0",
@@ -100,8 +100,8 @@ function NewMeterContent() {
     validate: (data) => {
       const newErrors: Record<string, string> = {}
 
-      if (!data.property_id) {
-        newErrors.property_id = "Property is required"
+      if (!data.entity_id) {
+        newErrors.entity_id = "Property is required"
       }
 
       if (!(data.meter_number as string).trim()) {
@@ -136,7 +136,7 @@ function NewMeterContent() {
         .from("meters")
         .insert(withCreatedBy({
           owner_id: userId,
-          property_id: data.property_id,
+          entity_id: data.entity_id,
           meter_number: (data.meter_number as string).trim(),
           meter_type: data.meter_type,
           initial_reading: parseFloat(data.initial_reading as string) || 0,
@@ -176,13 +176,13 @@ function NewMeterContent() {
     },
   })
 
-  const preselectedPropertyId = searchParams.get("property_id")
+  const preselectedPropertyId = searchParams.get("entity_id")
   const preselectedRoomId = searchParams.get("room_id")
 
   // Pre-fill from URL params
   useEffect(() => {
     const updates: Record<string, unknown> = {}
-    if (preselectedPropertyId && !formData.property_id) updates.property_id = preselectedPropertyId
+    if (preselectedPropertyId && !formData.entity_id) updates.entity_id = preselectedPropertyId
     if (preselectedRoomId && !formData.room_id) {
       updates.room_id = preselectedRoomId
       updates.assign_to_room = true
@@ -190,22 +190,22 @@ function NewMeterContent() {
     if (Object.keys(updates).length > 0) {
       setFormData((prev) => ({ ...prev, ...updates }))
     }
-  }, [preselectedPropertyId, preselectedRoomId, formData.property_id, formData.room_id, setFormData])
+  }, [preselectedPropertyId, preselectedRoomId, formData.entity_id, formData.room_id, setFormData])
 
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
+        supabase.from("rooms").select("id, room_number, entity_id").order("room_number"),
       ])
 
       if (propertiesRes.data) {
         setProperties(propertiesRes.data)
         // Auto-select first property if not preselected
         if (!preselectedPropertyId && propertiesRes.data.length > 0) {
-          setFormData((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
+          setFormData((prev) => ({ ...prev, entity_id: propertiesRes.data[0].id }))
         }
       }
 
@@ -219,8 +219,8 @@ function NewMeterContent() {
 
   // Filter rooms when property changes
   useEffect(() => {
-    if (formData.property_id) {
-      const filtered = rooms.filter((r) => r.property_id === formData.property_id)
+    if (formData.entity_id) {
+      const filtered = rooms.filter((r) => r.entity_id === formData.entity_id)
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredRooms(filtered)
       // Clear room selection if it's not in the filtered list
@@ -230,7 +230,7 @@ function NewMeterContent() {
     } else {
       setFilteredRooms([])
     }
-  }, [formData.property_id, rooms, formData.room_id, setFormData])
+  }, [formData.entity_id, rooms, formData.room_id, setFormData])
 
   const updateField = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -269,10 +269,10 @@ function NewMeterContent() {
           icon={Gauge}
         >
           <div className="space-y-4">
-            <FormField label="Property" required error={errors.property_id}>
+            <FormField label="Property" required error={errors.entity_id}>
               <Select
-                value={formData.property_id as string}
-                onChange={(e) => updateField("property_id", e.target.value)}
+                value={formData.entity_id as string}
+                onChange={(e) => updateField("entity_id", e.target.value)}
                 options={[
                   { value: "", label: "Select property" },
                   ...properties.map((p) => ({ value: p.id, label: p.name })),

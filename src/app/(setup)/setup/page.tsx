@@ -134,9 +134,10 @@ export default function SetupPage() {
       }
 
       // Step 3: Create the first property
-      const { error: propertyError } = await supabase.from("properties").insert(
+      const { error: propertyError } = await supabase.from("entities").insert(
         withCreatedBy({
           owner_id: user.id,
+          type: "pg",
           name: propertyName,
           address: propertyAddress || null,
           city: propertyCity,

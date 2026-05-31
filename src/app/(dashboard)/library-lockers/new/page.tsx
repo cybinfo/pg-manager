@@ -46,7 +46,7 @@ function NewLibraryLockerContent() {
   } = useFormPage({
     table: "library_lockers",
     initialData: {
-      library_id: "",
+      entity_id: "",
       locker_number: "",
       size: "medium",
       floor: 0,
@@ -58,15 +58,15 @@ function NewLibraryLockerContent() {
     successMessage: "Locker created successfully!",
     errorMessage: "Failed to create locker",
     validationSchema: {
-      library_id: requiredSelect("Library"),
+      entity_id: requiredSelect("Library"),
       locker_number: requiredField("Locker Number"),
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       // Get library's owner_id
       const { data: library } = await supabase
-        .from("libraries")
+        .from("entities").eq("type", "library")
         .select("owner_id")
-        .eq("id", data.library_id)
+        .eq("id", data.entity_id)
         .single()
 
       if (!library) {
@@ -78,7 +78,7 @@ function NewLibraryLockerContent() {
       const lockerData = withCreatedBy({
         owner_id: library.owner_id,
         workspace_id: workspaceId,
-        library_id: data.library_id,
+        entity_id: data.entity_id,
         locker_number: data.locker_number,
         size: data.size,
         floor: data.floor || 0,
@@ -95,10 +95,10 @@ function NewLibraryLockerContent() {
       }
 
       // Redirect to library detail if came from there
-      if (data.library_id && typeof window !== "undefined") {
+      if (data.entity_id && typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search)
         if (urlParams.get("library")) {
-          return `/library/${data.library_id}`
+          return `/library/${data.entity_id}`
         }
       }
     },
@@ -106,18 +106,18 @@ function NewLibraryLockerContent() {
 
   const preselectedLibrary = searchParams.get("library")
 
-  // Pre-fill library_id from URL param
+  // Pre-fill entity_id from URL param
   useEffect(() => {
-    if (preselectedLibrary && !formData.library_id) {
-      setFormData((prev) => ({ ...prev, library_id: preselectedLibrary }))
+    if (preselectedLibrary && !formData.entity_id) {
+      setFormData((prev) => ({ ...prev, entity_id: preselectedLibrary }))
     }
-  }, [preselectedLibrary, formData.library_id, setFormData])
+  }, [preselectedLibrary, formData.entity_id, setFormData])
 
   useEffect(() => {
     async function fetchLibraries() {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from("libraries")
+        .from("entities").eq("type", "library")
         .select("id, name, code")
         .eq("is_active", true)
         .is("deleted_at", null)
@@ -155,11 +155,11 @@ function NewLibraryLockerContent() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Locker Details" description="Enter locker information and pricing" icon={Lock}>
             {/* Library Selection */}
-            <FormField label="Library" required error={errors.library_id}>
+            <FormField label="Library" required error={errors.entity_id}>
               <Combobox
                 options={libraryOptions}
-                value={formData.library_id as string}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
+                value={formData.entity_id as string}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, entity_id: value }))}
                 placeholder="Select a library..."
                 searchPlaceholder="Search libraries..."
                 emptyText="No libraries found"

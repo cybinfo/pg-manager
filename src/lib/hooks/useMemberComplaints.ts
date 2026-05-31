@@ -35,6 +35,7 @@ export function useMemberComplaints(
   useEffect(() => {
     if (memberLoading) return
     if (!member || !user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false)
       return
     }
@@ -46,7 +47,7 @@ export function useMemberComplaints(
         .select(
           "id, category, title, description, status, priority, resolution_notes, created_at, resolved_at"
         )
-        .eq("library_id", member.library_id)
+        .eq("entity_id", member.entity_id)
         .eq("created_by", user.id)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })

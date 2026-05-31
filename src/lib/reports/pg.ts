@@ -85,7 +85,7 @@ export function computePGReport(input: PGReportInput): PGReportData {
   // Filter by property if selected
   const filterByProperty = (items: Record<string, unknown>[]) => {
     if (selectedProperty === "all") return items
-    return items.filter((item) => item.property_id === selectedProperty)
+    return items.filter((item) => item.entity_id === selectedProperty)
   }
 
   const filteredRooms = filterByProperty(roomsData)
@@ -197,12 +197,12 @@ export function computePGReport(input: PGReportInput): PGReportData {
 
   // Property-wise stats (always computed against all unfiltered data so every property row appears)
   const propertyStats = propertiesData.map((property) => {
-    const propRooms = roomsData.filter((r) => r.property_id === property.id)
+    const propRooms = roomsData.filter((r) => r.entity_id === property.id)
     const propPayments = paymentsData.filter((p) => {
       const paymentDate = new Date(p.payment_date as string)
-      return p.property_id === property.id && paymentDate >= startDate && paymentDate <= endDate
+      return p.entity_id === property.id && paymentDate >= startDate && paymentDate <= endDate
     })
-    const propBills = billsData.filter((b) => b.property_id === property.id && b.status !== "paid" && b.status !== "cancelled")
+    const propBills = billsData.filter((b) => b.entity_id === property.id && b.status !== "paid" && b.status !== "cancelled")
     return {
       id: property.id,
       name: property.name,

@@ -33,7 +33,7 @@ interface MemberOption {
   member_code: string | null
   status: string
   hours_balance: number
-  library_id: string
+  entity_id: string
   current_subscription_id: string | null
   time_slot?: string | null
   person?: { name: string } | null
@@ -86,7 +86,7 @@ function NewLibraryAttendanceContent() {
     table: "library_attendance",
     initialData: {
       member_id: "",
-      library_id: "",
+      entity_id: "",
       seat_id: "",
       check_in_time: getNowISO().slice(0, 16),
       notes: "",
@@ -111,7 +111,7 @@ function NewLibraryAttendanceContent() {
         supabase,
         {
           memberId: data.member_id as string,
-          libraryId: data.library_id as string,
+          libraryId: data.entity_id as string,
           workspaceId,
           seatId: (data.seat_id as string) || null,
           checkInTime: data.check_in_time as string,
@@ -145,7 +145,7 @@ function NewLibraryAttendanceContent() {
 
       // Fetch libraries
       const { data: librariesData } = await supabase
-        .from("libraries")
+        .from("entities").eq("type", "library")
         .select("id, name")
         .eq("workspace_id", workspaceId)
         .eq("is_active", true)
@@ -157,7 +157,7 @@ function NewLibraryAttendanceContent() {
       // Fetch active members with person data for live name
       const { data: membersData } = await supabase
         .from("library_members")
-        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, time_slot, person:people(name)")
+        .select("id, name, member_code, status, hours_balance, entity_id, current_subscription_id, time_slot, person:people(name)")
         .eq("workspace_id", workspaceId)
         .eq("status", "active")
         .is("deleted_at", null)
@@ -178,7 +178,7 @@ function NewLibraryAttendanceContent() {
           setFormData((prev) => ({
             ...prev,
             member_id: member.id,
-            library_id: member.library_id,
+            entity_id: member.entity_id,
           }))
         }
       }
@@ -209,7 +209,7 @@ function NewLibraryAttendanceContent() {
             id,
             name,
             is_ac,
-            library_id
+            entity_id
           )
         `)
         .eq("status", "available")
@@ -217,9 +217,9 @@ function NewLibraryAttendanceContent() {
 
       // Filter seats for this library and transform
       const availableSeats: SeatOption[] = (seatsData || [])
-        .map((seat: { id: string; seat_number: string; has_power_outlet: boolean; section: { id: string; name: string; is_ac: boolean; library_id: string } | { id: string; name: string; is_ac: boolean; library_id: string }[] | null }) => {
+        .map((seat: { id: string; seat_number: string; has_power_outlet: boolean; section: { id: string; name: string; is_ac: boolean; entity_id: string } | { id: string; name: string; is_ac: boolean; entity_id: string }[] | null }) => {
           const section = transformJoin(seat.section)
-          if (!section || section.library_id !== libraryId) return null
+          if (!section || section.entity_id !== libraryId) return null
           return {
             id: seat.id,
             seat_number: seat.seat_number,
@@ -247,13 +247,13 @@ function NewLibraryAttendanceContent() {
     setFormData((prev) => ({
       ...prev,
       member_id: memberId,
-      library_id: member?.library_id || prev.library_id,
+      entity_id: member?.entity_id || prev.entity_id,
       seat_id: "", // Reset seat when member changes
     }))
 
     // Fetch available seats for the member's library
-    if (member?.library_id) {
-      fetchAvailableSeats(member.library_id)
+    if (member?.entity_id) {
+      fetchAvailableSeats(member.entity_id)
     } else {
       setSeats([])
     }

@@ -20,7 +20,7 @@ interface Tenant {
   name: string
   phone: string
   monthly_rent: number
-  property_id: string
+  entity_id: string
   check_in_date: string | null
   property: {
     name: string
@@ -123,7 +123,7 @@ export function useBillCreateForm() {
             name,
             phone,
             monthly_rent,
-            property_id,
+            entity_id,
             check_in_date,
             property:properties(name),
             room:rooms(room_number)
@@ -369,7 +369,7 @@ export function useBillCreateForm() {
       const { billId } = await createBillWithCharges({
         ownerId: user.id,
         tenantId: selectedTenant,
-        propertyId: tenant?.property_id,
+        propertyId: tenant?.entity_id,
         forMonth: formData.for_month,
         billDate: formData.bill_date,
         dueDate: formData.due_date,

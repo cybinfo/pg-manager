@@ -78,9 +78,9 @@ function EditExpenseContent() {
 
               <FormField label="Property">
                 <Select
-                  id="property_id"
-                  name="property_id"
-                  value={formData.property_id}
+                  id="entity_id"
+                  name="entity_id"
+                  value={formData.entity_id}
                   onChange={handleChange}
                   placeholder="All Properties (General)"
                   options={properties.map((prop) => ({

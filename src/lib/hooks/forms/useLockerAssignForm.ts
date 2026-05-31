@@ -17,7 +17,7 @@ interface LockerData {
   size: string
   monthly_rent: number | null
   deposit_amount: number | null
-  library_id: string
+  entity_id: string
   status: string
   library?: { id: string; name: string } | null
 }
@@ -53,7 +53,7 @@ export function useLockerAssignForm(id: string) {
       const supabase = createClient()
 
       const { data: lockerData, error: lockerError } = await supabase
-        .from("library_lockers")
+        .from("entity_lockers")
         .select("*, library:libraries(id, name)")
         .eq("id", id)
         .is("deleted_at", null)
@@ -80,9 +80,9 @@ export function useLockerAssignForm(id: string) {
       }))
 
       const { data: membersData } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .select("id, name, member_code, status")
-        .eq("library_id", lockerData.library_id)
+        .eq("entity_id", lockerData.entity_id)
         .eq("status", "active")
         .is("locker_id", null)
         .is("deleted_at", null)
@@ -149,7 +149,7 @@ export function useLockerAssignForm(id: string) {
       )
 
       const { error: assignmentError } = await supabase
-        .from("library_locker_assignments")
+        .from("entity_locker_assignments")
         .insert(assignmentData)
 
       if (assignmentError) {
@@ -159,7 +159,7 @@ export function useLockerAssignForm(id: string) {
       }
 
       const { error: lockerError } = await supabase
-        .from("library_lockers")
+        .from("entity_lockers")
         .update({
           status: "occupied",
           current_member_id: formData.member_id,
@@ -176,7 +176,7 @@ export function useLockerAssignForm(id: string) {
       }
 
       const { error: memberError } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .update({
           locker_id: id,
           updated_at: getNowISO(),

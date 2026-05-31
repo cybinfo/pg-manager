@@ -76,8 +76,8 @@ export interface UseFormPageOptions<T extends FormData> {
   redirectTo: string
   /**
    * URL search param keys to pre-fill into formData.
-   * For example, `["library_id", "tenant_id"]` will read
-   * `?library_id=xxx&tenant_id=yyy` and set those fields.
+   * For example, `["entity_id", "tenant_id"]` will read
+   * `?entity_id=xxx&tenant_id=yyy` and set those fields.
    */
   preSelectFields?: string[]
   /**

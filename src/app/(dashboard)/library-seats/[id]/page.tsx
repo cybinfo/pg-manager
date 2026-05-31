@@ -93,7 +93,7 @@ export default function LibrarySeatDetailPage() {
     const supabase = createClient()
     const { data } = await supabase
       .from("library_seat_reservations")
-      .select("id, reserved_date, start_time, end_time, status, member:library_members(id, name, member_code)")
+      .select("id, reserved_date, start_time, end_time, status, member:entity_members(id, name, member_code)")
       .eq("seat_id", params.id as string)
       .is("deleted_at", null)
       .gte("reserved_date", getTodayISO())
@@ -106,7 +106,7 @@ export default function LibrarySeatDetailPage() {
     if (!workspaceId) return
     const supabase = createClient()
     supabase
-      .from("library_members")
+      .from("entity_members")
       .select("id, name, member_code")
       .eq("workspace_id", workspaceId)
       .eq("status", "active")
@@ -170,7 +170,7 @@ export default function LibrarySeatDetailPage() {
       destructive: true,
       onConfirm: async () => {
         try {
-          const result = await softDelete("library_seats", params.id as string, user.id)
+          const result = await softDelete("entity_seats", params.id as string, user.id)
           if (!result.error) {
             showSuccess("Seat deleted successfully")
             router.push("/library-seats")
@@ -244,7 +244,7 @@ export default function LibrarySeatDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            <PermissionGate permission="library_seats.edit" hide>
+            <PermissionGate permission="entity_seats.edit" hide>
               <Link href={`/library-seats/${seat.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="mr-2 h-4 w-4" />
@@ -252,7 +252,7 @@ export default function LibrarySeatDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_seats.edit" hide>
+            <PermissionGate permission="entity_seats.edit" hide>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -392,7 +392,7 @@ export default function LibrarySeatDetailPage() {
             description="Advance seat bookings"
             icon={CalendarPlus}
             actions={
-              <PermissionGate permission="library_seats.edit" hide>
+              <PermissionGate permission="entity_seats.edit" hide>
                 <Button size="sm" variant="outline" onClick={() => setShowReserveForm((v) => !v)}>
                   <CalendarPlus className="h-4 w-4 mr-1" />
                   Reserve Seat

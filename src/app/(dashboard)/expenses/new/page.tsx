@@ -62,7 +62,7 @@ function NewExpenseContent() {
     table: "expenses",
     initialData: {
       expense_type_id: "",
-      property_id: "",
+      entity_id: "",
       amount: "",
       expense_date: getTodayISO(),
       vendor_name: "",
@@ -84,7 +84,7 @@ function NewExpenseContent() {
     transform: (data, userId) => withCreatedBy({
       owner_id: userId,
       expense_type_id: data.expense_type_id,
-      property_id: data.property_id || null,
+      entity_id: data.entity_id || null,
       amount: Number(data.amount),
       expense_date: data.expense_date,
       vendor_name: data.vendor_name || null,
@@ -136,7 +136,7 @@ function NewExpenseContent() {
 
         // Fetch properties
         const { data: propertiesData } = await supabase
-          .from("properties")
+          .from("entities").eq("type", "pg")
           .select("id, name")
           .order("name")
 
@@ -189,11 +189,11 @@ function NewExpenseContent() {
                 />
               </FormField>
 
-              <FormField label="Property" htmlFor="property_id" hint="Leave empty for expenses that apply to all properties">
+              <FormField label="Property" htmlFor="entity_id" hint="Leave empty for expenses that apply to all properties">
                 <Select
-                  id="property_id"
-                  name="property_id"
-                  value={formData.property_id as string}
+                  id="entity_id"
+                  name="entity_id"
+                  value={formData.entity_id as string}
                   onChange={handleChange}
                   placeholder="All Properties (General)"
                   options={properties.map((prop) => ({

@@ -39,7 +39,7 @@ import { getNowISO, getTodayISO } from "@/lib/date-helpers"
 
 export interface ExitClearanceInput {
   tenant_id: string
-  property_id: string
+  entity_id: string
   room_id: string
   bed_id?: string
   requested_exit_date: string
@@ -287,7 +287,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
           owner_id: tenant.owner_id,
           created_by: context.actor_id,
           tenant_id: input.tenant_id,
-          property_id: input.property_id,
+          entity_id: input.entity_id,
           room_id: input.room_id,
           notice_given_date: input.notice_date || getTodayISO(),
           expected_exit_date: input.requested_exit_date,
@@ -503,7 +503,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           .from("exit_clearance")
           .select(`
             *,
-            tenant:tenants(id, name, user_id, room_id, property_id),
+            tenant:tenants(id, name, user_id, room_id, entity_id),
             room:rooms(id, room_number, total_beds, occupied_beds)
           `)
           .eq("id", input.clearance_id)
@@ -721,7 +721,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           workspace_id: context.workspace_id,
           tenant_id: tenant.id,
           exit_clearance_id: clearance.id,
-          property_id: clearance.property_id,
+          entity_id: clearance.entity_id,
           refund_type: "deposit_refund",
           amount: refundAmount,
           payment_mode: input.final_settlement_mode || "cash",

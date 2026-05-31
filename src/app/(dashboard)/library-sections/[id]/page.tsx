@@ -56,7 +56,7 @@ export default function LibrarySectionDetailPage() {
       destructive: true,
       onConfirm: async () => {
         try {
-          const result = await softDelete("library_sections", params.id as string, user.id)
+          const result = await softDelete("entity_sections", params.id as string, user.id)
           if (!result.error) {
             showSuccess("Section deleted successfully")
             router.push("/library-sections")
@@ -137,7 +137,7 @@ export default function LibrarySectionDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            <PermissionGate permission="library_sections.edit" hide>
+            <PermissionGate permission="entity_sections.edit" hide>
               <Link href={`/library-sections/${section.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="mr-2 h-4 w-4" />
@@ -145,7 +145,7 @@ export default function LibrarySectionDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_sections.delete" hide>
+            <PermissionGate permission="entity_sections.delete" hide>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

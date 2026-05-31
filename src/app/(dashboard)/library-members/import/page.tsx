@@ -73,7 +73,7 @@ function BulkImportContent() {
       const supabase = createClient()
 
       const { data: librariesData } = await supabase
-        .from("libraries")
+        .from("entities").eq("type", "library")
         .select("id, name, code, owner_id")
         .eq("is_active", true)
         .is("deleted_at", null)
@@ -180,7 +180,7 @@ function BulkImportContent() {
     const { data: existingMembers } = await supabase
       .from("library_members")
       .select("member_code")
-      .eq("library_id", selectedLibrary)
+      .eq("entity_id", selectedLibrary)
       .not("member_code", "is", null)
       .order("member_code", { ascending: false })
       .limit(100)
@@ -203,7 +203,7 @@ function BulkImportContent() {
         const { data: existing } = await supabase
           .from("library_members")
           .select("id")
-          .eq("library_id", selectedLibrary)
+          .eq("entity_id", selectedLibrary)
           .eq("phone", row.phone)
           .is("deleted_at", null)
           .limit(1)
@@ -239,7 +239,7 @@ function BulkImportContent() {
           {
             owner_id: library.owner_id,
             workspace_id: workspaceId,
-            library_id: selectedLibrary,
+            entity_id: selectedLibrary,
             name: row.name.toUpperCase(),
             phone: row.phone,
             email: row.email || null,

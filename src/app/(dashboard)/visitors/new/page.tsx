@@ -120,11 +120,11 @@ function NewVisitorContent() {
 
         {/* Property Selection */}
         <DetailSection title="Property" description="Select the property" icon={Building2}>
-          <FormField label="Property" htmlFor="property_id" required>
+          <FormField label="Property" htmlFor="entity_id" required>
             <Select
-              id="property_id"
-              name="property_id"
-              value={formData.property_id}
+              id="entity_id"
+              name="entity_id"
+              value={formData.entity_id}
               onChange={handleChange}
               required
               disabled={loading}

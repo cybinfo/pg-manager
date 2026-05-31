@@ -10,7 +10,7 @@ export interface MemberQRData {
   id: string
   name: string
   member_code: string | null
-  library_id: string
+  entity_id: string
   library: {
     name: string
     workspace_id: string
@@ -44,13 +44,13 @@ export function useMemberQR(): UseMemberQRReturn {
       }
 
       const { data: memberData } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .select(
           `
           id,
           name,
           member_code,
-          library_id,
+          entity_id,
           library:libraries(name, workspace_id),
           person:people(name)
         `

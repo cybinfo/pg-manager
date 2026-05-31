@@ -47,7 +47,7 @@ export async function sendLowHoursWarnings(
   const result: NotificationResult = { sent: 0, errors: [] }
 
   const { data: lowHoursMembers, error: lowHoursError } = await supabase
-    .from("library_members")
+    .from("entity_members")
     .select(`
       id,
       name,
@@ -56,8 +56,8 @@ export async function sendLowHoursWarnings(
       hours_balance,
       preferred_slot,
       person:people(name),
-      library:libraries(id, name, phone),
-      current_subscription:library_memberships(hours_included)
+      library:entities(id, name, phone),
+      current_subscription:entity_memberships(hours_included)
     `)
     .eq("status", "active")
     .not("email", "is", null)
@@ -124,19 +124,19 @@ export async function sendRenewalReminders(
   const renewalReminderDateStr = addDays(today, RENEWAL_REMINDER_DAYS).toISOString().split("T")[0]
 
   const { data: renewalMemberships, error: renewalError } = await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .select(`
       id,
       plan_name,
       end_date,
       hours_remaining,
-      member:library_members!library_memberships_member_id_fkey(
+      member:entity_members!library_memberships_member_id_fkey(
         id,
         name,
         email,
         member_code,
         person:people(name),
-        library:libraries(id, name, phone)
+        library:entities(id, name, phone)
       )
     `)
     .eq("status", "active")
@@ -166,8 +166,9 @@ export async function sendRenewalReminders(
       // Check if renewalReminders feature is enabled for this workspace
       if (library.id) {
         const { data: libWs } = await supabase
-          .from("libraries")
+          .from("entities")
           .select("workspace_id")
+          .eq("type", "library")
           .eq("id", library.id)
           .single()
         if (libWs?.workspace_id) {
@@ -223,20 +224,20 @@ export async function sendExpiringMembershipAlerts(
   const expiringDateStr = addDays(today, EXPIRING_DAYS_BEFORE).toISOString().split("T")[0]
 
   const { data: expiringMemberships, error: expiringError } = await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .select(`
       id,
       plan_name,
       end_date,
       hours_remaining,
       time_slot,
-      member:library_members!library_memberships_member_id_fkey(
+      member:entity_members!library_memberships_member_id_fkey(
         id,
         name,
         email,
         member_code,
         person:people(name),
-        library:libraries(id, name, phone)
+        library:entities(id, name, phone)
       )
     `)
     .eq("status", "active")
@@ -306,19 +307,19 @@ export async function sendExpiredMembershipAlerts(
   const yesterdayStr = new Date(today.getTime() - 86400000).toISOString().split("T")[0]
 
   const { data: expiredMemberships, error: expiredError } = await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .select(`
       id,
       plan_name,
       end_date,
       hours_remaining,
-      member:library_members!library_memberships_member_id_fkey(
+      member:entity_members!library_memberships_member_id_fkey(
         id,
         name,
         email,
         member_code,
         person:people(name),
-        library:libraries(id, name, phone)
+        library:entities(id, name, phone)
       )
     `)
     .eq("status", "expired")
@@ -396,7 +397,7 @@ export async function sendMonthlyAttendanceSummaries(
   const lastDayOfMonth = new Date(summaryYear, lastMonth.getMonth() + 1, 0).toISOString().split("T")[0]
 
   const { data: activeMembers, error: activeMembersError } = await supabase
-    .from("library_members")
+    .from("entity_members")
     .select(`
       id,
       name,
@@ -404,7 +405,7 @@ export async function sendMonthlyAttendanceSummaries(
       member_code,
       hours_balance,
       person:people(name),
-      library:libraries(id, name, phone)
+      library:entities(id, name, phone)
     `)
     .eq("status", "active")
     .not("email", "is", null)
@@ -427,7 +428,7 @@ export async function sendMonthlyAttendanceSummaries(
       if (!member.email || !library) continue
 
       const { data: attendanceRecords } = await supabase
-        .from("library_attendance")
+        .from("entity_attendance")
         .select("check_in_time, check_out_time, hours_used")
         .eq("member_id", member.id)
         .gte("check_in_time", `${firstDayOfMonth}T00:00:00`)
@@ -491,17 +492,17 @@ export async function sendLockerRenewalReminders(
   const lockerRenewalDateStr = addDays(today, 7).toISOString().split("T")[0]
 
   const { data: expiringLockers, error: lockersError } = await supabase
-    .from("library_locker_assignments")
+    .from("entity_locker_assignments")
     .select(`
       id,
       end_date,
-      locker:library_lockers(id, locker_number, library_id),
-      member:library_members!library_locker_assignments_member_id_fkey(
+      locker:entity_lockers(id, locker_number, entity_id),
+      member:entity_members!library_locker_assignments_member_id_fkey(
         id,
         name,
         email,
         person:people(name),
-        library:libraries(id, name, workspace_id)
+        library:entities(id, name, workspace_id)
       )
     `)
     .eq("status", "active")
@@ -588,17 +589,17 @@ export async function expireLibraryMemberships(
   const todayStr = getTodayISO()
 
   const { data: expiredMemberships, error: membershipError } = await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .select(`
       id,
       member_id,
       plan_name,
       end_date,
       hours_remaining,
-      member:library_members!library_memberships_member_id_fkey(
+      member:entity_members!library_memberships_member_id_fkey(
         id,
         name,
-        library_id,
+        entity_id,
         current_subscription_id,
         owner_id,
         workspace_id,
@@ -624,7 +625,7 @@ export async function expireLibraryMemberships(
   const membersWithOtherActiveMap = new Map<string, string>()
   if (memberIdsFromExpired.length > 0) {
     const { data: otherActiveMemberships } = await supabase
-      .from("library_memberships")
+      .from("entity_memberships")
       .select("id, member_id")
       .in("member_id", memberIdsFromExpired)
       .eq("status", "active")
@@ -646,7 +647,7 @@ export async function expireLibraryMemberships(
       const memberDisplayName = (memberPerson?.name as string) || member?.name || "Unknown"
 
       const { error: updateError } = await supabase
-        .from("library_memberships")
+        .from("entity_memberships")
         .update({ status: "expired", updated_at: getNowISO() })
         .eq("id", membership.id)
 
@@ -668,7 +669,7 @@ export async function expireLibraryMemberships(
 
         if (!otherActiveMembershipId) {
           const { error: memberUpdateError } = await supabase
-            .from("library_members")
+            .from("entity_members")
             .update({
               status: "expired",
               current_subscription_id: null,
@@ -703,7 +704,7 @@ export async function expireLibraryMemberships(
           }
         } else {
           await supabase
-            .from("library_members")
+            .from("entity_members")
             .update({ current_subscription_id: otherActiveMembershipId, updated_at: getNowISO() })
             .eq("id", membership.member_id)
 
@@ -724,7 +725,7 @@ export async function expireLibraryMemberships(
 
   // Safety check: members with expired expiry_date still showing active
   const { data: staleMembers, error: staleMemberError } = await supabase
-    .from("library_members")
+    .from("entity_members")
     .select("id, name, expiry_date, owner_id, workspace_id")
     .eq("status", "active")
     .not("expiry_date", "is", null)
@@ -735,7 +736,7 @@ export async function expireLibraryMemberships(
 
     const staleMemberIds = staleMembers.map((m: { id: string }) => m.id)
     const { data: staleMembersWithActive } = await supabase
-      .from("library_memberships")
+      .from("entity_memberships")
       .select("member_id")
       .in("member_id", staleMemberIds)
       .eq("status", "active")
@@ -747,7 +748,7 @@ export async function expireLibraryMemberships(
     for (const member of staleMembers) {
       if (!staleMembersWithActiveSet.has(member.id)) {
         const { error: updateError } = await supabase
-          .from("library_members")
+          .from("entity_members")
           .update({
             status: "expired",
             current_subscription_id: null,
@@ -779,13 +780,14 @@ export async function expireLibraryMemberships(
       const libraryIdsFromExpired = new Set<string>()
       for (const membership of expiredMemberships || []) {
         const member = transformJoin(membership.member)
-        if (member?.library_id) libraryIdsFromExpired.add(member.library_id)
+        if (member?.entity_id) libraryIdsFromExpired.add(member.entity_id)
       }
 
       for (const libraryId of libraryIdsFromExpired) {
         const { data: libraryRecord } = await supabase
-          .from("libraries")
+          .from("entities")
           .select("workspace_id")
+          .eq("type", "library")
           .eq("id", libraryId)
           .single()
 
@@ -800,14 +802,14 @@ export async function expireLibraryMemberships(
         }
 
         const { data: waitlistEntries } = await supabase
-          .from("library_waitlist")
+          .from("entity_waitlist")
           .select(`
             id,
             queue_position,
             person:people(id, name, email),
-            library:libraries(id, name, phone)
+            library:entities(id, name, phone)
           `)
-          .eq("library_id", libraryId)
+          .eq("entity_id", libraryId)
           .eq("status", "waiting")
           .is("deleted_at", null)
           .order("queue_position", { ascending: true })

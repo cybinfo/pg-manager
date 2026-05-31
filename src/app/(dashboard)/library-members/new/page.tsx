@@ -131,8 +131,8 @@ function NewLibraryMemberContent() {
             <span>
               {selectedPerson.name}
               {selectedPerson.phone ? ` · ${selectedPerson.phone}` : ""}
-              {formData.library_id
-                ? ` · ${libraries.find((l) => l.id === formData.library_id)?.name ?? ""}`
+              {formData.entity_id
+                ? ` · ${libraries.find((l) => l.id === formData.entity_id)?.name ?? ""}`
                 : ""}
             </span>
           ) : undefined
@@ -142,8 +142,8 @@ function NewLibraryMemberContent() {
           <FormField label="Library" required>
             <Combobox
               options={libraryOptions}
-              value={formData.library_id}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
+              value={formData.entity_id}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, entity_id: value }))}
               placeholder="Select a library..."
               searchPlaceholder="Search libraries..."
               emptyText="No libraries found"
@@ -429,7 +429,7 @@ function NewLibraryMemberContent() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Library</span>
               <span className="font-medium">
-                {libraries.find((l) => l.id === formData.library_id)?.name ?? "—"}
+                {libraries.find((l) => l.id === formData.entity_id)?.name ?? "—"}
               </span>
             </div>
 

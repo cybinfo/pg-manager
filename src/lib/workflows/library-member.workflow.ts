@@ -4,8 +4,8 @@
  * Orchestrates the multi-step registration of a new library member:
  * 1. Resolve library + owner context
  * 2. Generate member code
- * 3. Create library_members record (person already exists via PersonSelector)
- * 4. Create library_memberships record
+ * 3. Create entity_members record (person already exists via PersonSelector)
+ * 4. Create entity_memberships record
  * 5. Back-link current_subscription_id on the member
  * 6. Send welcome email (non-blocking, feature-gated by caller)
  * 7. Convert waitlist entry if applicable
@@ -19,7 +19,7 @@ import { calcSlotHours, serializeTimeSlots } from "@/lib/time-slots"
 import type { TimeSlot } from "@/lib/time-slots"
 
 export interface CreateLibraryMemberInput {
-  library_id: string
+  entity_id: string
   // Person reference — must already exist in people table (created via PersonSelector)
   person_id: string
   person_name: string
@@ -55,9 +55,9 @@ export async function createLibraryMember(
 ): Promise<CreateLibraryMemberResult> {
   // Resolve library context
   const { data: library } = await supabase
-    .from("libraries")
+    .from("entities").eq("type", "library")
     .select("owner_id, code, name")
-    .eq("id", input.library_id)
+    .eq("id", input.entity_id)
     .single()
 
   if (!library) {
@@ -76,9 +76,9 @@ export async function createLibraryMember(
   // Generate member code — find the highest existing suffix and increment
   const libraryCode = library.code || library.name.slice(0, 3).toUpperCase()
   const { data: existingMembers } = await supabase
-    .from("library_members")
+    .from("entity_members")
     .select("member_code")
-    .eq("library_id", input.library_id)
+    .eq("entity_id", input.entity_id)
     .not("member_code", "is", null)
     .order("member_code", { ascending: false })
     .limit(100)
@@ -115,7 +115,7 @@ export async function createLibraryMember(
     {
       owner_id: library.owner_id,
       workspace_id: workspaceId,
-      library_id: input.library_id,
+      entity_id: input.entity_id,
       person_id: input.person_id,
       name: memberName,
       phone: input.person_phone || null,
@@ -135,7 +135,7 @@ export async function createLibraryMember(
   )
 
   const { data: member, error: memberError } = await supabase
-    .from("library_members")
+    .from("entity_members")
     .insert(memberData)
     .select()
     .single()
@@ -168,7 +168,7 @@ export async function createLibraryMember(
   )
 
   const { data: membership, error: membershipError } = await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .insert(membershipData)
     .select()
     .single()
@@ -180,7 +180,7 @@ export async function createLibraryMember(
   // Back-link current_subscription_id
   if (membership) {
     await supabase
-      .from("library_members")
+      .from("entity_members")
       .update({ current_subscription_id: membership.id })
       .eq("id", member.id)
   }
@@ -212,7 +212,7 @@ export async function createLibraryMember(
   // Convert waitlist entry if applicable
   if (input.waitlist_id) {
     const { error: waitlistError } = await supabase
-      .from("library_waitlist")
+      .from("entity_waitlist")
       .update({
         status: "converted",
         converted_member_id: member.id,

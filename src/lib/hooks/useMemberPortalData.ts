@@ -80,7 +80,7 @@ export interface MemberPortalMember {
   id_proof_type: string | null
   id_proof_number: string | null
   notes: string | null
-  library_id: string
+  entity_id: string
   library: MemberPortalLibrary | null
   current_subscription: MemberPortalMembership | null
   assigned_seat: MemberPortalSeat | null
@@ -133,7 +133,7 @@ function transformMemberData(data: Record<string, unknown>): MemberPortalMember 
 }
 
 const MEMBER_PORTAL_CONFIG = {
-  table: "library_members" as const,
+  table: "entity_members" as const,
   select: `
     id,
     name,
@@ -149,11 +149,11 @@ const MEMBER_PORTAL_CONFIG = {
     id_proof_type,
     id_proof_number,
     notes,
-    library_id,
+    entity_id,
     library:libraries(id, name, phone, address, city, opening_time, closing_time),
-    assigned_seat:library_seats(seat_number, section:library_sections(name)),
-    locker:library_lockers(locker_number),
-    current_subscription:library_memberships!library_members_current_subscription_id_fkey(
+    assigned_seat:entity_seats(seat_number, section:entity_sections(name)),
+    locker:entity_lockers(locker_number),
+    current_subscription:entity_memberships!entity_members_current_subscription_id_fkey(
       id, plan_name, hours_included, hours_remaining, start_date, end_date, status
     ),
     person:people(name, photo_url)

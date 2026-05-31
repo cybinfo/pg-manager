@@ -97,7 +97,7 @@ export default function LibraryLockerDetailPage() {
 
       // End the current assignment
       const { error: assignmentError } = await supabase
-        .from("library_locker_assignments")
+        .from("entity_locker_assignments")
         .update({
           status: "ended",
           end_date: getTodayISO(),
@@ -115,7 +115,7 @@ export default function LibraryLockerDetailPage() {
 
       // Update locker status
       const { error: lockerError } = await supabase
-        .from("library_lockers")
+        .from("entity_lockers")
         .update({
           status: "available",
           current_member_id: null,
@@ -133,7 +133,7 @@ export default function LibraryLockerDetailPage() {
 
       // Remove locker from member
       const { error: memberError } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .update({
           locker_id: null,
           updated_at: getNowISO(),
@@ -246,7 +246,7 @@ export default function LibraryLockerDetailPage() {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <PermissionGate permission="library_lockers.edit" hide>
+            <PermissionGate permission="entity_lockers.edit" hide>
               <Link href={`/library-lockers/${locker.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="mr-2 h-4 w-4" />
@@ -254,7 +254,7 @@ export default function LibraryLockerDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_lockers.edit" hide>
+            <PermissionGate permission="entity_lockers.edit" hide>
               <Button
                 variant="destructive"
                 size="sm"
@@ -266,7 +266,7 @@ export default function LibraryLockerDetailPage() {
                     destructive: true,
                     onConfirm: async () => {
                       try {
-                        const result = await softDelete("library_lockers", params.id as string, user.id)
+                        const result = await softDelete("entity_lockers", params.id as string, user.id)
                         if (!result.error) {
                           showSuccess("Locker deleted successfully")
                           router.push("/library-lockers")

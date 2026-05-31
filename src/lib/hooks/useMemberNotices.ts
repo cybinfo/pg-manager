@@ -30,6 +30,7 @@ export function useMemberNotices(
   useEffect(() => {
     if (memberLoading) return
     if (!member) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false)
       return
     }
@@ -42,7 +43,7 @@ export function useMemberNotices(
         .from("notices")
         .select("id, title, content, type, created_at, expires_at")
         .eq("is_active", true)
-        .eq("library_id", member.library_id)
+        .eq("entity_id", member.entity_id)
         .or(`expires_at.is.null,expires_at.gt.${now}`)
         .order("created_at", { ascending: false })
 

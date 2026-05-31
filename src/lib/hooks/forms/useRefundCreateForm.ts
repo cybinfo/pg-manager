@@ -17,7 +17,7 @@ interface Tenant {
   name: string
   phone: string
   photo_url: string | null
-  property_id: string
+  entity_id: string
   property: { id: string; name: string } | null
   room: { id: string; room_number: string } | null
 }
@@ -56,8 +56,10 @@ export function useRefundCreateForm() {
   })
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     fetchTenants()
     if (exitClearanceId) {
+      // eslint-disable-next-line react-hooks/immutability
       fetchExitClearance(exitClearanceId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,6 +68,7 @@ export function useRefundCreateForm() {
   useEffect(() => {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTenant(tenant || null)
     }
   }, [formData.tenant_id, tenants])
@@ -75,7 +78,7 @@ export function useRefundCreateForm() {
     const { data, error } = await supabase
       .from("tenants")
       .select(`
-        id, name, phone, photo_url, property_id,
+        id, name, phone, photo_url, entity_id,
         property:properties(id, name),
         room:rooms(id, room_number)
       `)
@@ -140,7 +143,7 @@ export function useRefundCreateForm() {
       const refundData = withCreatedBy({
         owner_id: user.id,
         tenant_id: formData.tenant_id,
-        property_id: selectedTenant?.property_id || null,
+        entity_id: selectedTenant?.entity_id || null,
         exit_clearance_id: exitClearanceId || null,
         refund_type: formData.refund_type,
         amount: parseFloat(formData.amount),

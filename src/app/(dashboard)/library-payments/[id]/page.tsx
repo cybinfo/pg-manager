@@ -74,7 +74,7 @@ export default function LibraryPaymentDetailPage() {
       destructive: true,
       onConfirm: async () => {
         try {
-          const result = await softDelete("library_payments", params.id as string, user.id)
+          const result = await softDelete("entity_payments", params.id as string, user.id)
           if (!result.error) {
             showSuccess("Payment deleted successfully")
             router.push("/library-payments")
@@ -152,7 +152,7 @@ export default function LibraryPaymentDetailPage() {
                 </Button>
               </Link>
             )}
-            <PermissionGate permission="library_payments.edit" hide>
+            <PermissionGate permission="entity_payments.edit" hide>
               <Link href={`/library-payments/${payment.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="mr-2 h-4 w-4" />
@@ -160,7 +160,7 @@ export default function LibraryPaymentDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_payments.edit" hide>
+            <PermissionGate permission="entity_payments.edit" hide>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

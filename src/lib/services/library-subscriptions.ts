@@ -50,7 +50,7 @@ export async function recordLibrarySubscriptionPayment(
 
   // Generate sequential receipt number
   const { data: lastPayment } = await supabase
-    .from("library_payments")
+    .from("entity_payments")
     .select("receipt_number")
     .order("created_at", { ascending: false })
     .limit(1)
@@ -81,7 +81,7 @@ export async function recordLibrarySubscriptionPayment(
     userId
   )
 
-  const { error } = await supabase.from("library_payments").insert(paymentData)
+  const { error } = await supabase.from("entity_payments").insert(paymentData)
 
   if (error) {
     logger.error("recordLibrarySubscriptionPayment: error inserting payment", { detail: error })

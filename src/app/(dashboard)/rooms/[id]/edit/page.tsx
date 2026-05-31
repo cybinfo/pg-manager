@@ -47,7 +47,7 @@ function EditRoomContent() {
     table: "rooms",
     id: params.id as string,
     initialData: {
-      property_id: "",
+      entity_id: "",
       room_number: "",
       room_type: "single",
       floor: "0",
@@ -70,7 +70,7 @@ function EditRoomContent() {
     errorMessage: "Failed to update room",
     notFoundRedirect: "/rooms",
     mapToForm: (record) => ({
-      property_id: (record.property_id as string) || "",
+      entity_id: (record.entity_id as string) || "",
       room_number: (record.room_number as string) || "",
       room_type: (record.room_type as string) || "single",
       floor: ((record.floor as number) || 0).toString(),
@@ -89,7 +89,7 @@ function EditRoomContent() {
       photos: (record.photos as string[]) || [],
     }),
     validationSchema: {
-      property_id: requiredSelect("Property"),
+      entity_id: requiredSelect("Property"),
       room_number: requiredField("Room Number"),
       rent_amount: requiredAmount("Monthly Rent"),
     },
@@ -100,7 +100,7 @@ function EditRoomContent() {
         .map((amenity) => amenity.label.split(" (")[0])
 
       return {
-        property_id: data.property_id,
+        entity_id: data.entity_id,
         room_number: data.room_number,
         room_type: data.room_type,
         floor: parseInt(data.floor as string) || 0,
@@ -128,7 +128,7 @@ function EditRoomContent() {
       const supabase = createClient()
 
       const [propertiesRes, configRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
         user ? supabase.from("owner_config").select("room_types").eq("owner_id", user.id).single() : null,
       ])
 
@@ -167,11 +167,11 @@ function EditRoomContent() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <DetailSection title="Room Details" description="Update the room information" icon={Home}>
             {/* Property Selection */}
-            <FormField label="Property" required error={errors.property_id}>
+            <FormField label="Property" required error={errors.entity_id}>
               <Select
-                id="property_id"
-                name="property_id"
-                value={formData.property_id as string}
+                id="entity_id"
+                name="entity_id"
+                value={formData.entity_id as string}
                 onChange={handleChange}
                 required
                 disabled={saving}

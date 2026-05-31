@@ -65,7 +65,7 @@ async function getProperty(slug: string): Promise<PropertyWebsite | null> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from("properties")
+    .from("entities")
     .select(`
       id,
       name,

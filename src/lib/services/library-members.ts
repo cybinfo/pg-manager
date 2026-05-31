@@ -84,7 +84,7 @@ export async function renewLibraryMembership(
   )
 
   const { data: membership, error: membershipError } = await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .insert(membershipData)
     .select()
     .single()
@@ -96,7 +96,7 @@ export async function renewLibraryMembership(
 
   // Update member — hours_balance is the daily allowance (per-day model)
   const { error: memberUpdateError } = await supabase
-    .from("library_members")
+    .from("entity_members")
     .update({
       hours_balance: hoursIncluded,
       current_subscription_id: membership.id,
@@ -113,7 +113,7 @@ export async function renewLibraryMembership(
 
   // Mark previous active memberships as upgraded
   await supabase
-    .from("library_memberships")
+    .from("entity_memberships")
     .update({ status: "upgraded" })
     .eq("member_id", member.id)
     .eq("status", "active")

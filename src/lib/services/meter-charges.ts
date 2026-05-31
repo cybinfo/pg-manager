@@ -80,7 +80,7 @@ export async function generateMeterCharges(
   const chargeInserts = tenants.map((tenant: { id: string; name: string }) => ({
     owner_id: ownerId,
     tenant_id: tenant.id,
-    property_id: property?.id,
+    entity_id: property?.id,
     charge_type_id: chargeType?.id,
     amount: splitByOccupants ? amountPerTenant : totalAmount,
     due_date: dueDate.toISOString().split("T")[0],
@@ -154,7 +154,7 @@ export async function generateChargesOnCreate(
   const chargeInserts = tenants.map((tenant) => ({
     owner_id: ownerId,
     tenant_id: tenant.id,
-    property_id: propertyId,
+    entity_id: propertyId,
     charge_type_id: chargeTypeId,
     amount: splitByOccupants ? amountPerTenant : totalAmount,
     due_date: dueDate.toISOString().split("T")[0],
@@ -201,7 +201,7 @@ interface MeterInfo {
   id: string
   meter_number: string
   meter_type: string
-  property_id: string
+  entity_id: string
   current_assignment: MeterAssignment
 }
 
@@ -282,7 +282,7 @@ export async function createMeterReadingWithCharges(
   const readingData = withCreatedBy(
     {
       owner_id: userId,
-      property_id: meter.property_id,
+      entity_id: meter.entity_id,
       room_id: meter.current_assignment.room_id,
       charge_type_id: matchingChargeType?.id || null,
       meter_id: meter.id,
@@ -315,7 +315,7 @@ export async function createMeterReadingWithCharges(
         readingId,
         readingDate,
         unitsConsumed,
-        propertyId: meter.property_id,
+        propertyId: meter.entity_id,
         chargeTypeId: matchingChargeType.id,
         ratePerUnit,
         splitByOccupants: matchingChargeType.calculation_config?.split_by === "occupants",

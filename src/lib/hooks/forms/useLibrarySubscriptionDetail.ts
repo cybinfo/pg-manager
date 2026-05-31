@@ -196,7 +196,7 @@ export function useLibrarySubscriptionDetail() {
       destructive: true,
       onConfirm: async () => {
         if (!user) return
-        const { error } = await softDelete("library_memberships", params.id as string, user.id)
+        const { error } = await softDelete("entity_memberships", params.id as string, user.id)
         if (!error) {
           showSuccess("Subscription deleted")
           router.push("/library-subscriptions")

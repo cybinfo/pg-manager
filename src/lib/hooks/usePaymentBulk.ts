@@ -27,8 +27,8 @@ export function usePaymentBulk() {
         .from("bills")
         .select(`
           id, bill_number, for_month, balance_due, total_amount,
-          tenant:tenants(id, name, phone, property_id,
-            property:properties(id, name),
+          tenant:tenants(id, name, phone, entity_id,
+            property:entities(id, name),
             room:rooms(id, room_number)
           )
         `)
@@ -56,7 +56,7 @@ export function usePaymentBulk() {
             tenant_id: (tenant as Record<string, unknown>).id as string,
             tenant_name: (tenant as Record<string, unknown>).name as string,
             phone: (tenant as Record<string, unknown>).phone as string,
-            property_id: (tenant as Record<string, unknown>).property_id as string,
+            entity_id: (tenant as Record<string, unknown>).entity_id as string,
             property_name: (property as Record<string, unknown>)?.name as string || "Unknown",
             room_number: (room as Record<string, unknown>)?.room_number as string || "N/A",
             bill_id: bill.id as string,

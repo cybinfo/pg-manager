@@ -44,7 +44,7 @@ interface TenantData {
   email?: string | null
   status: string
   owner_id: string
-  property_id: string
+  entity_id: string
   room_id: string | null
   user_id: string | null
   person_id: string | null
@@ -88,6 +88,7 @@ export function useTenant(): UseTenantReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchTenant = useCallback(async () => {
     if (!user?.id) {
       setLoading(false)
@@ -111,7 +112,7 @@ export function useTenant(): UseTenantReturn {
           email,
           status,
           owner_id,
-          property_id,
+          entity_id,
           room_id,
           user_id,
           person_id,
@@ -173,6 +174,7 @@ export function useTenant(): UseTenantReturn {
   }, [user?.id])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTenant()
   }, [fetchTenant])
 
@@ -202,7 +204,7 @@ export function useTenantId() {
   return {
     tenantId: tenant?.id || null,
     ownerId: tenant?.owner_id || null,
-    propertyId: tenant?.property_id || null,
+    propertyId: tenant?.entity_id || null,
     loading,
     error,
   }

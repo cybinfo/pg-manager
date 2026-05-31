@@ -232,7 +232,7 @@ export default function PropertyRoomsPage() {
     const fetchProperty = async () => {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from("properties")
+        .from("entities")
         .select("id, name, address")
         .eq("id", propertyId)
         .is("deleted_at", null)
@@ -251,7 +251,7 @@ export default function PropertyRoomsPage() {
 
   const config = useMemo(() => ({
     ...ROOM_LIST_CONFIG,
-    fixedFilters: [{ column: "property_id", operator: "eq" as const, value: propertyId }],
+    fixedFilters: [{ column: "entity_id", operator: "eq" as const, value: propertyId }],
   }), [propertyId])
 
   if (notFound) {
@@ -284,7 +284,7 @@ export default function PropertyRoomsPage() {
       enableColumnManager={true}
 exportColumns={exportColumns}
       exportFilename={`rooms-property-${propertyId}`}
-      createHref={`/rooms/new?property_id=${propertyId}`}
+      createHref={`/rooms/new?entity_id=${propertyId}`}
       createLabel="Add Room"
       createPermission="rooms.create"
       detailHref={(room) => `/rooms/${room.id}`}

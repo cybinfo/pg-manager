@@ -94,13 +94,13 @@ export function useReportsData(): UseReportsDataReturn {
         complaintsRes,
         expensesRes,
       ] = await Promise.all([
-        supabase.from("properties").select("id, name"),
-        supabase.from("rooms").select("id, property_id, status, total_beds"),
-        supabase.from("tenants").select("id, property_id, status, monthly_rent, check_in_date, check_out_date, created_at"),
-        supabase.from("payments").select("id, property_id, amount, payment_method, payment_date, created_at"),
-        supabase.from("bills").select("id, property_id, tenant_id, total_amount, balance_due, status, bill_date, due_date"),
-        supabase.from("complaints").select("id, property_id, status, created_at, resolved_at"),
-        supabase.from("expenses").select("id, property_id, amount, expense_date, expense_type_id, expense_type:expense_types(name)"),
+        supabase.from("entities").eq("type", "pg").select("id, name"),
+        supabase.from("rooms").select("id, entity_id, status, total_beds"),
+        supabase.from("tenants").select("id, entity_id, status, monthly_rent, check_in_date, check_out_date, created_at"),
+        supabase.from("payments").select("id, entity_id, amount, payment_method, payment_date, created_at"),
+        supabase.from("bills").select("id, entity_id, tenant_id, total_amount, balance_due, status, bill_date, due_date"),
+        supabase.from("complaints").select("id, entity_id, status, created_at, resolved_at"),
+        supabase.from("expenses").select("id, entity_id, amount, expense_date, expense_type_id, expense_type:expense_types(name)"),
       ])
 
       const propertiesData = propertiesRes.data || []
@@ -120,7 +120,7 @@ export function useReportsData(): UseReportsDataReturn {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filterByProperty = (items: any[]) => {
         if (selectedProperty === "all") return items
-        return items.filter((item: Record<string, unknown>) => item.property_id === selectedProperty)
+        return items.filter((item: Record<string, unknown>) => item.entity_id === selectedProperty)
       }
 
       const filteredRooms = filterByProperty(roomsData)
@@ -223,12 +223,12 @@ export function useReportsData(): UseReportsDataReturn {
         : 0
 
       const propertyStats = propertiesData.map((property: { id: string; name: string }) => {
-        const propRooms = roomsData.filter((r: { property_id: string }) => r.property_id === property.id)
-        const propPayments = paymentsData.filter((p: { property_id: string; payment_date: string }) => {
+        const propRooms = roomsData.filter((r: { entity_id: string }) => r.entity_id === property.id)
+        const propPayments = paymentsData.filter((p: { entity_id: string; payment_date: string }) => {
           const paymentDate = new Date(p.payment_date)
-          return p.property_id === property.id && paymentDate >= startDate && paymentDate <= endDate
+          return p.entity_id === property.id && paymentDate >= startDate && paymentDate <= endDate
         })
-        const propBills = billsData.filter((b: { property_id: string; status: string }) => b.property_id === property.id && b.status !== "paid" && b.status !== "cancelled")
+        const propBills = billsData.filter((b: { entity_id: string; status: string }) => b.entity_id === property.id && b.status !== "paid" && b.status !== "cancelled")
         return {
           id: property.id,
           name: property.name,
@@ -304,6 +304,7 @@ export function useReportsData(): UseReportsDataReturn {
   }, [selectedProperty, dateRange])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReportData()
   }, [fetchReportData])
 

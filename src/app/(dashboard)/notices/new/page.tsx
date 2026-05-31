@@ -38,7 +38,7 @@ interface LibraryItem {
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 const NOTICE_TYPE_DESCRIPTIONS: Record<string, string> = {
@@ -88,8 +88,7 @@ function NewNoticeContent() {
     table: "notices",
     initialData: {
       entity_type: "all" as string,
-      property_id: "",
-      library_id: "",
+      entity_id: "",
       type: "general",
       target_audience: "all",
       title: "",
@@ -118,8 +117,7 @@ function NewNoticeContent() {
       const isScheduled = scheduleForLater && !!data.scheduled_at
       return withCreatedBy({
         owner_id: userId,
-        property_id: data.entity_type === "property" ? data.property_id : null,
-        library_id: data.entity_type === "library" ? data.library_id : null,
+        entity_id: data.entity_id || null,
         type: data.type,
         target_audience: data.target_audience,
         target_rooms: data.target_audience === "specific_rooms" ? selectedRooms : null,
@@ -138,9 +136,9 @@ function NewNoticeContent() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes, librariesRes] = await Promise.all([
-        supabase.from("properties").select("id, name").is("deleted_at", null).order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").is("deleted_at", null).order("room_number"),
-        supabase.from("libraries").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("rooms").select("id, room_number, entity_id").is("deleted_at", null).order("room_number"),
+        supabase.from("entities").eq("type", "library").select("id, name").is("deleted_at", null).order("name"),
       ])
 
       if (propertiesRes.data) setProperties(propertiesRes.data)
@@ -155,14 +153,14 @@ function NewNoticeContent() {
 
   // Filter rooms when property changes
   useEffect(() => {
-    if (formData.property_id) {
+    if (formData.entity_id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFilteredRooms(rooms.filter((r) => r.property_id === formData.property_id))
+      setFilteredRooms(rooms.filter((r) => r.entity_id === formData.entity_id))
     } else {
       setFilteredRooms([])
     }
     setSelectedRooms([])
-  }, [formData.property_id, rooms])
+  }, [formData.entity_id, rooms])
 
   // Custom handleChange that resets dependent fields
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -175,8 +173,7 @@ function NewNoticeContent() {
 
       // Reset dependent fields when entity_type changes
       if (name === "entity_type") {
-        newData.property_id = ""
-        newData.library_id = ""
+        newData.entity_id = ""
         newData.target_audience = value === "library" ? "all" : prev.target_audience
       }
 
@@ -296,11 +293,11 @@ function NewNoticeContent() {
 
           {/* Property Selection */}
           {formData.entity_type === "property" && (
-            <FormField label="Property" htmlFor="property_id" required>
+            <FormField label="Property" htmlFor="entity_id" required>
               <Select
-                id="property_id"
-                name="property_id"
-                value={formData.property_id as string}
+                id="entity_id"
+                name="entity_id"
+                value={formData.entity_id as string}
                 onChange={handleFormChange}
                 disabled={saving}
                 required
@@ -315,11 +312,11 @@ function NewNoticeContent() {
 
           {/* Library Selection */}
           {formData.entity_type === "library" && (
-            <FormField label="Library" htmlFor="library_id" required>
+            <FormField label="Library" htmlFor="entity_id" required>
               <Select
-                id="library_id"
-                name="library_id"
-                value={formData.library_id as string}
+                id="entity_id"
+                name="entity_id"
+                value={formData.entity_id as string}
                 onChange={handleFormChange}
                 disabled={saving}
                 required
@@ -333,11 +330,11 @@ function NewNoticeContent() {
           )}
 
           {formData.entity_type === "all" && libraries.length === 0 && (
-            <FormField label="Property" htmlFor="property_id" hint="Leave empty to send to all properties">
+            <FormField label="Property" htmlFor="entity_id" hint="Leave empty to send to all properties">
               <Select
-                id="property_id"
-                name="property_id"
-                value={formData.property_id as string}
+                id="entity_id"
+                name="entity_id"
+                value={formData.entity_id as string}
                 onChange={handleFormChange}
                 disabled={saving}
                 placeholder="All Properties"
@@ -376,7 +373,7 @@ function NewNoticeContent() {
 
           {/* Room Selection - only for property */}
           <FeatureGuard module="notices" feature="targetedNotices">
-          {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && formData.property_id && (
+          {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && formData.entity_id && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Select Rooms</Label>
@@ -411,7 +408,7 @@ function NewNoticeContent() {
             </div>
           )}
 
-          {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && !formData.property_id && (
+          {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && !formData.entity_id && (
             <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
               Please select a property first to choose specific rooms
             </p>

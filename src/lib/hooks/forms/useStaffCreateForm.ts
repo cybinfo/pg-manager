@@ -26,7 +26,7 @@ export interface Role {
 
 export interface RoleAssignment {
   role_id: string
-  property_id: string | null
+  entity_id: string | null
 }
 
 export function useStaffCreateForm() {
@@ -61,7 +61,7 @@ export function useStaffCreateForm() {
           .select("id, name, description, is_system_role")
           .order("is_system_role", { ascending: false })
           .order("name"),
-        supabase.from("properties").select("id, name").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
       ])
 
       if (!rolesRes.error) setRoles(rolesRes.data || [])
@@ -84,6 +84,7 @@ export function useStaffCreateForm() {
         .single()
 
       if (data && !data.is_blocked) {
+        // eslint-disable-next-line react-hooks/immutability
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
         showError("This person is blocked and cannot be added as staff")
@@ -114,10 +115,10 @@ export function useStaffCreateForm() {
       showError("No roles available. Create a role first.")
       return
     }
-    setRoleAssignments((prev) => [...prev, { role_id: roles[0].id, property_id: null }])
+    setRoleAssignments((prev) => [...prev, { role_id: roles[0].id, entity_id: null }])
   }
 
-  const updateRoleAssignment = (index: number, field: "role_id" | "property_id", value: string | null) => {
+  const updateRoleAssignment = (index: number, field: "role_id" | "entity_id", value: string | null) => {
     setRoleAssignments((prev) =>
       prev.map((assignment, i) => (i === index ? { ...assignment, [field]: value } : assignment))
     )
@@ -231,7 +232,7 @@ export function useStaffCreateForm() {
           owner_id: user.id,
           staff_member_id: staffData.id,
           role_id: assignment.role_id,
-          property_id: assignment.property_id,
+          entity_id: assignment.entity_id,
         }))
 
         const { error: roleError } = await supabase

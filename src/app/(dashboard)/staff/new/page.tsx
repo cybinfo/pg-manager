@@ -225,11 +225,11 @@ function NewStaffContent() {
                         <div>
                           <Label className="text-xs text-muted-foreground">Property (Optional)</Label>
                           <Select
-                            value={assignment.property_id || ""}
+                            value={assignment.entity_id || ""}
                             onChange={(e) =>
                               updateRoleAssignment(
                                 index,
-                                "property_id",
+                                "entity_id",
                                 e.target.value || null
                               )
                             }
@@ -308,7 +308,7 @@ function NewStaffContent() {
                 <span className="text-muted-foreground block">Roles</span>
                 {roleAssignments.map((assignment, i) => {
                   const role = roles.find(r => r.id === assignment.role_id)
-                  const property = properties.find(p => p.id === assignment.property_id)
+                  const property = properties.find(p => p.id === assignment.entity_id)
                   return (
                     <div key={i} className="flex items-center gap-2 pl-2">
                       <Shield className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />

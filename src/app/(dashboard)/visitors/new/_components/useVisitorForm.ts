@@ -21,14 +21,14 @@ import type { PropertyOption } from "@/types/properties.types"
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 interface Tenant {
   id: string
   name: string
   phone: string
-  property_id: string
+  entity_id: string
   room: {
     room_number: string
   } | null
@@ -38,14 +38,14 @@ interface RawTenant {
   id: string
   name: string
   phone: string
-  property_id: string
+  entity_id: string
   room: { room_number: string }[] | null
 }
 
 export interface VisitorFormData {
   visitor_contact_id: string
   visitor_type: VisitorType
-  property_id: string
+  entity_id: string
   tenant_id: string
   visitor_name: string
   visitor_phone: string
@@ -73,7 +73,7 @@ export interface VisitorFormData {
 const INITIAL_FORM_DATA: VisitorFormData = {
   visitor_contact_id: "",
   visitor_type: "tenant_visitor",
-  property_id: "",
+  entity_id: "",
   tenant_id: "",
   visitor_name: "",
   visitor_phone: "",
@@ -135,19 +135,19 @@ export function useVisitorForm() {
 
       const supabase = createClient()
       const [propertiesRes, tenantsRes, roomsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
+        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
         supabase
           .from("tenants")
-          .select("id, name, phone, property_id, room:rooms(room_number)")
+          .select("id, name, phone, entity_id, room:rooms(room_number)")
           .eq("status", "active")
           .order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
+        supabase.from("rooms").select("id, room_number, entity_id").order("room_number"),
       ])
 
       if (!propertiesRes.error) {
         setProperties(propertiesRes.data || [])
         if (propertiesRes.data && propertiesRes.data.length > 0) {
-          setFormData((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
+          setFormData((prev) => ({ ...prev, entity_id: propertiesRes.data[0].id }))
         }
       }
 
@@ -182,6 +182,7 @@ export function useVisitorForm() {
         .single()
 
       if (data && !data.is_blocked) {
+        // eslint-disable-next-line react-hooks/immutability
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
         showError("This person is blocked and cannot check in as a visitor")
@@ -193,8 +194,9 @@ export function useVisitorForm() {
 
   // Filter tenants and rooms when property changes
   useEffect(() => {
-    if (formData.property_id) {
-      const filtered = tenants.filter((t) => t.property_id === formData.property_id)
+    if (formData.entity_id) {
+      const filtered = tenants.filter((t) => t.entity_id === formData.entity_id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredTenants(filtered)
       if (filtered.length > 0 && formData.visitor_type === "tenant_visitor" && !formData.tenant_id) {
         setFormData((prev) => ({ ...prev, tenant_id: filtered[0].id }))
@@ -202,10 +204,10 @@ export function useVisitorForm() {
         setFormData((prev) => ({ ...prev, tenant_id: "" }))
       }
 
-      const filteredR = rooms.filter((r) => r.property_id === formData.property_id)
+      const filteredR = rooms.filter((r) => r.entity_id === formData.entity_id)
       setFilteredRooms(filteredR)
     }
-  }, [formData.property_id, tenants, rooms, formData.visitor_type, formData.tenant_id])
+  }, [formData.entity_id, tenants, rooms, formData.visitor_type, formData.tenant_id])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -281,7 +283,7 @@ export function useVisitorForm() {
       return
     }
 
-    if (!formData.property_id) {
+    if (!formData.entity_id) {
       showError("Please select a property")
       return
     }
@@ -378,7 +380,7 @@ export function useVisitorForm() {
           .insert(withCreatedBy({
             owner_id: user.id,
             tenant_id: formData.tenant_id,
-            property_id: formData.property_id,
+            entity_id: formData.entity_id,
             bill_number: billNumber,
             bill_date: today,
             due_date: expectedCheckout || today,
@@ -410,7 +412,7 @@ export function useVisitorForm() {
 
       const visitorData = withCreatedBy({
         owner_id: user.id,
-        property_id: formData.property_id,
+        entity_id: formData.entity_id,
         visitor_contact_id: visitorContactId || null,
         visitor_type: formData.visitor_type,
         visitor_name: selectedPerson?.name || formData.visitor_name,

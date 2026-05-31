@@ -47,7 +47,7 @@ export async function transferTenantRoom(
   await supabase.from("tenant_stays").insert({
     owner_id: ownerId,
     tenant_id: tenant.id,
-    property_id: toPropertyId,
+    entity_id: toPropertyId,
     room_id: toRoomId,
     join_date: getTodayISO(),
     monthly_rent: newRent,
@@ -58,6 +58,6 @@ export async function transferTenantRoom(
 
   await supabase
     .from("tenants")
-    .update({ property_id: toPropertyId, room_id: toRoomId, monthly_rent: newRent })
+    .update({ entity_id: toPropertyId, room_id: toRoomId, monthly_rent: newRent })
     .eq("id", tenant.id)
 }

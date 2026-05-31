@@ -409,7 +409,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
       const supabase = createClient()
 
       await submitInquiry(supabase, {
-        property_id: property.id,
+        entity_id: property.id,
         owner_id: property.owner_id,
         name: inquiryForm.name.trim(),
         phone: phoneValidation.normalized || inquiryForm.phone.trim(),

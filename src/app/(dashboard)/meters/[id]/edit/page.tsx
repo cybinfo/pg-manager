@@ -67,7 +67,7 @@ function EditMeterContent() {
     id,
     select: "*, property:properties(id, name)",
     initialData: {
-      property_id: "",
+      entity_id: "",
       meter_number: "",
       meter_type: "electricity" as string,
       status: "active" as string,
@@ -81,7 +81,7 @@ function EditMeterContent() {
     successMessage: "Meter updated successfully",
     errorMessage: "Failed to update meter",
     mapToForm: (rec) => ({
-      property_id: (rec.property_id as string) || "",
+      entity_id: (rec.entity_id as string) || "",
       meter_number: (rec.meter_number as string) || "",
       meter_type: (rec.meter_type as string) || "electricity",
       status: (rec.status as string) || "active",
@@ -93,7 +93,7 @@ function EditMeterContent() {
     }),
     validate: (data) => {
       const newErrors: Record<string, string> = {}
-      if (!data.property_id) newErrors.property_id = "Property is required"
+      if (!data.entity_id) newErrors.entity_id = "Property is required"
       if (!(data.meter_number as string).trim()) newErrors.meter_number = "Meter number is required"
       setErrors(newErrors)
       if (Object.keys(newErrors).length > 0) return "Please fix the errors before submitting"
@@ -118,7 +118,7 @@ function EditMeterContent() {
       const { error } = await supabase
         .from("meters")
         .update({
-          property_id: data.property_id,
+          entity_id: data.entity_id,
           meter_number: (data.meter_number as string).trim(),
           meter_type: data.meter_type,
           status: data.status,
@@ -139,7 +139,7 @@ function EditMeterContent() {
   useEffect(() => {
     const fetchProperties = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from("properties").select("id, name").order("name")
+      const { data } = await supabase.from("entities").eq("type", "pg").select("id, name").order("name")
       if (data) setProperties(data)
     }
     fetchProperties()
@@ -186,10 +186,10 @@ function EditMeterContent() {
           icon={Gauge}
         >
           <div className="space-y-4">
-            <FormField label="Property" required error={errors.property_id}>
+            <FormField label="Property" required error={errors.entity_id}>
               <Select
-                value={formData.property_id as string}
-                onChange={(e) => updateField("property_id", e.target.value)}
+                value={formData.entity_id as string}
+                onChange={(e) => updateField("entity_id", e.target.value)}
                 options={[
                   { value: "", label: "Select property" },
                   ...properties.map((p) => ({ value: p.id, label: p.name })),

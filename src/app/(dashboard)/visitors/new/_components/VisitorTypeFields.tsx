@@ -11,7 +11,7 @@ interface Tenant {
   id: string
   name: string
   phone: string
-  property_id: string
+  entity_id: string
   room: {
     room_number: string
   } | null
@@ -20,7 +20,7 @@ interface Tenant {
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 interface VisitorTypeFieldsProps {

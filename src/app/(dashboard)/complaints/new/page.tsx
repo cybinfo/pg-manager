@@ -36,13 +36,13 @@ interface LibraryMember {
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 interface TenantRaw {
   id: string
   name: string
-  property_id: string
+  entity_id: string
   room_id: string
   room: { room_number: string }[] | null
   property: { name: string }[] | null
@@ -51,7 +51,7 @@ interface TenantRaw {
 interface Tenant {
   id: string
   name: string
-  property_id: string
+  entity_id: string
   room_id: string
   room: {
     room_number: string
@@ -97,8 +97,7 @@ function NewComplaintForm() {
     table: "complaints",
     initialData: {
       entity_type: "property" as string,
-      property_id: "",
-      library_id: "",
+      entity_id: "",
       room_id: "",
       tenant_id: "",
       member_id: "",
@@ -113,23 +112,16 @@ function NewComplaintForm() {
     useCreatedBy: false,
     validationSchema: {
       title: requiredField("Title"),
-      property_id: (value: unknown, formData): ValidatorResult => {
-        if (formData.entity_type === "property" && !String(value ?? "").trim()) {
-          return { isValid: false, error: "Please select a property" }
-        }
-        return null
-      },
-      library_id: (value: unknown, formData): ValidatorResult => {
-        if (formData.entity_type === "library" && !String(value ?? "").trim()) {
-          return { isValid: false, error: "Please select a library" }
+      entity_id: (value: unknown): ValidatorResult => {
+        if (!String(value ?? "").trim()) {
+          return { isValid: false, error: "Please select a property or library" }
         }
         return null
       },
     },
     transform: (data, userId) => withCreatedBy({
       owner_id: userId,
-      property_id: data.entity_type === "property" ? data.property_id : null,
-      library_id: data.entity_type === "library" ? data.library_id : null,
+      entity_id: data.entity_id || null,
       room_id: data.room_id || null,
       tenant_id: data.tenant_id || null,
       category: data.category,
@@ -150,17 +142,14 @@ function NewComplaintForm() {
 
       // Reset dependent fields
       if (name === "entity_type") {
-        newData.property_id = ""
-        newData.library_id = ""
+        newData.entity_id = ""
         newData.room_id = ""
         newData.tenant_id = ""
         newData.member_id = ""
       }
-      if (name === "property_id") {
+      if (name === "entity_id") {
         newData.room_id = ""
         newData.tenant_id = ""
-      }
-      if (name === "library_id") {
         newData.member_id = ""
       }
       if (name === "room_id") {
@@ -176,15 +165,15 @@ function NewComplaintForm() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes, tenantsRes, librariesRes, membersRes] = await Promise.all([
-        supabase.from("properties").select("id, name").is("deleted_at", null).order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").is("deleted_at", null).order("room_number"),
+        supabase.from("entities").eq("type", "pg").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("rooms").select("id, room_number, entity_id").is("deleted_at", null).order("room_number"),
         supabase
           .from("tenants")
-          .select("id, name, property_id, room_id, room:rooms(room_number), property:properties(name)")
+          .select("id, name, entity_id, room_id, room:rooms(room_number), property:properties(name)")
           .eq("status", "active")
           .is("deleted_at", null)
           .order("name"),
-        supabase.from("libraries").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("entities").eq("type", "library").select("id, name").is("deleted_at", null).order("name"),
         supabase.from("library_members").select("id, name, member_code").eq("status", "active").is("deleted_at", null).order("name"),
       ])
 
@@ -197,7 +186,7 @@ function NewComplaintForm() {
         const transformedTenants: Tenant[] = (tenantsRes.data as TenantRaw[]).map((t) => ({
           id: t.id,
           name: t.name,
-          property_id: t.property_id,
+          entity_id: t.entity_id,
           room_id: t.room_id,
           room: transformJoin(t.room),
           property: transformJoin(t.property),
@@ -211,7 +200,7 @@ function NewComplaintForm() {
             setFormData((prev) => ({
               ...prev,
               tenant_id: preselectedTenantId,
-              property_id: tenant.property_id,
+              entity_id: tenant.entity_id,
               room_id: tenant.room_id,
             }))
           }
@@ -226,25 +215,25 @@ function NewComplaintForm() {
 
   // Filter rooms when property changes
   useEffect(() => {
-    if (formData.property_id) {
+    if (formData.entity_id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFilteredRooms(rooms.filter((r) => r.property_id === formData.property_id))
-      setFilteredTenants(tenants.filter((t) => t.property_id === formData.property_id))
+      setFilteredRooms(rooms.filter((r) => r.entity_id === formData.entity_id))
+      setFilteredTenants(tenants.filter((t) => t.entity_id === formData.entity_id))
     } else {
       setFilteredRooms([])
       setFilteredTenants(tenants)
     }
-  }, [formData.property_id, rooms, tenants])
+  }, [formData.entity_id, rooms, tenants])
 
   // Filter tenants when room changes
   useEffect(() => {
     if (formData.room_id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredTenants(tenants.filter((t) => t.room_id === formData.room_id))
-    } else if (formData.property_id) {
-      setFilteredTenants(tenants.filter((t) => t.property_id === formData.property_id))
+    } else if (formData.entity_id) {
+      setFilteredTenants(tenants.filter((t) => t.entity_id === formData.entity_id))
     }
-  }, [formData.room_id, formData.property_id, tenants])
+  }, [formData.room_id, formData.entity_id, tenants])
 
   if (loadingData) {
     return <PageSkeleton variant="form" />
@@ -335,11 +324,11 @@ function NewComplaintForm() {
             {formData.entity_type === "property" && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField label="Property" htmlFor="property_id" required error={errors.property_id}>
+                  <FormField label="Property" htmlFor="entity_id" required error={errors.entity_id}>
                     <Select
-                      id="property_id"
-                      name="property_id"
-                      value={formData.property_id as string}
+                      id="entity_id"
+                      name="entity_id"
+                      value={formData.entity_id as string}
                       onChange={handleChange}
                       disabled={saving}
                       placeholder="Select property"
@@ -355,7 +344,7 @@ function NewComplaintForm() {
                       name="room_id"
                       value={formData.room_id as string}
                       onChange={handleChange}
-                      disabled={saving || !formData.property_id}
+                      disabled={saving || !formData.entity_id}
                       placeholder="Select room"
                       options={filteredRooms.map((room) => ({
                         value: room.id,
@@ -385,11 +374,11 @@ function NewComplaintForm() {
             {/* Library Fields */}
             {formData.entity_type === "library" && (
               <>
-                <FormField label="Library" htmlFor="library_id" required error={errors.library_id}>
+                <FormField label="Library" htmlFor="entity_id" required error={errors.entity_id}>
                   <Select
-                    id="library_id"
-                    name="library_id"
-                    value={formData.library_id as string}
+                    id="entity_id"
+                    name="entity_id"
+                    value={formData.entity_id as string}
                     onChange={handleChange}
                     disabled={saving}
                     placeholder="Select library"

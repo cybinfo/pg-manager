@@ -149,7 +149,7 @@ export default function LibraryMemberDetailPage() {
       destructive: true,
       onConfirm: async () => {
         try {
-          const result = await softDelete("library_members", params.id as string, user.id)
+          const result = await softDelete("entity_members", params.id as string, user.id)
           if (!result.error) {
             showSuccess("Member deleted successfully")
             router.push("/library-members")
@@ -174,7 +174,7 @@ export default function LibraryMemberDetailPage() {
     try {
       const supabase = createClient()
       const { error } = await supabase
-        .from("library_members")
+        .from("entity_members")
         .update({
           left_date: markLeftDate,
           status: "suspended",
@@ -337,7 +337,7 @@ export default function LibraryMemberDetailPage() {
               </Link>
             )}
             {(member.status === "active" || member.status === "expired") && (
-              <PermissionGate permission="library_members.edit" hide>
+              <PermissionGate permission="entity_members.edit" hide>
                 <Link href={`/library-members/${member.id}/renew`}>
                   <Button variant="outline" size="sm" className="text-success border-success/30 hover:bg-success/10">
                     <RefreshCw className="mr-2 h-4 w-4" />
@@ -347,7 +347,7 @@ export default function LibraryMemberDetailPage() {
               </PermissionGate>
             )}
             {(member.status === "active" || member.status === "expired") && !member.left_date && (
-              <PermissionGate permission="library_members.edit" hide>
+              <PermissionGate permission="entity_members.edit" hide>
                 <Button
                   variant="outline"
                   size="sm"
@@ -362,7 +362,7 @@ export default function LibraryMemberDetailPage() {
                 </Button>
               </PermissionGate>
             )}
-            <PermissionGate permission="library_members.edit" hide>
+            <PermissionGate permission="entity_members.edit" hide>
               <Link href={`/library-members/${member.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="mr-2 h-4 w-4" />
@@ -370,7 +370,7 @@ export default function LibraryMemberDetailPage() {
                 </Button>
               </Link>
             </PermissionGate>
-            <PermissionGate permission="library_members.edit" hide>
+            <PermissionGate permission="entity_members.edit" hide>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

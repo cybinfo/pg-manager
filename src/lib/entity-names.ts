@@ -89,7 +89,20 @@ export const ENTITY_NAMES: Record<string, string> = {
   misc_transactions: "Misc Transaction",
   misc_transaction_categories: "Misc Transaction Category",
 
-  // ── Library Module ──────────────────────────────────────────────────────
+  // ── Entity Module (unified) ──────────────────────────────────────────────
+  entities: "Entity",
+  entity: "Entity",
+  entity_sections: "Section",
+  entity_seats: "Seat",
+  entity_members: "Member",
+  entity_memberships: "Membership",
+  entity_attendance: "Attendance",
+  entity_lockers: "Locker",
+  entity_locker_assignments: "Locker Assignment",
+  entity_payments: "Payment",
+  entity_plans: "Plan",
+  entity_waitlist: "Waitlist Entry",
+  // Kept for backward compat with existing audit events
   libraries: "Library",
   library: "Library",
   library_sections: "Library Section",
