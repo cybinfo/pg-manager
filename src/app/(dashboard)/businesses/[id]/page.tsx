@@ -26,7 +26,14 @@ import {
   Pencil,
   Plus,
   LayoutDashboard,
+  ChevronDown,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { BUSINESS_ENTITY_TYPE_LABELS } from "@/types/business.types"
@@ -170,77 +177,72 @@ export default function BusinessDetailPage() {
         )}
       </DetailSection>
 
-      {/* Section 3: Properties */}
-      <DetailListSection
-        title="Properties"
-        icon={Building2}
-        items={properties ?? []}
-        keyExtractor={(p) => p.id}
-        renderItem={(p) => (
-          <Link
-            href={`/properties/${p.id}`}
-            className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <div>
-                <div className="font-medium text-sm">{p.name}</div>
-                {p.city && <div className="text-xs text-muted-foreground">{p.city}</div>}
-              </div>
-            </div>
-            {!p.is_active && <TableBadge variant="muted">Inactive</TableBadge>}
-          </Link>
-        )}
-        viewAllHref="/properties"
-        viewAllLabel="All Properties"
-        emptyText="No properties linked to this business yet."
-        actions={
-          <PermissionGate permission="properties.create" hide>
-            <Link href="/properties/new">
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Property
-              </Button>
-            </Link>
-          </PermissionGate>
-        }
-      />
+      {/* Section 3: Entities (Properties + Libraries unified) */}
+      {(() => {
+        const allEntities = [
+          ...(properties ?? []).map((p) => ({ ...p, entityType: "property" as const })),
+          ...(libraries ?? []).map((l) => ({ ...l, entityType: "library" as const })),
+        ].sort((a, b) => a.name.localeCompare(b.name))
 
-      {/* Libraries */}
-      <DetailListSection
-        title="Libraries"
-        icon={Library}
-        items={libraries ?? []}
-        keyExtractor={(l) => l.id}
-        renderItem={(l) => (
-          <Link
-            href={`/library/${l.id}`}
-            className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Library className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <div>
-                <div className="font-medium text-sm">{l.name}</div>
-                {l.city && <div className="text-xs text-muted-foreground">{l.city}</div>}
-              </div>
-            </div>
-            {!l.is_active && <TableBadge variant="muted">Inactive</TableBadge>}
-          </Link>
-        )}
-        viewAllHref="/library"
-        viewAllLabel="All Libraries"
-        emptyText="No libraries linked to this business yet."
-        actions={
-          <PermissionGate permission="library.create" hide>
-            <Link href="/library/new">
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Library
-              </Button>
-            </Link>
-          </PermissionGate>
-        }
-      />
+        return (
+          <DetailListSection
+            title="Entities"
+            icon={Building2}
+            items={allEntities}
+            keyExtractor={(e) => `${e.entityType}-${e.id}`}
+            renderItem={(e) => (
+              <Link
+                href={e.entityType === "property" ? `/properties/${e.id}` : `/library/${e.id}`}
+                className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  {e.entityType === "property"
+                    ? <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    : <Library className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                  <div>
+                    <div className="font-medium text-sm">{e.name}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <TableBadge variant="info">{e.entityType === "property" ? "Property" : "Library"}</TableBadge>
+                      {e.city && <span>{e.city}</span>}
+                    </div>
+                  </div>
+                </div>
+                {!e.is_active && <TableBadge variant="muted">Inactive</TableBadge>}
+              </Link>
+            )}
+            emptyText="No entities linked to this business yet."
+            actions={
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Entity
+                    <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <PermissionGate permission="properties.create" hide>
+                    <DropdownMenuItem asChild>
+                      <Link href="/properties/new" className="flex items-center gap-2 cursor-pointer">
+                        <Building2 className="h-4 w-4" />
+                        Add Property
+                      </Link>
+                    </DropdownMenuItem>
+                  </PermissionGate>
+                  <PermissionGate permission="library.create" hide>
+                    <DropdownMenuItem asChild>
+                      <Link href="/library/new" className="flex items-center gap-2 cursor-pointer">
+                        <Library className="h-4 w-4" />
+                        Add Library
+                      </Link>
+                    </DropdownMenuItem>
+                  </PermissionGate>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
+          />
+        )
+      })()}
     </DetailPageTemplate>
   )
 }
