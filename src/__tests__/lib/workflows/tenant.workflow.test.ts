@@ -106,7 +106,7 @@ const mockTenant = {
   email: "alice@example.com",
   status: "active",
   monthly_rent: 5000,
-  property_id: "p1",
+  entity_id: "p1",
   room_id: "r1",
   bed_id: null,
   owner_id: ACTOR_ID,
@@ -119,7 +119,7 @@ const mockStay = { id: "stay-1", tenant_id: "t1", room_id: "r1", status: "active
 const validCreateInput = {
   name: "Alice",
   phone: "9876543210",
-  property_id: "p1",
+  entity_id: "p1",
   room_id: "r1",
   check_in_date: "2026-04-01",
   monthly_rent: 5000,

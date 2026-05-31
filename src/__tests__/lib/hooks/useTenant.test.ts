@@ -49,7 +49,7 @@ const mockTenant = {
   email: "alice@example.com",
   status: "active",
   owner_id: "owner-1",
-  property_id: "p1",
+  entity_id: "p1",
   room_id: "r1",
   user_id: "u1",
   person_id: null,

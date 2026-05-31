@@ -379,8 +379,8 @@ describe("Audit Utilities", () => {
       })
 
       const result = await cascadeSoftDelete("property-1", "user-1", [
-        { table: "rooms", foreignKey: "property_id" },
-        { table: "meters", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
+        { table: "meters", foreignKey: "entity_id" },
       ])
 
       expect(result.errors).toHaveLength(0)
@@ -408,8 +408,8 @@ describe("Audit Utilities", () => {
       })
 
       const result = await cascadeSoftDelete("property-1", "user-1", [
-        { table: "rooms", foreignKey: "property_id" },
-        { table: "meters", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
+        { table: "meters", foreignKey: "entity_id" },
       ])
 
       expect(result.results.rooms).toBe(1)
@@ -445,8 +445,8 @@ describe("Audit Utilities", () => {
       })
 
       const result = await cascadeSoftDelete("parent-1", "user-1", [
-        { table: "rooms", foreignKey: "property_id" },
-        { table: "meters", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
+        { table: "meters", foreignKey: "entity_id" },
       ])
 
       expect(result.results.rooms).toBe(1)
@@ -474,7 +474,7 @@ describe("Audit Utilities", () => {
       }))
 
       const result = await cascadeSoftDelete("parent-1", "user-1", [
-        { table: "rooms", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
       ])
 
       expect(result.results.rooms).toBe(0)
@@ -493,7 +493,7 @@ describe("Audit Utilities", () => {
       }))
 
       const result = await cascadeSoftDelete("parent-1", "user-1", [
-        { table: "rooms", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
       ])
 
       expect(result.results.rooms).toBe(0)
@@ -513,7 +513,7 @@ describe("Audit Utilities", () => {
       }))
 
       const result = await cascadeSoftDelete("parent-1", "user-1", [
-        { table: "rooms", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
       ])
 
       expect(result.errors).toHaveLength(1)
@@ -532,7 +532,7 @@ describe("Audit Utilities", () => {
       mockFrom.mockReturnValue({ update: mockUpdate })
 
       await cascadeSoftDelete("parent-1", "deleter-user", [
-        { table: "rooms", foreignKey: "property_id" },
+        { table: "rooms", foreignKey: "entity_id" },
       ])
 
       expect(mockUpdate).toHaveBeenCalledWith(

@@ -262,11 +262,11 @@ describe("applyBaseFiltersToQuery", () => {
   // --------------------------------------------------------------------------
 
   describe("select filter FK mapping", () => {
-    it("maps 'property' filter to property_id column", () => {
+    it("maps 'property' filter to entity_id column", () => {
       const q = makeMockChain()
       const fc: FilterConfig = { id: "property", label: "Property", type: "select", options: [] }
       applyBaseFiltersToQuery(q, makeConfig(), [fc], { property: "prop-1" }, "")
-      expect(q.eq).toHaveBeenCalledWith("property_id", "prop-1")
+      expect(q.eq).toHaveBeenCalledWith("entity_id", "prop-1")
     })
 
     it("maps 'tenant' filter to tenant_id column", () => {

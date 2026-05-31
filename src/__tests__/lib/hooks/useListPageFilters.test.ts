@@ -368,7 +368,7 @@ describe("useListPageFilters — fetchFilterOptions", () => {
           table: "rooms",
           valueField: "id",
           labelField: "room_number",
-          filter: { property_id: "prop-1" },
+          filter: { entity_id: "prop-1" },
         },
       },
     ]
@@ -378,7 +378,7 @@ describe("useListPageFilters — fetchFilterOptions", () => {
     )
 
     await act(async () => { await result.current.fetchFilterOptions() })
-    expect(mockEq).toHaveBeenCalledWith("property_id", "prop-1")
+    expect(mockEq).toHaveBeenCalledWith("entity_id", "prop-1")
   })
 
   it("skips filterConfig with neither options nor optionsQuery", async () => {

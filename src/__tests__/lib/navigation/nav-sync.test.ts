@@ -97,16 +97,16 @@ describe("dashboard navigation single-source enforcement", () => {
     const hrefs = collectHrefs(DASHBOARD_NAVIGATION_GROUPED)
     const libraryRoutes = [
       "/library",
-      "/library-sections",
-      "/library-seats",
-      "/library-members",
-      "/library-waitlist",
-      "/library-attendance",
-      "/library-lockers",
-      "/library-subscriptions",
-      "/library-payments",
-      "/library-reports",
-      "/library-plans",
+      "/entity-sections",
+      "/entity-seats",
+      "/entity-members",
+      "/entity-waitlist",
+      "/entity-attendance",
+      "/entity-lockers",
+      "/entity-subscriptions",
+      "/entity-payments",
+      "/entity-reports",
+      "/entity-plans",
     ]
     for (const route of libraryRoutes) {
       expect(hrefs).toContain(route)

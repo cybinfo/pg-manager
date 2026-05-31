@@ -100,7 +100,7 @@ function makeFetchResponse(data: unknown, options: { ok?: boolean; status?: numb
 
 const validExitInput = {
   tenant_id: "t1",
-  property_id: "p1",
+  entity_id: "p1",
   room_id: "r1",
   requested_exit_date: "2026-05-31",
   exit_reason: "Moving out",
@@ -373,7 +373,7 @@ describe("completeExitClearance — validation failures", () => {
     const completedClearance = {
       id: "c1",
       status: "completed",
-      tenant: { id: "t1", name: "Alice", user_id: "u1", room_id: "r1", property_id: "p1" },
+      tenant: { id: "t1", name: "Alice", user_id: "u1", room_id: "r1", entity_id: "p1" },
       room: { id: "r1", room_number: "101", total_beds: 2, occupied_beds: 1 },
     }
     mockFrom.mockReturnValue(makeChain({ data: completedClearance, error: null }))
@@ -394,14 +394,14 @@ describe("completeExitClearance — success path", () => {
     id: "c1",
     status: "pending",
     tenant_id: "t1",
-    property_id: "p1",
+    entity_id: "p1",
     exit_reason: "Moving out",
     total_refundable: 10000,
     total_dues: 0,
     deductions: [],
     bed_id: null,
     owner_id: "owner-1",
-    tenant: { id: "t1", name: "Alice", user_id: "u1", room_id: "r1", property_id: "p1" },
+    tenant: { id: "t1", name: "Alice", user_id: "u1", room_id: "r1", entity_id: "p1" },
     room: { id: "r1", room_number: "101", total_beds: 2, occupied_beds: 1 },
   }
 

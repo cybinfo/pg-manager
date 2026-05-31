@@ -62,15 +62,15 @@ describe('DASHBOARD_NAVIGATION', () => {
   it('contains library module items', () => {
     const libraryHrefs = [
       '/library',
-      '/library-sections',
-      '/library-seats',
-      '/library-members',
-      '/library-waitlist',
-      '/library-attendance',
-      '/library-lockers',
-      '/library-payments',
-      '/library-reports',
-      '/library-plans',
+      '/entity-sections',
+      '/entity-seats',
+      '/entity-members',
+      '/entity-waitlist',
+      '/entity-attendance',
+      '/entity-lockers',
+      '/entity-payments',
+      '/entity-reports',
+      '/entity-plans',
     ]
     for (const href of libraryHrefs) {
       const item = DASHBOARD_NAVIGATION.find((i) => i.href === href)
@@ -82,13 +82,13 @@ describe('DASHBOARD_NAVIGATION', () => {
     const libraryItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library')
     expect(libraryItem?.module).toBe('members')
 
-    const sectionsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library-sections')
+    const sectionsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-sections')
     expect(sectionsItem?.module).toBe('sections')
 
-    const seatsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library-seats')
+    const seatsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-seats')
     expect(seatsItem?.module).toBe('seats')
 
-    const attendanceItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library-attendance')
+    const attendanceItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-attendance')
     expect(attendanceItem?.module).toBe('attendance')
   })
 
@@ -312,8 +312,8 @@ describe('getPathPermissions', () => {
     const result = getPathPermissions(DASHBOARD_NAVIGATION)
 
     expect(result['/library']).toBe('library.view')
-    expect(result['/library-members']).toBe('library_members.view')
-    expect(result['/library-attendance']).toBe('library_attendance.view')
+    expect(result['/entity-members']).toBe('library_members.view')
+    expect(result['/entity-attendance']).toBe('library_attendance.view')
   })
 
   it('works with nested children', () => {
@@ -364,10 +364,10 @@ describe('getPathModules', () => {
     const result = getPathModules(DASHBOARD_NAVIGATION)
 
     expect(result['/library']).toBe('members')
-    expect(result['/library-members']).toBe('members')
-    expect(result['/library-seats']).toBe('seats')
-    expect(result['/library-sections']).toBe('sections')
-    expect(result['/library-attendance']).toBe('attendance')
+    expect(result['/entity-members']).toBe('members')
+    expect(result['/entity-seats']).toBe('seats')
+    expect(result['/entity-sections']).toBe('sections')
+    expect(result['/entity-attendance']).toBe('attendance')
   })
 
   it('works with nested children', () => {

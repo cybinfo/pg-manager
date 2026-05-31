@@ -41,12 +41,12 @@ describe("isSoftDeletableTable", () => {
       expect(isSoftDeletableTable("complaints")).toBe(true)
     })
 
-    it("returns true for 'library_members'", () => {
-      expect(isSoftDeletableTable("library_members")).toBe(true)
+    it("returns true for 'entity_members'", () => {
+      expect(isSoftDeletableTable("entity_members")).toBe(true)
     })
 
-    it("returns true for 'library_payments'", () => {
-      expect(isSoftDeletableTable("library_payments")).toBe(true)
+    it("returns true for 'entity_payments'", () => {
+      expect(isSoftDeletableTable("entity_payments")).toBe(true)
     })
 
     it("returns true for 'tenant_documents'", () => {

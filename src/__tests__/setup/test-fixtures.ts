@@ -174,7 +174,7 @@ export const SAMPLE_ENTITIES = {
     id: "room-test-001",
     room_number: "101",
     room_type: "single",
-    property_id: "property-test-001",
+    entity_id: "property-test-001",
     rent_amount: 8500,
     total_beds: 1,
     occupied_beds: 0,
@@ -188,7 +188,7 @@ export const SAMPLE_ENTITIES = {
     name: "Test Tenant",
     email: "tenant@test.com",
     phone: "9876543210",
-    property_id: "property-test-001",
+    entity_id: "property-test-001",
     room_id: "room-test-001",
     monthly_rent: 8500,
     status: "active",
@@ -201,7 +201,7 @@ export const SAMPLE_ENTITIES = {
     id: "bill-test-001",
     bill_number: "BILL-001",
     tenant_id: "tenant-test-001",
-    property_id: "property-test-001",
+    entity_id: "property-test-001",
     total_amount: 8500,
     paid_amount: 0,
     balance_due: 8500,
@@ -228,7 +228,7 @@ export const SAMPLE_ENTITIES = {
   complaint: {
     id: "complaint-test-001",
     tenant_id: "tenant-test-001",
-    property_id: "property-test-001",
+    entity_id: "property-test-001",
     title: "Test Complaint",
     description: "This is a test complaint",
     status: "open",
@@ -488,7 +488,7 @@ export function createMockProperty(overrides?: Partial<MockProperty>): MockPrope
 interface MockRoom {
   id: string
   owner_id: string
-  property_id: string
+  entity_id: string
   room_number: string
   room_type: "single" | "double" | "triple" | "quad" | "dormitory"
   floor: number
@@ -515,7 +515,7 @@ export function createMockRoom(overrides?: Partial<MockRoom>): MockRoom {
   return {
     id: TEST_UUIDS.room1,
     owner_id: TEST_UUIDS.owner1,
-    property_id: TEST_UUIDS.property1,
+    entity_id: TEST_UUIDS.property1,
     room_number: "101",
     room_type: "double",
     floor: 1,
@@ -546,7 +546,7 @@ interface MockTenant {
   id: string
   owner_id: string
   person_id: string | null
-  property_id: string
+  entity_id: string
   room_id: string | null
   name: string
   email: string | null
@@ -580,7 +580,7 @@ export function createMockTenant(overrides?: Partial<MockTenant>): MockTenant {
     id: TEST_UUIDS.tenant1,
     owner_id: TEST_UUIDS.owner1,
     person_id: TEST_UUIDS.person1,
-    property_id: TEST_UUIDS.property1,
+    entity_id: TEST_UUIDS.property1,
     room_id: TEST_UUIDS.room1,
     name: "Aarav Sharma",
     email: "aarav.sharma@gmail.com",
@@ -659,7 +659,7 @@ interface MockBill {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_number: string
   bill_date: string
   due_date: string
@@ -684,7 +684,7 @@ export function createMockBill(overrides?: Partial<MockBill>): MockBill {
     id: TEST_UUIDS.bill1,
     owner_id: TEST_UUIDS.owner1,
     tenant_id: TEST_UUIDS.tenant1,
-    property_id: TEST_UUIDS.property1,
+    entity_id: TEST_UUIDS.property1,
     bill_number: "BILL-2026-001",
     bill_date: TODAY,
     due_date: NEXT_MONTH,
@@ -716,7 +716,7 @@ interface MockPayment {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_id: string | null
   charge_type_id: string | null
   amount: number
@@ -742,7 +742,7 @@ export function createMockPayment(overrides?: Partial<MockPayment>): MockPayment
     id: TEST_UUIDS.payment1,
     owner_id: TEST_UUIDS.owner1,
     tenant_id: TEST_UUIDS.tenant1,
-    property_id: TEST_UUIDS.property1,
+    entity_id: TEST_UUIDS.property1,
     bill_id: TEST_UUIDS.bill1,
     charge_type_id: null,
     amount: 8500,
@@ -770,7 +770,7 @@ export function createMockPayment(overrides?: Partial<MockPayment>): MockPayment
 interface MockExpense {
   id: string
   owner_id: string
-  property_id: string | null
+  entity_id: string | null
   expense_type_id: string | null
   amount: number
   expense_date: string
@@ -796,7 +796,7 @@ export function createMockExpense(overrides?: Partial<MockExpense>): MockExpense
   return {
     id: TEST_UUIDS.expense1,
     owner_id: TEST_UUIDS.owner1,
-    property_id: TEST_UUIDS.property1,
+    entity_id: TEST_UUIDS.property1,
     expense_type_id: "etype-001",
     amount: 3500,
     expense_date: TODAY,
@@ -859,7 +859,7 @@ interface MockLibraryMember {
   id: string
   owner_id: string
   workspace_id: string
-  library_id: string
+  entity_id: string
   person_id: string | null
   name: string
   phone: string | null
@@ -922,7 +922,7 @@ export function createMockLibraryMember(overrides?: Partial<MockLibraryMember>):
     id: TEST_UUIDS.libraryMember1,
     owner_id: TEST_UUIDS.owner1,
     workspace_id: TEST_UUIDS.workspace1,
-    library_id: TEST_UUIDS.library1,
+    entity_id: TEST_UUIDS.library1,
     person_id: TEST_UUIDS.person1,
     name: "Neha Gupta",
     phone: "9654321098",

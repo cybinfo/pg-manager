@@ -127,9 +127,9 @@ export function applyBaseFiltersToQuery<T>(
 
     // Handle different filter types
     if (filterConfig.type === "select") {
-      // Handle FK relationships (property -> property_id)
+      // Handle FK relationships (property -> entity_id)
       if (filterId === "property") {
-        query = query.eq("property_id", filterValue)
+        query = query.eq("entity_id", filterValue)
       } else if (filterId === "tenant") {
         query = query.eq("tenant_id", filterValue)
       } else if (filterId === "room") {

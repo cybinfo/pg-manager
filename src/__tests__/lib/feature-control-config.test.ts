@@ -11,8 +11,8 @@ import type { ModuleKey, WorkspaceModuleConfig } from '@/lib/features/types'
 // ============================================================
 
 describe('MODULES_CATALOG', () => {
-  it('exports exactly 26 modules', () => {
-    expect(MODULES_CATALOG).toHaveLength(26)
+  it('exports exactly 28 modules', () => {
+    expect(MODULES_CATALOG).toHaveLength(28)
   })
 
   it('every module has required fields', () => {
@@ -39,13 +39,14 @@ describe('MODULES_CATALOG', () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('includes all 26 expected module keys', () => {
+  it('includes all 28 expected module keys', () => {
     const expectedKeys: ModuleKey[] = [
       'properties', 'rooms', 'tenants', 'members', 'people',
       'billing', 'payments', 'refunds', 'subscriptions', 'plans',
       'expenses', 'meters', 'attendance', 'seats', 'sections',
       'lockers', 'waitlist', 'complaints', 'notices', 'visitors',
       'staff', 'reports', 'approvals', 'exitClearance', 'activityLog', 'inquiries',
+      'businesses', 'locations',
     ]
     for (const key of expectedKeys) {
       expect(MODULES_CATALOG.some((m) => m.key === key)).toBe(true)

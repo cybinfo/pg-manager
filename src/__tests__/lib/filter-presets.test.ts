@@ -61,7 +61,7 @@ describe('Static filter presets', () => {
 
   describe('LIBRARY_FILTER', () => {
     it('has correct id', () => {
-      expect(LIBRARY_FILTER.id).toBe('library_id')
+      expect(LIBRARY_FILTER.id).toBe('entity_id')
       expect(LIBRARY_FILTER.type).toBe('select')
     })
   })

@@ -77,13 +77,13 @@ describe('FeatureSettings', () => {
   describe('Module count summary', () => {
     it('shows module count', () => {
       setup()
-      // defaultConfig has 1 enabled (expenses), total is MODULES_CATALOG.length (26)
-      expect(screen.getByText(/1 of 26 modules enabled/)).toBeInTheDocument()
+      // defaultConfig has 1 enabled (expenses), total is MODULES_CATALOG.length (28)
+      expect(screen.getByText(/1 of 28 modules enabled/)).toBeInTheDocument()
     })
   })
 
   describe('Module cards', () => {
-    it('shows all 26 module cards', () => {
+    it('shows all 28 module cards', () => {
       setup()
       // Check a sample of module names
       expect(screen.getByText('Expenses')).toBeInTheDocument()

@@ -55,7 +55,7 @@ function makeChain(result: unknown) {
 const mockRawData = {
   id: "t1",
   owner_id: "owner-1",
-  property_id: "p1",
+  entity_id: "p1",
   room_id: "r1",
   property: { id: "p1", name: "Test PG", owner_id: "owner-1" },
 }
@@ -123,7 +123,7 @@ describe("useTenantPortalData — context resolution", () => {
     expect(result.current.tenantContext?.id).toBe("t1")
     expect(result.current.tenantContext?.workspace_id).toBe("ws-1")
     expect(result.current.tenantContext?.owner_id).toBe("owner-1")
-    expect(result.current.tenantContext?.property_id).toBe("p1")
+    expect(result.current.tenantContext?.entity_id).toBe("p1")
     expect(result.current.tenantContext?.room_id).toBe("r1")
   })
 

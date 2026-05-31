@@ -113,7 +113,7 @@ const mockPayment = {
 
 const validInput = {
   tenant_id: "t1",
-  property_id: "prop-1",
+  entity_id: "prop-1",
   bill_id: "b1",
   amount: 5000,
   payment_date: "2026-04-26",
@@ -681,8 +681,8 @@ describe("recordBulkPayments", () => {
     const result = await recordBulkPayments(
       {
         payments: [
-          { tenant_id: "t1", property_id: "p1", bill_id: "b1", amount: 5000, payment_method: "upi" },
-          { tenant_id: "t2", property_id: "p2", bill_id: "b2", amount: 3000, payment_method: "cash" },
+          { tenant_id: "t1", entity_id: "p1", bill_id: "b1", amount: 5000, payment_method: "upi" },
+          { tenant_id: "t2", entity_id: "p2", bill_id: "b2", amount: 3000, payment_method: "cash" },
         ],
         payment_date: "2026-04-26",
         send_receipts: false,
@@ -716,8 +716,8 @@ describe("recordBulkPayments", () => {
     const result = await recordBulkPayments(
       {
         payments: [
-          { tenant_id: "t1", property_id: "p1", bill_id: "b-invalid", amount: 5000, payment_method: "upi" },
-          { tenant_id: "t2", property_id: "p2", bill_id: "b2", amount: 3000, payment_method: "cash" },
+          { tenant_id: "t1", entity_id: "p1", bill_id: "b-invalid", amount: 5000, payment_method: "upi" },
+          { tenant_id: "t2", entity_id: "p2", bill_id: "b2", amount: 3000, payment_method: "cash" },
         ],
         payment_date: "2026-04-26",
       },

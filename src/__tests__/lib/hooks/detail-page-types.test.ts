@@ -103,7 +103,7 @@ describe("TENANT_DETAIL_CONFIG", () => {
 
 describe("LIBRARY_MEMBER_DETAIL_CONFIG", () => {
   it("queries the library_members table", () => {
-    expect(LIBRARY_MEMBER_DETAIL_CONFIG.table).toBe("library_members")
+    expect(LIBRARY_MEMBER_DETAIL_CONFIG.table).toBe("entity_members")
   })
 
   it("has relatedQueries for attendance or payments", () => {
@@ -120,6 +120,6 @@ describe("EXIT_CLEARANCE_DETAIL_CONFIG", () => {
 
 describe("LIBRARY_SUBSCRIPTION_DETAIL_CONFIG", () => {
   it("queries the library_memberships table", () => {
-    expect(LIBRARY_SUBSCRIPTION_DETAIL_CONFIG.table).toBe("library_memberships")
+    expect(LIBRARY_SUBSCRIPTION_DETAIL_CONFIG.table).toBe("entity_memberships")
   })
 })
