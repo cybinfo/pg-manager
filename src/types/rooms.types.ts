@@ -45,7 +45,7 @@ export const ROOM_STATUS_CONFIG = {
 export interface Room {
   id: string
   owner_id: string
-  property_id: string
+  entity_id: string
   room_number: string
   room_type: RoomType
   floor: number
@@ -93,7 +93,7 @@ export interface Bed {
 // ============================================================================
 
 export interface RoomFormData {
-  property_id: string
+  entity_id: string
   room_number: string
   room_type: RoomType
   floor: number

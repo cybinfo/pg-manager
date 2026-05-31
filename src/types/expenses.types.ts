@@ -51,7 +51,7 @@ export interface ExpenseType {
 export interface Expense {
   id: string
   owner_id: string
-  property_id: string | null
+  entity_id: string | null
   expense_type_id: string | null
   amount: number
   expense_date: string
@@ -82,7 +82,7 @@ export interface Expense {
 // ============================================================================
 
 export interface ExpenseFormData {
-  property_id?: string
+  entity_id?: string
   expense_type_id?: string
   amount: number
   expense_date: string

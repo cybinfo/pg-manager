@@ -51,7 +51,7 @@ export interface TenantPortalTenant {
   notes: string | null
   custom_fields: Record<string, unknown> | null
   owner_id: string
-  property_id: string
+  entity_id: string
   room_id: string | null
   user_id: string | null
   property: {
@@ -134,6 +134,7 @@ export function useTenantPortalData(): UseTenantPortalDataReturn {
   // Resolve owner and workspace context after tenant data is fetched
   useEffect(() => {
     if (!rawData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTenantContext(null)
       return
     }
@@ -158,7 +159,7 @@ export function useTenantPortalData(): UseTenantPortalDataReturn {
             id: rawData.id as string,
             workspace_id: workspace?.id || "",
             owner_id: ownerId,
-            property_id: rawData.property_id as string,
+            entity_id: rawData.entity_id as string,
             room_id: rawData.room_id as string | undefined,
           })
         }

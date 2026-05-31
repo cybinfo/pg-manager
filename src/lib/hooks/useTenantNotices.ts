@@ -41,6 +41,7 @@ export function useTenantNotices(): UseTenantNoticesReturn {
   useEffect(() => {
     if (tenantLoading) return
     if (!tenant) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDataLoading(false)
       return
     }
@@ -66,7 +67,7 @@ export function useTenantNotices(): UseTenantNoticesReturn {
             property:properties(name)
           `)
           .eq("is_active", true)
-          .or(`property_id.is.null,property_id.eq.${tenant.property_id}`)
+          .or(`entity_id.is.null,entity_id.eq.${tenant.entity_id}`)
           .or(`expires_at.is.null,expires_at.gt.${now}`)
           .order("created_at", { ascending: false })
 

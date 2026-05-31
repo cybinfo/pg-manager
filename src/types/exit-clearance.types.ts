@@ -38,7 +38,7 @@ export interface ExitClearance {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string
+  entity_id: string
   room_id: string
   notice_given_date: string | null
   expected_exit_date: string

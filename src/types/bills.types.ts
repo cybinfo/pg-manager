@@ -52,7 +52,7 @@ export interface Bill {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_number: string
   bill_date: string
   due_date: string
@@ -89,7 +89,7 @@ export interface Bill {
 
 export interface BillFormData {
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_date: string
   due_date: string
   for_month: string

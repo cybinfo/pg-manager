@@ -61,7 +61,7 @@ export function useTenantHome(): UseTenantHomeReturn {
           supabase
             .from("notices")
             .select("id", { count: "exact", head: true })
-            .eq("property_id", tenant.property_id)
+            .eq("entity_id", tenant.entity_id)
             .is("deleted_at", null)
             .eq("is_active", true),
           supabase

@@ -32,7 +32,7 @@ export interface Payment {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_id: string | null
   charge_type_id: string | null
   amount: number
@@ -69,7 +69,7 @@ export interface Payment {
 
 export interface PaymentFormData {
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_id?: string
   charge_type_id?: string
   amount: number
@@ -121,7 +121,7 @@ export interface TenantWithBillDues {
   tenant_id: string
   tenant_name: string
   phone: string
-  property_id: string
+  entity_id: string
   property_name: string
   room_number: string
   bill_id: string

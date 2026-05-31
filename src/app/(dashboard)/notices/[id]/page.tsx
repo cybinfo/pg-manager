@@ -46,7 +46,7 @@ import type { PropertyOption } from "@/types/properties.types"
 interface Room {
   id: string
   room_number: string
-  property_id: string
+  entity_id: string
 }
 
 export default function NoticeDetailPage() {
@@ -61,7 +61,7 @@ export default function NoticeDetailPage() {
   const [formInitialized, setFormInitialized] = useState(false)
 
   const [formData, setFormData] = useState({
-    property_id: "",
+    entity_id: "",
     type: "general" as NoticeType,
     target_audience: "all",
     title: "",
@@ -86,7 +86,7 @@ export default function NoticeDetailPage() {
     if (notice && !formInitialized) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
-        property_id: notice.property_id || "",
+        entity_id: notice.entity_id || "",
         type: notice.type,
         target_audience: notice.target_audience,
         title: notice.title,
@@ -105,8 +105,8 @@ export default function NoticeDetailPage() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
+        supabase.from("entities").select("id, name").eq("type", "pg").order("name"),
+        supabase.from("rooms").select("id, room_number, entity_id").order("room_number"),
       ])
 
       if (propertiesRes.data) setProperties(propertiesRes.data)
@@ -118,14 +118,14 @@ export default function NoticeDetailPage() {
 
   // Filter rooms when property changes
   useEffect(() => {
-    if (formData.property_id) {
+    if (formData.entity_id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFilteredRooms(rooms.filter((r) => r.property_id === formData.property_id))
+      setFilteredRooms(rooms.filter((r) => r.entity_id === formData.entity_id))
     } else {
        
       setFilteredRooms([])
     }
-  }, [formData.property_id, rooms])
+  }, [formData.entity_id, rooms])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -170,7 +170,7 @@ export default function NoticeDetailPage() {
       const { error } = await supabase
         .from("notices")
         .update({
-          property_id: formData.property_id || null,
+          entity_id: formData.entity_id || null,
           type: formData.type,
           target_audience: formData.target_audience,
           target_rooms: formData.target_audience === "specific_rooms" ? selectedRooms : null,
@@ -359,11 +359,11 @@ export default function NoticeDetailPage() {
         icon={Target}
       >
         <div className="space-y-4">
-          <FormField label="Property" htmlFor="property_id">
+          <FormField label="Property" htmlFor="entity_id">
             <Select
-              id="property_id"
-              name="property_id"
-              value={formData.property_id}
+              id="entity_id"
+              name="entity_id"
+              value={formData.entity_id}
               onChange={handleChange}
               disabled={saving}
               placeholder="All Properties"
@@ -385,7 +385,7 @@ export default function NoticeDetailPage() {
           </FormField>
 
           {/* Room Selection */}
-          {formData.target_audience === "specific_rooms" && formData.property_id && (
+          {formData.target_audience === "specific_rooms" && formData.entity_id && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Select Rooms</Label>

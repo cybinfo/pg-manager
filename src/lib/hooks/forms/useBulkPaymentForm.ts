@@ -101,7 +101,7 @@ export function useBulkPaymentForm() {
 
         return {
           tenant_id: due.tenant_id,
-          property_id: due.property_id,
+          entity_id: due.entity_id,
           bill_id: due.bill_id,
           amount,
           payment_method: row.payment_method as BulkPaymentInput["payments"][number]["payment_method"],

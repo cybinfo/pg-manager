@@ -20,7 +20,7 @@ export interface Tenant {
   phone: string
   photo_url: string | null
   monthly_rent: number
-  property_id: string
+  entity_id: string
   property: {
     id: string
     name: string
@@ -37,7 +37,7 @@ interface RawTenant {
   phone: string
   photo_url: string | null
   monthly_rent: number
-  property_id: string
+  entity_id: string
   property: {
     id: string
     name: string
@@ -148,8 +148,10 @@ export function usePaymentCreateForm() {
   useEffect(() => {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTenant(tenant || null)
       if (tenant) {
+         
         setFormData((prev) => ({
           ...prev,
           amount: tenant.monthly_rent.toString(),
@@ -183,6 +185,7 @@ export function usePaymentCreateForm() {
     if (formData.bill_id) {
       const bill = bills.find((b) => b.id === formData.bill_id)
       if (bill) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData((prev) => ({
           ...prev,
           amount: bill.balance_due.toString(),
@@ -194,6 +197,7 @@ export function usePaymentCreateForm() {
 
   useEffect(() => {
     const currentPeriod = formatMonthYear(new Date())
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData((prev) => ({ ...prev, for_period: currentPeriod }))
   }, [])
 
@@ -226,7 +230,7 @@ export function usePaymentCreateForm() {
 
       const workflowInput: PaymentRecordInput = {
         tenant_id: formData.tenant_id,
-        property_id: selectedTenant?.property_id || "",
+        entity_id: selectedTenant?.entity_id || "",
         bill_id: formData.bill_id,
         amount: parseFloat(formData.amount),
         payment_date: formData.payment_date,

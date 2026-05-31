@@ -16,6 +16,9 @@
 // Common types
 export * from "./common"
 
+// Entity (unified PG + Library + future business types)
+export * from "./entity.types"
+
 // Entity-specific types
 export * from "./tenants.types"
 export * from "./visitors.types"

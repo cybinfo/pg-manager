@@ -57,7 +57,7 @@ export interface Refund {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string | null
+  entity_id: string | null
   exit_clearance_id: string | null
   refund_type: RefundType
   amount: number
@@ -102,7 +102,7 @@ export interface Refund {
 
 export interface RefundFormData {
   tenant_id: string
-  property_id?: string
+  entity_id?: string
   exit_clearance_id?: string
   refund_type: RefundType
   amount: number

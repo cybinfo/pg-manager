@@ -57,7 +57,7 @@ export interface Tenant {
   owner_id: string
   user_id: string | null
   person_id: string | null
-  property_id: string
+  entity_id: string
   room_id: string | null
   name: string
   email: string | null
@@ -94,7 +94,7 @@ export interface TenantStay {
   id: string
   owner_id: string
   tenant_id: string
-  property_id: string
+  entity_id: string
   room_id: string
   join_date: string
   exit_date: string | null
@@ -114,9 +114,9 @@ export interface RoomTransfer {
   id: string
   owner_id: string
   tenant_id: string
-  from_property_id: string
+  from_entity_id: string
   from_room_id: string
-  to_property_id: string
+  to_entity_id: string
   to_room_id: string
   transfer_date: string
   reason: string | null
@@ -138,7 +138,7 @@ export interface RoomTransfer {
 
 export interface TenantFormData {
   person_id?: string
-  property_id: string
+  entity_id: string
   room_id: string
   name: string
   email?: string
@@ -214,6 +214,6 @@ export interface TenantWithContext {
   id: string
   workspace_id: string
   owner_id: string
-  property_id?: string
+  entity_id?: string
   room_id?: string
 }

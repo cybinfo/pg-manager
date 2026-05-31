@@ -177,7 +177,7 @@ export default function WaitlistDetailPage({
       phone: entry.phone,
       ...(entry.email && { email: entry.email }),
       ...(entry.preferred_slot && { slot: entry.preferred_slot }),
-      library: entry.library_id,
+      library: entry.entity_id,
       waitlist_id: entry.id,
     })
     router.push(`/library-members/new?${params.toString()}`)

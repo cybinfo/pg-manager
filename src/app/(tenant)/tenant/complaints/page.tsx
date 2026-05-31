@@ -52,11 +52,11 @@ export default function TenantComplaintsPage() {
     try {
       const supabase = createClient()
 
-      // Get owner_id from property
+      // Get owner_id from entity
       const { data: property } = await supabase
-        .from("properties")
+        .from("entities")
         .select("owner_id")
-        .eq("id", tenantContext.property_id)
+        .eq("id", tenantContext.entity_id)
         .single()
 
       if (!property) {
@@ -69,7 +69,7 @@ export default function TenantComplaintsPage() {
         .insert(withCreatedBy({
           owner_id: property.owner_id,
           tenant_id: tenantContext.id,
-          property_id: tenantContext.property_id,
+          entity_id: tenantContext.entity_id,
           room_id: tenantContext.room_id,
           category: formData.category,
           title: formData.title,

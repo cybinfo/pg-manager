@@ -1,7 +1,9 @@
 /**
  * Properties Management Types
  *
- * Types for properties and related data.
+ * Kept for backward compatibility during the transition to unified Entity model.
+ * The `properties` table is now `entities` (type='pg').
+ * New code should import Entity from entity.types.ts instead.
  */
 
 // ============================================================================

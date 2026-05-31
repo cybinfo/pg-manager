@@ -155,7 +155,7 @@ export interface ProductFormData {
 export interface DailySpend extends AuditableEntity {
   id: string
   workspace_id: string
-  property_id: string | null
+  entity_id: string | null
   spend_date: string
   product_id: string | null
   product_name: string
@@ -183,7 +183,7 @@ export interface DailySpend extends AuditableEntity {
  * Daily spend form data
  */
 export interface DailySpendFormData {
-  property_id?: string
+  entity_id?: string
   spend_date: string
   product_id?: string
   product_name: string
@@ -303,7 +303,7 @@ export interface VendorFormData {
 export interface BillPayment extends AuditableEntity {
   id: string
   workspace_id: string
-  property_id: string | null
+  entity_id: string | null
   vendor_id: string | null
   vendor_name: string
   category_id: string | null
@@ -348,7 +348,7 @@ export interface BillPayment extends AuditableEntity {
  * Bill payment form data
  */
 export interface BillPaymentFormData {
-  property_id?: string
+  entity_id?: string
   vendor_id?: string
   vendor_name: string
   category_id?: string
@@ -460,7 +460,7 @@ export interface ServiceProviderFormData {
 export interface ServicePayment extends AuditableEntity {
   id: string
   workspace_id: string
-  property_id: string | null
+  entity_id: string | null
   room_id: string | null
   provider_id: string | null
   provider_name: string
@@ -506,7 +506,7 @@ export interface ServicePayment extends AuditableEntity {
  * Service payment form data
  */
 export interface ServicePaymentFormData {
-  property_id?: string
+  entity_id?: string
   room_id?: string
   provider_id?: string
   provider_name: string
@@ -545,7 +545,7 @@ export interface ServicePaymentFormData {
 export interface ExpenseBudget {
   id: string
   workspace_id: string
-  property_id: string | null
+  entity_id: string | null
   budget_type: BudgetType
   category_id: string | null
 
@@ -571,7 +571,7 @@ export interface ExpenseBudget {
  * Budget form data
  */
 export interface ExpenseBudgetFormData {
-  property_id?: string
+  entity_id?: string
   budget_type: BudgetType
   category_id?: string
   period_type: BudgetPeriodType
@@ -604,7 +604,7 @@ export interface ProductPriceHistory {
 export interface KitchenWastage {
   id: string
   workspace_id: string
-  property_id: string | null
+  entity_id: string | null
   wastage_date: string
   product_id: string | null
   product_name: string
@@ -625,7 +625,7 @@ export interface KitchenWastage {
  * Wastage form data
  */
 export interface KitchenWastageFormData {
-  property_id?: string
+  entity_id?: string
   wastage_date: string
   product_id?: string
   product_name: string
@@ -664,7 +664,7 @@ export interface UnifiedExpense {
   category: string
   description: string
   amount: number
-  property_id: string | null
+  entity_id: string | null
   property_name: string | null
   vendor: string | null
 }
@@ -689,7 +689,7 @@ export interface ExpenseSummary {
  */
 export interface PerPersonCost {
   period: string
-  property_id: string
+  entity_id: string
   property_name: string
   total_tenants: number
   total_kitchen_spend: number
@@ -740,7 +740,7 @@ export interface ServicePaymentListItem extends ServicePayment {
 // ============================================================================
 
 export interface DailySpendFilters {
-  property_id?: string
+  entity_id?: string
   category_id?: string
   vendor_name?: string
   date_from?: string
@@ -749,7 +749,7 @@ export interface DailySpendFilters {
 }
 
 export interface BillPaymentFilters {
-  property_id?: string
+  entity_id?: string
   vendor_id?: string
   category_id?: string
   status?: BillPaymentStatus
@@ -760,7 +760,7 @@ export interface BillPaymentFilters {
 }
 
 export interface ServicePaymentFilters {
-  property_id?: string
+  entity_id?: string
   provider_id?: string
   category_id?: string
   date_from?: string
@@ -819,7 +819,7 @@ export interface MiscTransaction {
   transaction_date: string
   payment_mode: MiscPaymentMode
   payment_reference: string | null
-  property_id: string | null
+  entity_id: string | null
   tenant_id: string | null
   receipt_url: string | null
   notes: string | null
@@ -849,7 +849,7 @@ export interface MiscTransactionFormData {
   transaction_date: string
   payment_mode?: MiscPaymentMode
   payment_reference?: string
-  property_id?: string
+  entity_id?: string
   tenant_id?: string
   notes?: string
 }

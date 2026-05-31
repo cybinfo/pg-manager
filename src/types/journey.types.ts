@@ -116,7 +116,7 @@ export interface JourneyEvent {
 
   // Related entities
   related_entities?: {
-    property_id?: string
+    entity_id?: string
     property_name?: string
     room_id?: string
     room_number?: string

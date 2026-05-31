@@ -109,7 +109,7 @@ export interface LibrarySection extends AuditableEntity {
   id: string
   owner_id: string
   workspace_id: string
-  library_id: string
+  entity_id: string
   name: string
   section_number: string | null
   floor: number
@@ -159,7 +159,7 @@ export interface LibraryMember extends AuditableEntity {
   id: string
   owner_id: string
   workspace_id: string
-  library_id: string
+  entity_id: string
   person_id: string | null
   name: string
   phone: string | null
@@ -250,7 +250,7 @@ export interface LibraryLocker extends AuditableEntity {
   id: string
   owner_id: string
   workspace_id: string
-  library_id: string
+  entity_id: string
   locker_number: string
   size: LibraryLockerSize
   floor: number
@@ -360,7 +360,7 @@ export interface LibraryFormData {
 }
 
 export interface LibrarySectionFormData {
-  library_id: string
+  entity_id: string
   name: string
   section_number?: string
   floor?: number
@@ -380,7 +380,7 @@ export interface LibrarySeatFormData {
 }
 
 export interface LibraryMemberFormData {
-  library_id: string
+  entity_id: string
   person_id?: string
   name: string
   phone: string
@@ -401,7 +401,7 @@ export interface LibraryMemberFormData {
 }
 
 export interface LibraryLockerFormData {
-  library_id: string
+  entity_id: string
   locker_number: string
   size?: LibraryLockerSize
   floor?: number
@@ -492,7 +492,7 @@ export interface LibraryWaitlist extends AuditableEntity {
   id: string
   owner_id: string
   workspace_id: string
-  library_id: string
+  entity_id: string
   name: string
   phone: string
   email: string | null
@@ -515,7 +515,7 @@ export interface LibraryWaitlist extends AuditableEntity {
 }
 
 export interface LibraryWaitlistFormData {
-  library_id: string
+  entity_id: string
   name: string
   phone: string
   email?: string

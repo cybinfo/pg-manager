@@ -34,7 +34,7 @@ import { sendPaymentReceipt } from "@/lib/email"
 
 export interface PaymentRecordInput {
   tenant_id: string
-  property_id: string
+  entity_id: string
   bill_id: string
   amount: number
   payment_date: string
@@ -56,7 +56,7 @@ export interface PaymentRecordOutput {
 export interface BulkPaymentInput {
   payments: Array<{
     tenant_id: string
-    property_id: string
+    entity_id: string
     bill_id: string
     amount: number
     payment_method: "cash" | "upi" | "bank_transfer" | "card" | "cheque" | "other"
@@ -168,7 +168,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
 
         const paymentData = {
           tenant_id: input.tenant_id,
-          property_id: input.property_id,
+          entity_id: input.entity_id,
           bill_id: input.bill_id,
           amount: input.amount,
           payment_date: input.payment_date,
@@ -327,9 +327,9 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
           // Fetch property name for the receipt
           const supabase = createClient()
           const { data: property } = await supabase
-            .from("properties")
+            .from("entities")
             .select("name")
-            .eq("id", input.property_id)
+            .eq("id", input.entity_id)
             .single()
 
           // Fetch owner name

@@ -55,7 +55,7 @@ export const NOTICE_AUDIENCES: { value: NoticeAudience; label: string }[] = [
 export interface Notice {
   id: string
   owner_id: string
-  property_id: string | null
+  entity_id: string | null
   title: string
   content: string
   type: NoticeType
@@ -82,7 +82,7 @@ export interface Notice {
 // ============================================================================
 
 export interface NoticeFormData {
-  property_id?: string
+  entity_id?: string
   title: string
   content: string
   type: NoticeType

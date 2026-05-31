@@ -43,7 +43,7 @@ export function normalizeStayEvents(stays: StayRecord[]): JourneyEvent[] {
       status: stay.status,
       status_color: stay.status === "active" ? "success" : "muted",
       related_entities: {
-        property_id: stay.property?.id,
+        entity_id: stay.property?.id,
         property_name: stay.property?.name,
         room_id: stay.room?.id,
         room_number: stay.room?.room_number,
@@ -71,7 +71,7 @@ export function normalizeStayEvents(stays: StayRecord[]): JourneyEvent[] {
         status: "completed",
         status_color: "muted",
         related_entities: {
-          property_id: stay.property?.id,
+          entity_id: stay.property?.id,
           property_name: stay.property?.name,
           room_id: stay.room?.id,
           room_number: stay.room?.room_number,
@@ -102,7 +102,7 @@ export function normalizeBillEvents(bills: BillRecord[]): JourneyEvent[] {
     status: bill.status,
     status_color: getBillStatusColor(bill.status),
     related_entities: {
-      property_id: bill.property?.id,
+      entity_id: bill.property?.id,
       property_name: bill.property?.name,
       bill_id: bill.id,
       bill_number: bill.bill_number,
@@ -252,7 +252,7 @@ export function normalizeTransferEvents(transfers: TransferRecord[]): JourneyEve
     status: "completed",
     status_color: "primary",
     related_entities: {
-      property_id: transfer.to_property?.id,
+      entity_id: transfer.to_property?.id,
       property_name: transfer.to_property?.name,
       room_id: transfer.to_room?.id,
       room_number: transfer.to_room?.room_number,
@@ -287,7 +287,7 @@ export function normalizeExitEvents(clearances: ExitClearanceRecord[]): JourneyE
       status: clearance.settlement_status,
       status_color: clearance.settlement_status === "cleared" ? "success" : "warning",
       related_entities: {
-        property_id: clearance.property?.id,
+        entity_id: clearance.property?.id,
         property_name: clearance.property?.name,
         room_id: clearance.room?.id,
         room_number: clearance.room?.room_number,

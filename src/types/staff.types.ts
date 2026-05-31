@@ -41,7 +41,7 @@ export interface UserRole {
   owner_id: string
   staff_member_id: string
   role_id: string
-  property_id: string | null
+  entity_id: string | null
   created_at: string
 
   // Joined fields
@@ -58,7 +58,7 @@ export interface StaffFormData {
   email: string
   phone?: string
   role_id: string
-  property_id?: string
+  entity_id?: string
 }
 
 export interface RoleFormData {
@@ -69,7 +69,7 @@ export interface RoleFormData {
 
 export interface RoleAssignmentFormData {
   role_id: string
-  property_id?: string
+  entity_id?: string
 }
 
 // ============================================================================

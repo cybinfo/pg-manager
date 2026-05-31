@@ -844,7 +844,7 @@ export default function LibraryMemberDetailPage() {
           memberId={member.id}
           memberName={displayName}
           memberCode={member.member_code}
-          libraryId={member.library_id}
+          libraryId={member.entity_id}
           size={180}
         />
 

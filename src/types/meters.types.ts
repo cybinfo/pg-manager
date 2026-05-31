@@ -99,7 +99,7 @@ export const METER_STATUS_CONFIG = {
 export interface Meter {
   id: string
   owner_id: string
-  property_id: string
+  entity_id: string
   meter_number: string
   meter_type: MeterType
   status: MeterStatus
@@ -153,7 +153,7 @@ export interface MeterAssignmentWithRelations extends MeterAssignment {
 // ============================================================================
 
 export interface MeterFormData {
-  property_id: string
+  entity_id: string
   meter_number: string
   meter_type: MeterType
   initial_reading: string

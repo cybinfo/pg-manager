@@ -67,7 +67,7 @@ export interface VisitorContactSearchResult {
 export interface Visitor {
   id: string
   owner_id: string
-  property_id: string
+  entity_id: string
   tenant_id: string | null
   visitor_contact_id: string | null
   person_id: string | null
@@ -138,7 +138,7 @@ export interface Visitor {
 export interface VisitorFormData {
   visitor_contact_id?: string
   visitor_type: VisitorType
-  property_id: string
+  entity_id: string
   tenant_id?: string
   visitor_name: string
   visitor_phone?: string
