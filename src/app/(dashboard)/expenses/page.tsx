@@ -224,8 +224,7 @@ export default function ExpensesPage() {
       columns={columns}
       searchPlaceholder="Search vendor, description, reference..."
       enableColumnManager={true}
-      enableInlineEdit={true}
-      enableAdvancedFilters={true}
+enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       exportColumns={exportColumns}
       exportFilename="expenses"

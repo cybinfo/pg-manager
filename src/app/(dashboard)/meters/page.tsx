@@ -71,9 +71,6 @@ const columns: Column<Meter>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
-    editValidation: { required: true },
     render: (meter) => {
       const typeConfig = METER_TYPE_CONFIG[meter.meter_type] || METER_TYPE_CONFIG.electricity
       const Icon = meterTypeIcons[meter.meter_type] || Zap
@@ -136,9 +133,6 @@ const columns: Column<Meter>[] = [
   },
   statusColumn(METER_STATUS_CONFIG, {
     style: "badge",
-    editable: true,
-    editType: "select",
-    editOptions: METER_STATUS_OPTIONS,
   }),
   // Hidden by default columns
   {
@@ -277,8 +271,7 @@ export default function MetersPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="meters"
       createHref="/meters/new"
       createLabel="Add Meter"

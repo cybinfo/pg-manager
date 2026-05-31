@@ -268,8 +268,7 @@ export default function LibraryPaymentsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-payments"
       createHref="/library-payments/new"
       createLabel="Record Payment"

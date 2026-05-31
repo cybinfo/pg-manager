@@ -156,9 +156,6 @@ const columns: Column<Refund>[] = [
   },
   statusColumn(REFUND_STATUS, {
     style: "badge",
-    editable: true,
-    editType: "select",
-    editOptions: REFUND_STATUS_OPTIONS,
   }),
   // Hidden by default columns
   {
@@ -197,8 +194,6 @@ const columns: Column<Refund>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (refund) => refund.notes ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{refund.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -307,8 +302,7 @@ export default function RefundsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="refunds"
       createHref="/refunds/new"
       createLabel="New Refund"

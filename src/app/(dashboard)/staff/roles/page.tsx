@@ -185,8 +185,7 @@ export default function RolesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={false}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="roles"
       createHref="/staff/roles/new"
       createLabel="Create Role"

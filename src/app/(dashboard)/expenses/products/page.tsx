@@ -50,9 +50,6 @@ const columns: Column<Product>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
-    editValidation: { required: true, minLength: 2 },
     render: (product) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -90,9 +87,6 @@ const columns: Column<Product>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "select",
-    editOptions: UNIT_OPTIONS,
     render: (product) => (
       <TableBadge variant="muted">
         {product.default_unit || "—"}
@@ -108,9 +102,6 @@ const columns: Column<Product>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
     render: (product) =>
       product.default_rate ? (
         <span className="font-medium tabular-nums">
@@ -130,8 +121,6 @@ const columns: Column<Product>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "boolean",
     render: (product) =>
       product.is_active ? (
         <TableBadge variant="success">
@@ -152,8 +141,6 @@ const columns: Column<Product>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (product) => product.name_hi || <span className="text-muted-foreground">—</span>,
   },
   dateColumn("created_at", "Added On", { defaultVisible: false }),
@@ -269,8 +256,7 @@ export default function ProductsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      createHref="/expenses/products/new"
+createHref="/expenses/products/new"
       createLabel="Add Product"
       createPermission="expenses.create"
       detailHref={(product) => `/expenses/products/${product.id}`}

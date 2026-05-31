@@ -151,8 +151,7 @@ export default function LibraryWaitlistPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-waitlist"
       groupByOptions={groupByOptions}
       onRowClick={(item) => router.push(`/library-waitlist/${item.id}`)}

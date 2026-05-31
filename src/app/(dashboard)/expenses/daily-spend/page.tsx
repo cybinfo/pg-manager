@@ -94,9 +94,6 @@ const columns: Column<DailySpendItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
     render: (item) => (
       <span className="tabular-nums">
         {item.quantity} {item.unit}
@@ -112,9 +109,6 @@ const columns: Column<DailySpendItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
     render: (item) => (
       <span className="tabular-nums text-muted-foreground">
         {formatCurrency(item.rate)}/{item.unit}
@@ -189,8 +183,6 @@ const columns: Column<DailySpendItem>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (item) => item.notes ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{item.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -313,8 +305,7 @@ export default function DailySpendPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      createHref="/expenses/daily-spend/new"
+createHref="/expenses/daily-spend/new"
       createLabel="Add Entry"
       createPermission="expenses.create"
       detailHref={(item) => `/expenses/daily-spend/${item.id}`}

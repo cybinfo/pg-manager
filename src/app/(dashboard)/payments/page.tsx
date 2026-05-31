@@ -124,8 +124,6 @@ const columns: Column<Payment>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (payment) => payment.for_period || <NullDisplay />,
   },
   {
@@ -167,8 +165,6 @@ const columns: Column<Payment>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (payment) => payment.notes ? (
       <span className="truncate max-w-[150px]" title={payment.notes}>{payment.notes}</span>
     ) : <NullDisplay />,
@@ -258,8 +254,7 @@ export default function PaymentsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="payments"
       createHref="/payments/new"
       createLabel="Record Payment"

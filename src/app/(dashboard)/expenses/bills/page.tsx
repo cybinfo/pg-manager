@@ -85,7 +85,7 @@ const columns: Column<BillPaymentListItem>[] = [
       <span>{bill.category?.name || bill.category_name || "Uncategorized"}</span>
     ),
   },
-  currencyColumn("bill_amount", "Amount", { editable: true, editType: "number", editValidation: { min: 0 } }),
+  currencyColumn("bill_amount", "Amount", { }),
   {
     key: "due_date",
     header: "Due Date",
@@ -132,7 +132,7 @@ const columns: Column<BillPaymentListItem>[] = [
         <span className="text-muted-foreground">—</span>
       ),
   },
-  statusColumn(BILL_STATUS, { style: "badge", editable: true, editType: "select", editOptions: EXPENSE_BILL_STATUS_OPTIONS }),
+  statusColumn(BILL_STATUS, { style: "badge" }),
   // Hidden by default columns
   {
     key: "bill_number",
@@ -159,9 +159,6 @@ const columns: Column<BillPaymentListItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
     render: (bill) => bill.paid_amount ? (
       <span className="text-success font-medium tabular-nums">{formatCurrency(bill.paid_amount)}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -294,8 +291,7 @@ export default function BillPaymentsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      createHref="/expenses/bills/new"
+createHref="/expenses/bills/new"
       createLabel="Add Bill"
       createPermission="expenses.create"
       detailHref={(bill) => `/expenses/bills/${bill.id}`}

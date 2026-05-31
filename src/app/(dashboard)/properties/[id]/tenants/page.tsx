@@ -73,15 +73,9 @@ const columns: Column<Tenant>[] = [
     ),
   },
   currencyColumn("monthly_rent", "Rent", {
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
   }),
   dateColumn("check_in_date", "Since", { hideOnMobile: true }),
   statusColumn((status) => getTenantStatusInfo("tenant", status), {
-    editable: true,
-    editType: "select",
-    editOptions: TENANT_STATUS_OPTIONS,
   }),
   phoneColumn("phone", "Phone", { defaultVisible: false }),
   emailColumn("email", "Email", { defaultVisible: false }),
@@ -199,8 +193,7 @@ export default function PropertyTenantsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableColumnManager={true}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename={`tenants-property-${propertyId}`}
       createHref={`/tenants/new?property_id=${propertyId}`}
       createLabel="Add Tenant"

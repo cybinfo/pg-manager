@@ -250,8 +250,7 @@ export default function LibrarySectionsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-sections"
       createHref="/library-sections/new"
       createLabel="Add Section"

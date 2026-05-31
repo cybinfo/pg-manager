@@ -213,8 +213,7 @@ export default function LibrarySeatsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-seats"
       createHref="/library-seats/new"
       createLabel="Add Seat"

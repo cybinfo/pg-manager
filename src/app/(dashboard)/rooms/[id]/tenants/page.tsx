@@ -68,15 +68,9 @@ const columns: Column<Tenant>[] = [
   }),
   phoneColumn("phone", "Phone"),
   currencyColumn("monthly_rent", "Rent", {
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
   }),
   dateColumn("check_in_date", "Since", { hideOnMobile: true }),
   statusColumn((status) => getTenantStatusInfo("tenant", status), {
-    editable: true,
-    editType: "select",
-    editOptions: TENANT_STATUS_OPTIONS,
   }),
   emailColumn("email", "Email", { defaultVisible: false }),
   currencyColumn("security_deposit", "Security Deposit", {
@@ -200,8 +194,7 @@ export default function RoomTenantsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableColumnManager={true}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename={`tenants-room-${roomId}`}
       createHref={canAddTenant ? `/tenants/new?room_id=${roomId}` : undefined}
       createLabel="Add Tenant"

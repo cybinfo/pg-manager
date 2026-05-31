@@ -88,23 +88,13 @@ const columns: Column<Room>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "number",
-    editField: "total_beds",
-    editValidation: { required: true, min: 1 },
     render: (room) => (
       <span className="tabular-nums">{room.occupied_beds}/{room.total_beds}</span>
     ),
   },
   currencyColumn("rent_amount", "Rent", {
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
   }),
   statusColumn(ROOM_STATUS, {
-    editable: true,
-    editType: "select",
-    editOptions: ROOM_STATUS_OPTIONS,
   }),
   {
     key: "floor",
@@ -292,8 +282,7 @@ export default function PropertyRoomsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableColumnManager={true}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename={`rooms-property-${propertyId}`}
       createHref={`/rooms/new?property_id=${propertyId}`}
       createLabel="Add Room"

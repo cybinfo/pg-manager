@@ -146,8 +146,6 @@ const columns: Column<Payment>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (payment) => payment.notes ? (
       <span className="truncate max-w-[150px]" title={payment.notes}>{payment.notes}</span>
     ) : <NullDisplay />,
@@ -281,8 +279,7 @@ export default function TenantPaymentsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableColumnManager={true}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename={`payments-tenant-${tenantId}`}
       createHref={`/payments/new?tenant_id=${tenantId}`}
       createLabel="Record Payment"

@@ -254,8 +254,7 @@ export default function ApprovalsPage() {
           enableColumnManager={true}
           enableAdvancedFilters={true}
           advancedFilterColumns={advancedFilterColumns}
-          enableInlineEdit={true}
-          exportColumns={exportColumns}
+exportColumns={exportColumns}
           exportFilename="approvals"
           onRowClick={handleRowClick}
           emptyTitle="No requests found"

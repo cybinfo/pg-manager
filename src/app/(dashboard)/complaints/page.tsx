@@ -93,9 +93,6 @@ const columns: Column<Complaint>[] = [
     ),
   },
   statusColumn((status) => getComplaintStatusInfo("complaint", status), {
-    editable: true,
-    editType: "select",
-    editOptions: COMPLAINT_STATUS_OPTIONS,
   }),
   timeAgoColumn("created_at", "Created", {
     width: "date",
@@ -114,9 +111,6 @@ const columns: Column<Complaint>[] = [
   },
   badgeColumn("priority", "Priority", COMPLAINT_PRIORITY, {
     defaultVisible: false,
-    editable: true,
-    editType: "select",
-    editOptions: PRIORITY_OPTIONS,
   }),
   {
     key: "category",
@@ -251,8 +245,7 @@ export default function ComplaintsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="complaints"
       createHref="/complaints/new"
       createLabel="New Complaint"

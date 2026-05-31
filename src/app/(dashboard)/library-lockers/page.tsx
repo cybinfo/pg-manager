@@ -255,8 +255,7 @@ export default function LibraryLockersPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-lockers"
       createHref="/library-lockers/new"
       createLabel="Add Locker"

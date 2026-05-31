@@ -73,8 +73,6 @@ const columns: Column<Notice>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
     render: (notice) => {
       const TypeIcon = (NOTICE_TYPE_DISPLAY_CONFIG[notice.type] || NOTICE_TYPE_DISPLAY_CONFIG.general).icon
       const isActive = notice.is_active && !notice.is_expired
@@ -167,8 +165,6 @@ const columns: Column<Notice>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "boolean",
     render: (notice) => (
       <TableBadge variant={notice.is_active ? "success" : "muted"}>
         {notice.is_active ? "Active" : "Inactive"}
@@ -313,8 +309,7 @@ export default function NoticesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="notices"
       createHref="/notices/new"
       createLabel="New Announcement"

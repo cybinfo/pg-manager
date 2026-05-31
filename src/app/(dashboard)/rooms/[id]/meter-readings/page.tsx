@@ -102,9 +102,6 @@ const columns: Column<MeterReading>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
     render: (reading) => (
       <span className="font-semibold tabular-nums">{formatNumber(reading.reading_value)}</span>
     ),
@@ -154,8 +151,6 @@ const columns: Column<MeterReading>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (reading) => reading.notes ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{reading.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -315,8 +310,7 @@ export default function RoomMeterReadingsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableColumnManager={true}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename={`meter-readings-room-${roomId}`}
       createHref={`/meter-readings/new?room=${roomId}`}
       createLabel="Record Reading"

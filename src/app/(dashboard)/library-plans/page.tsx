@@ -399,8 +399,7 @@ export default function LibraryPlansPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-plans"
       createHref="/library-plans/new"
       createLabel="Add Plan"

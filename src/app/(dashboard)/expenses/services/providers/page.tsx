@@ -52,9 +52,6 @@ const columns: Column<ServiceProviderListItem>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
-    editValidation: { required: true, minLength: 2 },
     render: (provider) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center">
@@ -90,9 +87,6 @@ const columns: Column<ServiceProviderListItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 1, max: 5 },
     render: (provider) =>
       provider.rating ? (
         <div className="flex items-center gap-1">
@@ -140,8 +134,6 @@ const columns: Column<ServiceProviderListItem>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "boolean",
     render: (provider) =>
       provider.is_active ? (
         <TableBadge variant="success">
@@ -156,7 +148,7 @@ const columns: Column<ServiceProviderListItem>[] = [
       ),
   },
   // Hidden by default columns
-  phoneColumn("phone", "Phone", { defaultVisible: false, editable: true, editType: "text" }),
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
   emailColumn("email", "Email", { defaultVisible: false }),
   {
     key: "pan",
@@ -307,8 +299,7 @@ export default function ServiceProvidersPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      createHref="/expenses/services/providers/new"
+createHref="/expenses/services/providers/new"
       createLabel="Add Provider"
       createPermission="expenses.create"
       detailHref={(provider) => `/expenses/services/providers/${provider.id}`}

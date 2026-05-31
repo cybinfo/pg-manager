@@ -102,9 +102,6 @@ const columns: Column<Bill>[] = [
   },
   dateColumn("due_date", "Due", { hideOnMobile: true }),
   statusColumn(BILL_STATUS, {
-    editable: true,
-    editType: "select",
-    editOptions: BILL_STATUS_OPTIONS,
   }),
   currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-success", bold: false }),
   currencyColumn("balance_due", "Balance Due", { defaultVisible: false, color: "text-destructive", bold: false }),
@@ -115,8 +112,6 @@ const columns: Column<Bill>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (bill) => bill.notes ? (
       <span className="truncate max-w-[150px]" title={bill.notes}>{bill.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -256,8 +251,7 @@ export default function TenantBillsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableColumnManager={true}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename={`bills-tenant-${tenantId}`}
       createHref={`/bills/new?tenant_id=${tenantId}`}
       createLabel="Generate Bill"

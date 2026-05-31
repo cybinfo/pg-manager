@@ -102,9 +102,6 @@ const columns: Column<StaffMember>[] = [
     falseLabel: "Inactive",
     width: "status",
     sortKey: "is_active",
-    editable: true,
-    editType: "boolean",
-    editField: "is_active",
   }),
   // Hidden by default columns
   emailColumn("email", "Email", { defaultVisible: false }),
@@ -213,8 +210,7 @@ export default function StaffPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="staff"
       createHref="/staff/new"
       createLabel="Add Staff"

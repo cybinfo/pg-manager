@@ -95,10 +95,6 @@ const columns: Column<ServicePaymentListItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
-    editable: true,
-    editType: "number",
-    editField: "gross_amount",
-    editValidation: { min: 0 },
     render: (payment) => (
       <div className="text-right">
         <div className="font-medium tabular-nums">{formatCurrency(payment.net_amount)}</div>
@@ -182,10 +178,6 @@ const columns: Column<ServicePaymentListItem>[] = [
     sortKey: "gross_amount",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "number",
-    editField: "gross_amount",
-    editValidation: { min: 0 },
     render: (payment) => (
       <span className="font-medium tabular-nums">{formatCurrency(payment.gross_amount)}</span>
     ),
@@ -210,9 +202,6 @@ const columns: Column<ServicePaymentListItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
     render: (payment) => (
       <span className="font-medium tabular-nums">{formatCurrency(payment.net_amount)}</span>
     ),
@@ -377,8 +366,7 @@ export default function ServicePaymentsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      createHref="/expenses/services/new"
+createHref="/expenses/services/new"
       createLabel="Add Service"
       createPermission="expenses.create"
       detailHref={(payment) => `/expenses/services/${payment.id}`}

@@ -39,9 +39,6 @@ const columns: Column<LocationItem>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
-    editValidation: { required: true, minLength: 2 },
     render: (location) => (
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg ${brandGradient.solid} flex items-center justify-center`}>
@@ -114,8 +111,6 @@ const columns: Column<LocationItem>[] = [
     trueLabel: "Active",
     falseLabel: "Inactive",
     width: "status",
-    editable: true,
-    editType: "boolean",
   }),
   dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
@@ -214,8 +209,7 @@ export default function LocationsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="locations"
       createHref="/locations/new"
       createLabel="Add Location"

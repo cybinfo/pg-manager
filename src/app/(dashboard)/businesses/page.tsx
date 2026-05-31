@@ -37,9 +37,6 @@ const columns: Column<Business>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
-    editValidation: { required: true, minLength: 2 },
     render: (business) => (
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg ${brandGradient.solid} flex items-center justify-center`}>
@@ -81,8 +78,6 @@ const columns: Column<Business>[] = [
     trueLabel: "Active",
     falseLabel: "Inactive",
     width: "status",
-    editable: true,
-    editType: "boolean",
   }),
   {
     key: "website",
@@ -193,8 +188,7 @@ export default function BusinessesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="businesses"
       createHref="/businesses/new"
       createLabel="Add Business"

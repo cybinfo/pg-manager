@@ -99,16 +99,10 @@ const columns: ExtendedColumn<Tenant>[] = [
     ),
   },
   currencyColumn("monthly_rent", "Rent", {
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
   }),
   dateColumn("check_in_date", "Since", { hideOnMobile: true }),
   {
     ...statusColumn((status) => getTenantStatusInfo("tenant", status), {
-      editable: true,
-      editType: "select",
-      editOptions: TENANT_STATUS_OPTIONS,
     }),
     groupable: true,
     groupKey: "status",
@@ -120,9 +114,6 @@ const columns: ExtendedColumn<Tenant>[] = [
   currencyColumn("security_deposit", "Security Deposit", {
     defaultVisible: false,
     bold: false,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
   }),
   {
     key: "police_verification_status",
@@ -132,9 +123,6 @@ const columns: ExtendedColumn<Tenant>[] = [
     canHide: true,
     defaultVisible: false,
     groupable: true,
-    editable: true,
-    editType: "select",
-    editOptions: POLICE_VERIFICATION_STATUS_OPTIONS,
     render: (tenant) => {
       const variantToClass: Record<string, string> = {
         success: "text-success bg-success/10",
@@ -160,8 +148,6 @@ const columns: ExtendedColumn<Tenant>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "boolean",
     render: (tenant) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
         tenant.agreement_signed
@@ -182,8 +168,6 @@ const columns: ExtendedColumn<Tenant>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (tenant) => tenant.notes ? (
       <span className="truncate max-w-[150px]" title={tenant.notes}>{tenant.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -291,8 +275,7 @@ export default function TenantsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="tenants"
       // Contextual help
       headerActions={

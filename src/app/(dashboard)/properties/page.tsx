@@ -55,9 +55,6 @@ const columns: Column<Property>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
-    editable: true,
-    editType: "text",
-    editValidation: { required: true, minLength: 2 },
     render: (property) => (
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg ${brandGradient.solid} flex items-center justify-center`}>
@@ -109,8 +106,6 @@ const columns: Column<Property>[] = [
     falseLabel: "Inactive",
     width: "status",
     hideOnMobile: true,
-    editable: true,
-    editType: "boolean",
   }),
   // Hidden by default columns
   {
@@ -119,8 +114,6 @@ const columns: Column<Property>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    editable: true,
-    editType: "text",
     render: (property) => property.address || <span className="text-muted-foreground">—</span>,
   },
   {
@@ -290,8 +283,7 @@ export default function PropertiesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="properties"
       createHref="/properties/new"
       createLabel="Add Property"

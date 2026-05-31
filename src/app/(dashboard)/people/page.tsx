@@ -92,9 +92,6 @@ const columns: Column<Person>[] = [
     personNameField: "name",
     photoField: "photo_url",
     subtitleField: "phone",
-    editable: true,
-    editType: "text",
-    editValidation: { required: true },
   }),
   {
     key: "email",
@@ -159,8 +156,8 @@ const columns: Column<Person>[] = [
     ),
   },
   // Hidden by default columns
-  phoneColumn("phone", "Phone", { defaultVisible: false, editable: true, editType: "text" }),
-  emailColumn("email", "Email", { key: "email_only", defaultVisible: false, editable: true, editType: "text", editField: "email" }),
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
+  emailColumn("email", "Email", { key: "email_only", defaultVisible: false }),
   {
     key: "company_name",
     header: "Company",
@@ -369,8 +366,7 @@ export default function PeoplePage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="people"
       // Actions
       createHref="/people/new"

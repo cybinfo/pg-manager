@@ -647,8 +647,7 @@ export default function LibraryAttendancePage() {
         enableColumnManager={true}
         enableAdvancedFilters={true}
         advancedFilterColumns={advancedFilterColumns}
-        enableInlineEdit={true}
-        exportColumns={isFeatureEnabled("attendance", "csvExport") ? exportColumns : undefined}
+exportColumns={isFeatureEnabled("attendance", "csvExport") ? exportColumns : undefined}
         exportFilename="library-attendance"
         detailHref={(att) => `/library-attendance/${att.id}`}
         emptyTitle="No attendance records"

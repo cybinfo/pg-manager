@@ -250,8 +250,7 @@ export default function LibrarySubscriptionsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
+exportColumns={exportColumns}
       exportFilename="library-subscriptions"
       detailHref={(sub) => `/library-subscriptions/${sub.id}`}
       createHref="/library-subscriptions/new"
