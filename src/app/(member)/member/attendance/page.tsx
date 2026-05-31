@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui"
 import { Clock, CheckCircle, Calendar, Timer, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ExportButton } from "@/components/ui/export-button"
@@ -118,11 +119,7 @@ export default function MemberAttendancePage() {
         </CardHeader>
         <CardContent>
           {attendance.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No attendance records yet</p>
-              <p className="text-sm">Your check-in history will appear here</p>
-            </div>
+            <EmptyState variant="minimal" icon={Clock} title="No attendance records yet" description="Your check-in history will appear here" />
           ) : (
             <div className="space-y-3">
               {attendance.map((record) => (

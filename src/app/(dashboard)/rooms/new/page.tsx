@@ -19,6 +19,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 // Shared form components
 import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
+import { withCreatedBy } from "@/lib/audit"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
@@ -94,9 +95,8 @@ function NewRoomContent() {
         .filter((amenity) => data[amenity.key as keyof typeof data])
         .map((amenity) => amenity.label.split(" (")[0])
 
-      return {
+      return withCreatedBy({
         owner_id: userId,
-        created_by: userId,
         property_id: data.property_id,
         room_number: data.room_number,
         room_type: data.room_type,
@@ -108,7 +108,7 @@ function NewRoomContent() {
         has_attached_bathroom: data.has_attached_bathroom,
         amenities: amenities,
         photos: (data.photos as string[]).length > 0 ? data.photos : null,
-      }
+      }, userId) as unknown as Record<string, unknown>
     },
     addOwnerId: false,
   })

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Avatar } from "@/components/ui/avatar"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PageHeader } from "@/components/ui"
+import { DetailHero } from "@/components/ui"
 import {
   Search,
   Merge,
@@ -135,9 +135,12 @@ export default function PersonMergePage() {
     <PermissionGuard permission="tenants.update">
       <div className="space-y-6">
         {ConfirmDialogElement}
-        <PageHeader
+        <DetailHero
           title="Merge Duplicate People"
+          subtitle="Consolidate duplicate person records — all linked data moves to the primary record"
+          icon={Merge}
           backHref="/people"
+          backLabel="Back to People"
           breadcrumbs={[
             { label: "People", href: "/people" },
             { label: "Merge" },

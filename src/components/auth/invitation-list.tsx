@@ -9,6 +9,7 @@ import { showSuccess, showError } from '@/lib/toast-helpers'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/format'
 import { logger } from "@/lib/logger"
+import { EmptyState } from "@/components/ui"
 
 // ============================================
 // Invitation List Component
@@ -82,11 +83,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
   }
 
   if (invitations.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No pending invitations
-      </div>
-    )
+    return <EmptyState variant="minimal" icon={Clock} title="No pending invitations" />
   }
 
   return (

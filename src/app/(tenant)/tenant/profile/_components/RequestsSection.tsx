@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui"
 import { FileText, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Flag } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { formatTimeAgo } from "@/lib/format"
 import { APPROVAL_STATUS } from "@/lib/status"
 
 interface ApprovalRequest {
@@ -47,9 +48,7 @@ export function RequestsSection({ requests, showRequests, onToggleRequests }: Re
         {showRequests && (
           <CardContent className="pt-0">
             {requests.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No requests submitted yet. Use the flag icons above to report any issues.
-              </p>
+              <EmptyState variant="minimal" icon={Flag} title="No requests submitted yet" description="Use the flag icons above to report any issues." />
             ) : (
               <div className="space-y-3">
                 {requests.map((request) => {
@@ -62,7 +61,7 @@ export function RequestsSection({ requests, showRequests, onToggleRequests }: Re
                       <div>
                         <p className="font-medium">{typeLabel}</p>
                         <p className="text-xs text-muted-foreground">
-                          Submitted {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                          Submitted {formatTimeAgo(request.created_at)}
                         </p>
                       </div>
                       {(() => {

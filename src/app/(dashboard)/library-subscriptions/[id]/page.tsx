@@ -7,14 +7,7 @@
 
 "use client"
 
-import { useState } from "react"
-import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { useDetailPage, LIBRARY_SUBSCRIPTION_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
-import { softDelete } from "@/lib/audit"
-import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { useAuth } from "@/lib/auth"
-import { createClient } from "@/lib/supabase/client"
 import {
   DetailHero,
   InfoCard,
@@ -52,13 +45,20 @@ import {
   Edit,
   Trash2,
 } from "lucide-react"
-
-import { parseTimeSlots, formatTime12h, calcSlotHours, getDurationDays } from "@/lib/time-slots"
+import { parseTimeSlots, formatTime12h, calcSlotHours } from "@/lib/time-slots"
 import type { TimeSlot } from "@/lib/time-slots"
 import { formatDate } from "@/lib/format"
+import { TableBadge } from "@/components/ui/data-table"
+import { LIBRARY_PAYMENT_METHOD_LABELS } from "@/lib/status"
+import type { LibraryPayment } from "@/types/library.types"
+import {
+  useLibrarySubscriptionDetail,
+  usePaymentForm,
+  type SubscriptionRecord,
+} from "@/lib/hooks/forms/useLibrarySubscriptionDetail"
 
 // ============================================
-// Time Slot Display (JSX variant \u2014 wraps lib helpers)
+// Time Slot Display (JSX variant — wraps lib helpers)
 // ============================================
 
 function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
@@ -66,7 +66,7 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
   if (slots.length === 0) return raw || "Full Day"
   if (slots.length === 1) {
     const s = slots[0]
-    return `${formatTime12h(s.start)} \u2013 ${formatTime12h(s.end)} (${calcSlotHours(s).toFixed(1)}h)`
+    return `${formatTime12h(s.start)} – ${formatTime12h(s.end)} (${calcSlotHours(s).toFixed(1)}h)`
   }
   const total = slots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
   return (
@@ -79,59 +79,6 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
       <span className="text-xs text-muted-foreground">Total: {total.toFixed(1)}h</span>
     </span>
   )
-}
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { logger } from "@/lib/logger"
-import { recordLibrarySubscriptionPayment } from "@/lib/services/library-subscriptions"
-import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
-import type { LibraryMembership, LibraryPayment } from "@/types/library.types"
-import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_METHOD_LABELS } from "@/lib/status"
-import { getTodayISO } from "@/lib/date-helpers"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-
-// ============================================
-// Types
-// ============================================
-
-interface SubscriptionMember {
-  id: string
-  name: string
-  member_code: string | null
-  phone: string | null
-  email: string | null
-  person?: {
-    id: string
-    name?: string
-    photo_url?: string
-    phone?: string
-    email?: string
-  } | null
-}
-
-interface SubscriptionPlan {
-  id: string
-  name: string
-  hours_included: number | null
-  base_price: number
-}
-
-interface SubscriptionRecord extends LibraryMembership {
-  member?: SubscriptionMember | null
-  plan?: SubscriptionPlan | null
-}
-
-// ============================================
-// Helper: Payment Status
-// ============================================
-
-function getPaymentStatus(finalAmount: number, totalPaid: number) {
-  if (totalPaid >= finalAmount) {
-    return { label: "Fully Paid", variant: "success" as const, color: "text-success" }
-  }
-  if (totalPaid > 0) {
-    return { label: "Partial", variant: "warning" as const, color: "text-warning" }
-  }
-  return { label: "Unpaid", variant: "error" as const, color: "text-destructive" }
 }
 
 // ============================================
@@ -147,75 +94,22 @@ function RecordPaymentForm({
   balanceDue: number
   onSuccess: () => void
 }) {
-  const { user } = useAuth()
-  const [isOpen, setIsOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    amount: "",
-    payment_method: "cash",
-    payment_date: getTodayISO(),
-    payment_reference: "",
-    notes: "",
-  })
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-
-    const amount = Number(formData.amount)
-    if (!amount || amount <= 0) {
-      showError("Please enter a valid amount")
-      return
-    }
-
-    setSaving(true)
-    try {
-      const supabase = createClient()
-
-      await recordLibrarySubscriptionPayment(supabase, {
-        userId: user.id,
-        subscription: {
-          id: subscription.id,
-          owner_id: subscription.owner_id,
-          workspace_id: subscription.workspace_id,
-          member_id: subscription.member_id,
-        },
-        amount,
-        paymentMethod: formData.payment_method,
-        paymentDate: formData.payment_date,
-        paymentReference: formData.payment_reference || null,
-        notes: formData.notes || null,
-      })
-
-      showSuccess(`Payment of Rs. ${amount} recorded successfully`)
-      setFormData({
-        amount: "",
-        payment_method: "cash",
-        payment_date: getTodayISO(),
-        payment_reference: "",
-        notes: "",
-      })
-      setIsOpen(false)
-      onSuccess()
-    } catch (err) {
-      logger.error("RecordPaymentForm: payment insert failed", { error: String(err) })
-      showError(err instanceof Error ? err.message : "Failed to record payment")
-    } finally {
-      setSaving(false)
-    }
-  }
+  const {
+    isOpen,
+    saving,
+    formData,
+    setFormData,
+    openForm,
+    closeForm,
+    handleSubmit,
+    paymentMethodOptions,
+  } = usePaymentForm({ subscription, balanceDue, onSuccess })
 
   if (!isOpen) {
     return (
       <PermissionGate permission="library_payments.create" hide>
         <Button
-          onClick={() => {
-            setFormData((prev) => ({
-              ...prev,
-              amount: balanceDue > 0 ? balanceDue.toString() : "",
-            }))
-            setIsOpen(true)
-          }}
+          onClick={openForm}
           size="sm"
           disabled={balanceDue <= 0}
         >
@@ -234,7 +128,7 @@ function RecordPaymentForm({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => setIsOpen(false)}
+          onClick={closeForm}
           disabled={saving}
         >
           Cancel
@@ -273,7 +167,7 @@ function RecordPaymentForm({
             onChange={(e) => setFormData((prev) => ({ ...prev, payment_method: e.target.value }))}
             name="payment_method"
             disabled={saving}
-            options={LIBRARY_PAYMENT_METHOD_OPTIONS}
+            options={paymentMethodOptions}
           />
         </div>
         <FormField label="Reference" htmlFor="pay-ref">
@@ -330,44 +224,29 @@ export default function LibrarySubscriptionDetailPage() {
 }
 
 function LibrarySubscriptionDetailContent() {
-  const params = useParams()
-  const router = useRouter()
-  const { user } = useAuth()
-
   const {
-    data: subscription,
-    related,
+    subscription,
+    payments,
     loading,
     refetch,
-  } = useDetailPage<SubscriptionRecord>({
-    config: LIBRARY_SUBSCRIPTION_DETAIL_CONFIG,
-    id: params.id as string,
-  })
-
-  const { backHref, backLabel } = useBackNavigation({
-    defaultHref: "/library-subscriptions",
-    defaultLabel: "All Subscriptions",
-  })
-
-  const { confirm: confirmDelete, ConfirmDialogElement } = useConfirmDialog()
-
-  const handleDelete = () => {
-    confirmDelete({
-      title: "Delete Subscription",
-      description: "Are you sure you want to delete this subscription? This action cannot be undone.",
-      destructive: true,
-      onConfirm: async () => {
-        if (!user) return
-        const { error } = await softDelete("library_memberships", params.id as string, user.id)
-        if (!error) {
-          showSuccess("Subscription deleted")
-          router.push("/library-subscriptions")
-        } else {
-          showError("Failed to delete subscription")
-        }
-      },
-    })
-  }
+    router,
+    backHref,
+    backLabel,
+    handleDelete,
+    ConfirmDialogElement,
+    totalPaid,
+    balanceDue,
+    paidPercentage,
+    paymentStatus,
+    member,
+    displayName,
+    photoUrl,
+    memberPhone,
+    memberEmail,
+    statusConfig,
+    durationDays,
+    daysRemaining,
+  } = useLibrarySubscriptionDetail()
 
   if (loading) {
     return <PageLoading message="Loading subscription details..." />
@@ -376,36 +255,6 @@ function LibrarySubscriptionDetailContent() {
   if (!subscription) {
     return <NotFoundState title="Subscription not found" backHref="/library-subscriptions" backLabel="All Subscriptions" />
   }
-
-  const payments = (related.payments || []) as LibraryPayment[]
-
-  // Compute payment summary
-  const totalPaid = payments
-    .filter((p: LibraryPayment) => p.status === "completed")
-    .reduce((sum: number, p: LibraryPayment) => sum + (p.amount || 0), 0)
-  const balanceDue = Math.max(0, subscription.final_amount - totalPaid)
-  const paidPercentage = subscription.final_amount > 0
-    ? Math.min(100, Math.round((totalPaid / subscription.final_amount) * 100))
-    : 0
-  const paymentStatus = getPaymentStatus(subscription.final_amount, totalPaid)
-
-  // Member info
-  const member = subscription.member
-  const displayName = member?.person?.name || member?.name || "Unknown Member"
-  const photoUrl = member?.person?.photo_url
-  const memberPhone = member?.person?.phone || member?.phone
-  const memberEmail = member?.person?.email || member?.email
-
-  // Subscription status
-  const statusConfig = LIBRARY_MEMBERSHIP_STATUS_CONFIG[subscription.status as keyof typeof LIBRARY_MEMBERSHIP_STATUS_CONFIG]
-  const durationDays = getDurationDays(subscription.start_date, subscription.end_date)
-
-  // Check if expired
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const endDate = new Date(subscription.end_date)
-  endDate.setHours(0, 0, 0, 0)
-  const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
   return (
     <div className="space-y-6">
@@ -427,12 +276,12 @@ function LibrarySubscriptionDetailContent() {
             {subscription.time_slot && (() => {
               const slots = parseTimeSlots(subscription.time_slot)
               const display = slots.length > 0
-                ? slots.map((s: TimeSlot) => `${formatTime12h(s.start)}\u2013${formatTime12h(s.end)}`).join(", ")
+                ? slots.map((s: TimeSlot) => `${formatTime12h(s.start)}–${formatTime12h(s.end)}`).join(", ")
                 : subscription.time_slot
               return (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                <TableBadge className="bg-purple-100 text-purple-700">
                   {display}
-                </span>
+                </TableBadge>
               )
             })()}
           </div>
@@ -602,10 +451,10 @@ function LibrarySubscriptionDetailContent() {
             label="Payment Status"
             value={
               <StatusBadge
-                status={paymentStatus.variant}
-                label={paymentStatus.label === "Partial"
+                status={paymentStatus!.variant}
+                label={paymentStatus!.label === "Partial"
                   ? `Partial (${paidPercentage}%)`
-                  : paymentStatus.label}
+                  : paymentStatus!.label}
                 size="sm"
               />
             }

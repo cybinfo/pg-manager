@@ -35,9 +35,10 @@ import { getNowISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PageHeader } from "@/components/ui"
+import { DetailHero } from "@/components/ui"
 import { Select } from "@/components/ui/form-components"
 import { EmptyState } from "@/components/ui/empty-state"
+import { TableBadge } from "@/components/ui/data-table"
 import {
   VisitorType,
   VISITOR_TYPE_LABELS,
@@ -59,11 +60,11 @@ import {
 // Badge Colors & Icons
 // ============================================
 
-const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-info/10 text-info",
-  enquiry: "bg-purple-100 text-purple-700",
-  service_provider: "bg-warning/10 text-warning",
-  general: "bg-muted text-foreground",
+const VISITOR_TYPE_BADGE_VARIANTS: Record<VisitorType, { variant: "info" | "warning" | "default" | "muted"; className?: string }> = {
+  tenant_visitor: { variant: "info" },
+  enquiry: { variant: "default", className: "bg-purple-100 text-purple-700" },
+  service_provider: { variant: "warning" },
+  general: { variant: "muted" },
 }
 
 const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
@@ -146,9 +147,12 @@ export default function VisitorDirectoryPage() {
   return (
     <PermissionGuard permission="visitors.view">
       <div className="space-y-6">
-        <PageHeader
+        <DetailHero
           title="Visitor Directory"
+          subtitle="View all unique visitors, manage frequent contacts, and block unwanted guests"
+          icon={Users}
           backHref="/visitors"
+          backLabel="Back to Visitors"
           breadcrumbs={[
             { label: "Visitors", href: "/visitors" },
             { label: "Visitor Directory" },
@@ -271,26 +275,29 @@ export default function VisitorDirectoryPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${VISITOR_TYPE_BADGE_COLORS[contact.visitor_type]}`}>
+                      <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${VISITOR_TYPE_BADGE_VARIANTS[contact.visitor_type].className || ""} bg-muted`}>
                         {VISITOR_TYPE_ICONS[contact.visitor_type]}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold truncate">{contact.name}</h3>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${VISITOR_TYPE_BADGE_COLORS[contact.visitor_type]}`}>
+                          <TableBadge
+                            variant={VISITOR_TYPE_BADGE_VARIANTS[contact.visitor_type].variant}
+                            className={VISITOR_TYPE_BADGE_VARIANTS[contact.visitor_type].className}
+                          >
                             {VISITOR_TYPE_LABELS[contact.visitor_type]}
-                          </span>
+                          </TableBadge>
                           {contact.is_frequent && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-warning/10 text-warning rounded-full text-xs font-medium">
-                              <Star className="h-3 w-3" />
+                            <TableBadge variant="warning">
+                              <Star className="h-3 w-3 mr-1" />
                               Frequent
-                            </span>
+                            </TableBadge>
                           )}
                           {contact.is_blocked && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-destructive/10 text-destructive rounded-full text-xs font-medium">
-                              <Ban className="h-3 w-3" />
+                            <TableBadge variant="error">
+                              <Ban className="h-3 w-3 mr-1" />
                               Blocked
-                            </span>
+                            </TableBadge>
                           )}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">

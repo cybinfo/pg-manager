@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { apiSuccess, unauthorized } from "@/lib/api-response"
+import { apiSuccess, unauthorized, internalError } from "@/lib/api-response"
 import { logger } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 
 export async function GET(request: NextRequest) {
   const supabase = await createServerClient()
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     logger.error("Error fetching sessions", { detail: error.message })
-    return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 })
+    return internalError("Failed to fetch sessions")
   }
 
   const enriched = (sessions || []).map((s) => ({
@@ -41,7 +42,7 @@ export async function DELETE(request: NextRequest) {
   // Mark all other sessions as signed out in our table
   let query = supabase
     .from("user_sessions")
-    .update({ signed_out_at: new Date().toISOString() })
+    .update({ signed_out_at: getNowISO() })
     .eq("user_id", user.id)
     .is("signed_out_at", null)
 
@@ -54,7 +55,7 @@ export async function DELETE(request: NextRequest) {
 
   if (error) {
     logger.error("Error revoking sessions", { detail: error.message })
-    return NextResponse.json({ error: "Failed to revoke sessions" }, { status: 500 })
+    return internalError("Failed to revoke sessions")
   }
 
   // Tell Supabase to invalidate tokens for other sessions

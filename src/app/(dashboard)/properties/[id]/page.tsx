@@ -25,6 +25,7 @@ import {
   NotFoundState,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -136,10 +137,10 @@ export default function PropertyDetailPage() {
               </span>
             )}
             {property.is_under_maintenance && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning border border-warning/30">
-                <Wrench className="h-3 w-3" />
+              <TableBadge variant="warning">
+                <Wrench className="h-3 w-3 mr-1" />
                 Under Maintenance
-              </span>
+              </TableBadge>
             )}
           </div>
         }
@@ -343,12 +344,8 @@ export default function PropertyDetailPage() {
                   </span>
                 </div>
                 <div className="flex gap-1 mt-2">
-                  {room.has_ac && (
-                    <span className="px-1.5 py-0.5 bg-info/10 text-info rounded text-xs">AC</span>
-                  )}
-                  {room.has_attached_bathroom && (
-                    <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-xs">Bath</span>
-                  )}
+                  {room.has_ac && <TableBadge variant="info">AC</TableBadge>}
+                  {room.has_attached_bathroom && <TableBadge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">Bath</TableBadge>}
                 </div>
               </div>
             </Link>

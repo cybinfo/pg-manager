@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
+import { getNowISO } from "@/lib/date-helpers"
 
 export interface Notification {
   id: string
@@ -80,12 +81,12 @@ export function useNotifications(): UseNotificationsResult {
     async (id: string) => {
       await supabase
         .from("notifications")
-        .update({ read: true, read_at: new Date().toISOString() })
+        .update({ read: true, read_at: getNowISO() })
         .eq("id", id)
 
       setNotifications((prev) =>
         prev.map((n) =>
-          n.id === id ? { ...n, read: true, read_at: new Date().toISOString() } : n
+          n.id === id ? { ...n, read: true, read_at: getNowISO() } : n
         )
       )
     },
@@ -97,12 +98,12 @@ export function useNotifications(): UseNotificationsResult {
 
     await supabase
       .from("notifications")
-      .update({ read: true, read_at: new Date().toISOString() })
+      .update({ read: true, read_at: getNowISO() })
       .eq("user_id", user.id)
       .eq("read", false)
 
     setNotifications((prev) =>
-      prev.map((n) => ({ ...n, read: true, read_at: new Date().toISOString() }))
+      prev.map((n) => ({ ...n, read: true, read_at: getNowISO() }))
     )
   }, [user, supabase])
 

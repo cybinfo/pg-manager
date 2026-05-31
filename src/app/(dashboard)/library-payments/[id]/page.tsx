@@ -23,6 +23,7 @@ import {
   NotFoundState,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
@@ -111,13 +112,12 @@ export default function LibraryPaymentDetailPage() {
             <span className="text-2xl font-bold text-success">
               +<Currency amount={payment.amount} />
             </span>
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              payment.payment_type === "subscription" ? "bg-info/10 text-info" :
-              payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
-              "bg-muted text-muted-foreground"
-            }`}>
+            <TableBadge
+              variant={payment.payment_type === "subscription" ? "info" : payment.payment_type === "locker_rent" ? "default" : "muted"}
+              className={payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" : undefined}
+            >
               {typeConfig?.label || payment.payment_type}
-            </span>
+            </TableBadge>
           </div>
         }
         backHref={backHref}

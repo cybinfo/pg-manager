@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth"
 import { useAdminExplorerData } from "@/lib/hooks/useAdminExplorerData"
 import type { AdminWorkspace } from "@/lib/hooks/useAdminExplorerData"
-import { PageHeader } from "@/components/ui/page-header"
+import { DetailHero, EmptyState } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,8 +31,7 @@ import {
   CreditCard,
   Activity,
 } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatTimeAgo } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { logger } from "@/lib/logger"
 import { createClient } from "@/lib/supabase/client"
@@ -122,7 +121,7 @@ export default function AdminExplorerPage() {
         <div>
           <div className="font-medium">{ws.name}</div>
           <div className="text-xs text-muted-foreground">
-            Created {formatDistanceToNow(new Date(ws.created_at), { addSuffix: true })}
+            Created {formatTimeAgo(ws.created_at)}
           </div>
         </div>
       )
@@ -184,10 +183,12 @@ export default function AdminExplorerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <DetailHero
         title="Platform Admin"
-        description="Browse and explore all workspaces"
+        subtitle="Browse and explore all workspaces"
         icon={Shield}
+        backHref="/dashboard"
+        backLabel="Back to Dashboard"
         breadcrumbs={[{ label: "Admin" }]}
         actions={
           <Button
@@ -228,11 +229,11 @@ export default function AdminExplorerPage() {
             searchFields={["name", "owner_name", "owner_email"]}
             searchPlaceholder="Search workspaces..."
             emptyState={
-              <div className="flex flex-col items-center py-12">
-                <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No workspaces found</h3>
-                <p className="text-muted-foreground">No workspaces have been created yet</p>
-              </div>
+              <EmptyState
+                icon={Building2}
+                title="No workspaces found"
+                description="No workspaces have been created yet"
+              />
             }
           />
         </CardContent>
@@ -368,7 +369,7 @@ export default function AdminExplorerPage() {
                           <span className="text-sm capitalize">{event.entity_type}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(event.occurred_at), { addSuffix: true })}
+                          {formatTimeAgo(event.occurred_at)}
                         </span>
                       </div>
                     ))}
@@ -379,10 +380,11 @@ export default function AdminExplorerPage() {
               {/* Empty state if no data */}
               {workspaceDetails.properties.length === 0 &&
                workspaceDetails.tenants.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>This workspace has no properties or tenants yet</p>
-                </div>
+                <EmptyState
+                  icon={Building2}
+                  title="No data yet"
+                  description="This workspace has no properties or tenants yet"
+                />
               )}
             </div>
           ) : null}

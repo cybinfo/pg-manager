@@ -25,8 +25,10 @@ import {
   InfoRow,
   DetailPageTemplate,
   NotFoundState,
+  EmptyState,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Armchair,
@@ -52,6 +54,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 import type { LibrarySeat } from "@/types/library.types"
 import { logger } from "@/lib/logger"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface Reservation {
   id: string
@@ -93,7 +96,7 @@ export default function LibrarySeatDetailPage() {
       .select("id, reserved_date, start_time, end_time, status, member:library_members(id, name, member_code)")
       .eq("seat_id", params.id as string)
       .is("deleted_at", null)
-      .gte("reserved_date", new Date().toISOString().split("T")[0])
+      .gte("reserved_date", getTodayISO())
       .order("reserved_date", { ascending: true })
       .limit(20)
     setReservations((data || []) as unknown as Reservation[])
@@ -451,10 +454,7 @@ export default function LibrarySeatDetailPage() {
               </div>
             )}
             {reservations.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
-                <CalendarPlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No upcoming reservations</p>
-              </div>
+              <EmptyState variant="minimal" icon={CalendarPlus} title="No upcoming reservations" />
             ) : (
               <div className="space-y-2">
                 {reservations.map((r) => (
@@ -467,9 +467,9 @@ export default function LibrarySeatDetailPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${r.status === "confirmed" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+                      <TableBadge variant={r.status === "confirmed" ? "success" : "muted"}>
                         {r.status}
-                      </span>
+                      </TableBadge>
                       {r.status === "confirmed" && (
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => handleCancelReservation(r.id)}>
                           <X className="h-3.5 w-3.5" />

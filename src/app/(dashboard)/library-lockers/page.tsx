@@ -7,7 +7,7 @@
 "use client"
 
 import { Lock, Users } from "lucide-react"
-import { Column } from "@/components/ui/data-table"
+import { Column, TableBadge } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_LOCKER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -90,13 +90,12 @@ const columns: Column<LockerItem>[] = [
     render: (locker) => {
       const config = LIBRARY_LOCKER_SIZE_CONFIG[locker.size as keyof typeof LIBRARY_LOCKER_SIZE_CONFIG]
       return (
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-          locker.size === "large" ? "bg-info/10 text-info" :
-          locker.size === "medium" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
-          "bg-muted text-muted-foreground"
-        }`}>
+        <TableBadge
+          variant={locker.size === "large" ? "info" : locker.size === "medium" ? "default" : "muted"}
+          className={locker.size === "medium" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" : undefined}
+        >
           {config?.label || locker.size}
-        </span>
+        </TableBadge>
       )
     },
   },

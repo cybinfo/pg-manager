@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { PageHeader } from "@/components/ui/page-header"
+import { DetailHero } from "@/components/ui"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
@@ -89,10 +89,12 @@ export default function ArchitecturePage() {
       <PermissionGuard permission="properties.view">
         <div className="space-y-6">
         {/* Header */}
-        <PageHeader
+        <DetailHero
           title="Property Architecture"
-          description="Visual overview of all properties, rooms, and bed availability"
+          subtitle="Visual overview of all properties, rooms, and bed availability"
           icon={Building2}
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
           breadcrumbs={[{ label: "Architecture" }]}
         />
 

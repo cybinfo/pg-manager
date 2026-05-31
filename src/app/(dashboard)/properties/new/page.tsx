@@ -12,6 +12,7 @@ import { requiredField } from "@/lib/validation"
 // Shared form components
 import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
+import { withCreatedBy } from "@/lib/audit"
 
 export default function NewPropertyPage() {
   return (
@@ -57,9 +58,8 @@ function NewPropertyContent() {
         .filter(Boolean)
         .join(", ")
 
-      return {
+      return withCreatedBy({
         owner_id: userId,
-        created_by: userId,
         name: data.name,
         address: fullAddress || null,
         city: data.city,
@@ -69,7 +69,7 @@ function NewPropertyContent() {
         manager_phone: data.manager_phone || null,
         cover_image: data.cover_image || null,
         photos: (data.photos as string[]).length > 0 ? data.photos : null,
-      }
+      }, userId) as unknown as Record<string, unknown>
     },
     addOwnerId: false,
   })

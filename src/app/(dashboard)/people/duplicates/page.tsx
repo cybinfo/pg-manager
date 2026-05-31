@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PageHeader } from "@/components/ui"
+import { DetailHero } from "@/components/ui"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
   AlertTriangle,
@@ -81,9 +81,12 @@ export default function DuplicatesPage() {
     <FeatureGuard module="people" feature="mergeDetection">
     <PermissionGuard permission="tenants.view">
       <div className="space-y-6">
-        <PageHeader
+        <DetailHero
           title="Duplicate Detection"
+          subtitle="Find and merge duplicate person records detected by matching phone, email, or ID"
+          icon={AlertTriangle}
           backHref="/people"
+          backLabel="Back to People"
           breadcrumbs={[
             { label: "People", href: "/people" },
             { label: "Duplicate Detection" },

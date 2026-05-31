@@ -1,11 +1,8 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -16,70 +13,15 @@ import {
   ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText, AlertCircle, CheckCircle2,
 } from "lucide-react"
 import { FormField, Select } from "@/components/ui/form-components"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { handleClientError } from "@/lib/error-handler"
-import { formatCurrency, formatMonthYear } from "@/lib/format"
+import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
-import { getTodayISO } from "@/lib/date-helpers"
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 import { PAYMENT_METHODS, PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
-import { logger } from "@/lib/logger"
-import { useFeatures } from "@/lib/features/use-features"
 import { cn } from "@/lib/utils"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { DatePicker } from "@/components/ui/date-picker"
-
-interface Tenant {
-  id: string
-  name: string
-  phone: string
-  photo_url: string | null
-  monthly_rent: number
-  property_id: string
-  property: {
-    id: string
-    name: string
-  } | null
-  room: {
-    id: string
-    room_number: string
-  } | null
-}
-
-interface RawTenant {
-  id: string
-  name: string
-  phone: string
-  photo_url: string | null
-  monthly_rent: number
-  property_id: string
-  property: {
-    id: string
-    name: string
-  }[] | null
-  room: {
-    id: string
-    room_number: string
-  }[] | null
-}
-
-interface ChargeType {
-  id: string
-  name: string
-  code: string
-}
-
-interface Bill {
-  id: string
-  bill_number: string
-  for_month: string
-  total_amount: number
-  balance_due: number
-  status: string
-}
+import { usePaymentCreateForm } from "@/lib/hooks/forms/usePaymentCreateForm"
 
 const STEPS: WorkflowStepDef[] = [
   { id: 1, label: "Select Tenant", icon: User },
@@ -88,216 +30,23 @@ const STEPS: WorkflowStepDef[] = [
 ]
 
 function NewPaymentForm() {
-  const { backHref } = useBackNavigation({ defaultHref: "/payments" })
-  const { isFeatureEnabled } = useFeatures()
-  const { user } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const preselectedTenantId = searchParams.get("tenant")
-  const preselectedBillId = searchParams.get("bill")
-
-  const [loading, setLoading] = useState(false)
-  const [tenants, setTenants] = useState<Tenant[]>([])
-  const [chargeTypes, setChargeTypes] = useState<ChargeType[]>([])
-  const [bills, setBills] = useState<Bill[]>([])
-  const [loadingData, setLoadingData] = useState(true)
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null)
-  const [currentStep, setCurrentStep] = useState(1)
-
-  const [formData, setFormData] = useState({
-    tenant_id: preselectedTenantId || "",
-    bill_id: preselectedBillId || "",
-    charge_type_id: "",
-    amount: "",
-    payment_method: "cash",
-    payment_date: getTodayISO(),
-    for_period: "",
-    reference_number: "",
-    notes: "",
-  })
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-
-      const [tenantsRes, chargeTypesRes] = await Promise.all([
-        supabase
-          .from("tenants")
-          .select(`
-            *,
-            property:properties(id, name),
-            room:rooms(id, room_number)
-          `)
-          .eq("status", "active")
-          .order("name"),
-        supabase
-          .from("charge_types")
-          .select("id, name, code")
-          .eq("owner_id", user?.id)
-          .eq("is_enabled", true)
-          .order("display_order"),
-      ])
-
-      if (tenantsRes.error) {
-        logger.error("Error fetching tenants:", { detail: tenantsRes.error })
-        showError("Failed to load tenants")
-      } else {
-        const transformedTenants = ((tenantsRes.data as RawTenant[]) || []).map((tenant) => ({
-          ...tenant,
-          property: transformJoin(tenant.property),
-          room: transformJoin(tenant.room),
-        }))
-        setTenants(transformedTenants)
-
-        if (preselectedTenantId) {
-          const tenant = transformedTenants.find((t) => t.id === preselectedTenantId)
-          if (tenant) {
-            setSelectedTenant(tenant)
-            setFormData((prev) => ({
-              ...prev,
-              amount: tenant.monthly_rent.toString(),
-            }))
-          }
-        }
-      }
-
-      if (chargeTypesRes.error) {
-        logger.error("Error fetching charge types:", { detail: chargeTypesRes.error })
-      } else {
-        setChargeTypes(chargeTypesRes.data || [])
-        const rentType = chargeTypesRes.data?.find((ct: { code: string }) => ct.code === "rent")
-        if (rentType) {
-          setFormData((prev) => ({ ...prev, charge_type_id: rentType.id }))
-        }
-      }
-
-      setLoadingData(false)
-    }
-
-    fetchData()
-  }, [preselectedTenantId, user])
-
-  // Update selected tenant and fetch bills when tenant changes
-  useEffect(() => {
-    if (formData.tenant_id) {
-      const tenant = tenants.find((t) => t.id === formData.tenant_id)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedTenant(tenant || null)
-      if (tenant) {
-        setFormData((prev) => ({
-          ...prev,
-          amount: tenant.monthly_rent.toString(),
-        }))
-
-        const fetchBills = async () => {
-          const supabase = createClient()
-          const { data: billsData, error } = await supabase
-            .from("bills")
-            .select("id, bill_number, for_month, total_amount, balance_due, status")
-            .eq("tenant_id", tenant.id)
-            .in("status", ["pending", "partial", "overdue"])
-            .gt("balance_due", 0)
-            .order("bill_date", { ascending: false })
-
-          if (!error && billsData) {
-            setBills(billsData)
-          } else {
-            setBills([])
-          }
-        }
-        fetchBills()
-      }
-    } else {
-      setSelectedTenant(null)
-      setBills([])
-    }
-  }, [formData.tenant_id, tenants])
-
-  // Update amount when bill is selected
-  useEffect(() => {
-    if (formData.bill_id) {
-      const bill = bills.find((b) => b.id === formData.bill_id)
-      if (bill) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setFormData((prev) => ({
-          ...prev,
-          amount: bill.balance_due.toString(),
-          for_period: bill.for_month,
-        }))
-      }
-    }
-  }, [formData.bill_id, bills])
-
-  // Generate current month period
-  useEffect(() => {
-    const currentPeriod = formatMonthYear(new Date())
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFormData((prev) => ({ ...prev, for_period: currentPeriod }))
-  }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  const doSubmit = async () => {
-    if (!formData.tenant_id || !formData.amount || !formData.payment_method) {
-      showError("Please fill in all required fields")
-      return
-    }
-
-    if (!formData.bill_id) {
-      showError("Payment must be linked to a bill. Please select a bill or create one first.")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
-      const workflowInput: PaymentRecordInput = {
-        tenant_id: formData.tenant_id,
-        property_id: selectedTenant?.property_id || "",
-        bill_id: formData.bill_id,
-        amount: parseFloat(formData.amount),
-        payment_date: formData.payment_date,
-        payment_method: formData.payment_method as PaymentRecordInput["payment_method"],
-        reference_number: formData.reference_number || undefined,
-        notes: formData.notes || undefined,
-        is_advance: false,
-        send_receipt: isFeatureEnabled("payments", "paymentReceipts"),
-      }
-
-      const result = await recordPayment(
-        workflowInput,
-        user.id,
-        "owner",
-        user.id
-      )
-
-      if (!result.success) {
-        logger.error("Error recording payment:", { detail: result.errors })
-        const errorMsg = result.errors?.[0]?.message || "Unknown error"
-        showError(`Failed to record payment: ${errorMsg}`)
-        setLoading(false)
-        return
-      }
-
-      showSuccess(`Payment recorded! Receipt: ${result.data?.receipt_number || "Generated"}`)
-      setLoading(false)
-      router.push("/payments")
-    } catch (error: unknown) {
-      handleClientError(error, "Recording payment")
-      setLoading(false)
-    }
-  }
+  const {
+    backHref,
+    loading,
+    loadingData,
+    tenants,
+    bills,
+    selectedTenant,
+    currentStep,
+    setCurrentStep,
+    formData,
+    setFormData,
+    handleChange,
+    doSubmit,
+    handleEditStep1,
+    handleEditStep2,
+  } = usePaymentCreateForm()
 
   if (loadingData) {
     return <PageSkeleton variant="form" />
@@ -358,12 +107,7 @@ function NewPaymentForm() {
         description="Choose the tenant making this payment"
         icon={User}
         currentStep={currentStep}
-        onEdit={() => {
-          setCurrentStep(1)
-          setFormData((prev) => ({ ...prev, tenant_id: "", bill_id: "" }))
-          setSelectedTenant(null)
-          setBills([])
-        }}
+        onEdit={handleEditStep1}
         completedSummary={
           selectedTenant
             ? `${selectedTenant.name} · ${selectedTenant.property?.name ?? ""}${selectedTenant.room ? ` Rm ${selectedTenant.room.room_number}` : ""}`
@@ -423,10 +167,7 @@ function NewPaymentForm() {
         description="Every payment must be linked to a bill"
         icon={FileText}
         currentStep={currentStep}
-        onEdit={() => {
-          setCurrentStep(2)
-          setFormData((prev) => ({ ...prev, bill_id: "" }))
-        }}
+        onEdit={handleEditStep2}
         completedSummary={
           selectedBill
             ? `${selectedBill.bill_number} · ${selectedBill.for_month} · ${formatCurrency(selectedBill.balance_due)} due`

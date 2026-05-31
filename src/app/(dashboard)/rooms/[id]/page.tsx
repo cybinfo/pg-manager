@@ -20,6 +20,7 @@ import {
   NotFoundState,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -171,10 +172,10 @@ export default function RoomDetailPage() {
               </Link>
             )}
             {room.is_under_maintenance && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning border border-warning/30">
-                <Wrench className="h-3 w-3" />
+              <TableBadge variant="warning">
+                <Wrench className="h-3 w-3 mr-1" />
                 Under Maintenance
-              </span>
+              </TableBadge>
             )}
           </div>
         }

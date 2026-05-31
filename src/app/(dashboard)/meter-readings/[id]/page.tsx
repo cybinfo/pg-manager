@@ -338,10 +338,10 @@ export default function MeterReadingDetailPage() {
 
       <FeatureGuard module="meters" feature="consumptionAlerts">
         {consumptionAnomaly && (
-          <div className={`flex items-start gap-3 p-4 rounded-lg border ${consumptionAnomaly.alertType === "high" ? "border-destructive/30 bg-destructive/5" : "border-blue-300/50 bg-blue-50/50 dark:bg-blue-950/20"}`}>
-            <AlertTriangle className={`h-5 w-5 mt-0.5 shrink-0 ${consumptionAnomaly.alertType === "high" ? "text-destructive" : "text-blue-600"}`} />
+          <div className={`flex items-start gap-3 p-4 rounded-lg border ${consumptionAnomaly.alertType === "high" ? "border-destructive/30 bg-destructive/5" : "border-info/30 bg-info/10"}`}>
+            <AlertTriangle className={`h-5 w-5 mt-0.5 shrink-0 ${consumptionAnomaly.alertType === "high" ? "text-destructive" : "text-info"}`} />
             <div>
-              <p className={`text-sm font-semibold ${consumptionAnomaly.alertType === "high" ? "text-destructive" : "text-blue-700 dark:text-blue-400"}`}>
+              <p className={`text-sm font-semibold ${consumptionAnomaly.alertType === "high" ? "text-destructive" : "text-info"}`}>
                 {consumptionAnomaly.alertType === "high" ? "Unusually High Consumption" : "Unusually Low Consumption"}
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">

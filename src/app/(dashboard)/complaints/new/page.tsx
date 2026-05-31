@@ -17,8 +17,9 @@ import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITY } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { PageSkeleton } from "@/components/ui/loading"
-import { DetailHero, DetailSection } from "@/components/ui"
+import { DetailHero, DetailSection, EmptyState } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
+import { withCreatedBy } from "@/lib/audit"
 import type { PropertyOption } from "@/types/properties.types"
 
 interface LibraryItem {
@@ -125,7 +126,7 @@ function NewComplaintForm() {
         return null
       },
     },
-    transform: (data, userId) => ({
+    transform: (data, userId) => withCreatedBy({
       owner_id: userId,
       property_id: data.entity_type === "property" ? data.property_id : null,
       library_id: data.entity_type === "library" ? data.library_id : null,
@@ -136,8 +137,7 @@ function NewComplaintForm() {
       title: data.title,
       description: data.description || null,
       status: "open",
-      created_by: userId,
-    }),
+    }, userId) as unknown as Record<string, unknown>,
     addOwnerId: false,
   })
 
@@ -266,20 +266,14 @@ function NewComplaintForm() {
         />
 
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No properties or libraries found</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              You need to add a property or library before logging complaints
-            </p>
-            <div className="flex gap-3">
-              <Link href="/properties/new">
-                <Button>Add Property</Button>
-              </Link>
-              <Link href="/library/new">
-                <Button variant="outline">Add Library</Button>
-              </Link>
-            </div>
+          <CardContent className="py-2">
+            <EmptyState
+              icon={Building2}
+              title="No properties or libraries found"
+              description="You need to add a property or library before logging complaints"
+              action={{ label: "Add Property", href: "/properties/new" }}
+              secondaryAction={{ label: "Add Library", href: "/library/new" }}
+            />
           </CardContent>
         </Card>
       </div>

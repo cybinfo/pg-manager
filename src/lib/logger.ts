@@ -21,6 +21,8 @@
  * ```
  */
 
+import { getNowISO } from "@/lib/date-helpers"
+
 type LogLevel = "debug" | "info" | "warn" | "error"
 
 interface LogMeta {
@@ -70,7 +72,7 @@ function createLogEntry(
   return {
     level,
     message,
-    timestamp: new Date().toISOString(),
+    timestamp: getNowISO(),
     module,
     meta,
   }

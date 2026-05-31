@@ -15,6 +15,7 @@ import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 import { FeatureGuard } from "@/components/auth"
 import { APPROVAL_STATUS } from "@/lib/status"
 import { variantClassMap } from "@/lib/design-tokens"
+import { TableBadge } from "@/components/ui/data-table"
 
 interface RenewalRequest {
   id: string
@@ -160,10 +161,10 @@ function TenantRenewalContent() {
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Status</p>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
-                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              <TableBadge variant="success">
+                <span className="h-1.5 w-1.5 rounded-full bg-success mr-1.5 inline-block" />
                 Active
-              </span>
+              </TableBadge>
             </div>
           </div>
         </CardContent>

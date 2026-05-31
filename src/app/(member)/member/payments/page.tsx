@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui"
 import { CreditCard, CheckCircle, IndianRupee, Calendar, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatsGrid } from "@/components/ui/stat-card"
@@ -59,11 +60,7 @@ export default function MemberPaymentsPage() {
         </CardHeader>
         <CardContent>
           {payments.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No payments recorded yet</p>
-              <p className="text-sm">Your payment history will appear here</p>
-            </div>
+            <EmptyState variant="minimal" icon={CreditCard} title="No payments recorded yet" description="Your payment history will appear here" />
           ) : (
             <div className="space-y-3">
               {payments.map((payment) => (

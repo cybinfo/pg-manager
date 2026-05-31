@@ -1,17 +1,6 @@
-/**
- * Add New Person Page
- *
- * Form to create a new person in the central registry
- * Uses single-column layout with DetailSection for consistency
- */
-
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,27 +22,17 @@ import {
   Loader2,
   Camera,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 import { PermissionGuard } from "@/components/auth"
 import { FormField, Select, EmailInput } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
-import {
-  PersonFormData,
-  EmergencyContact,
-  Gender,
-} from "@/types/people.types"
+import { IdDocumentEntry } from "@/components/forms"
 import {
   GENDER_OPTIONS,
   BLOOD_GROUP_OPTIONS,
   INDIAN_STATE_OPTIONS,
   RELATION_OPTIONS,
 } from "@/lib/constants/form-options"
-import { validatePhone as validateIndianMobile } from "@/lib/phone"
-import { validateAadhaar, validatePAN } from "@/lib/validators"
-import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { logger } from "@/lib/logger"
+import { usePeopleCreateForm, type Gender } from "@/lib/hooks/forms/usePeopleCreateForm"
 
 export default function NewPersonPage() {
   return (
@@ -64,202 +43,23 @@ export default function NewPersonPage() {
 }
 
 function NewPersonContent() {
-  const router = useRouter()
-  const { user } = useAuth()
-  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/people", defaultLabel: "All People" })
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<PersonFormData>({
-    name: "",
-    phone: "",
-    email: "",
-    photo_url: "",
-    tags: [],
-    emergency_contacts: [],
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  // ID Documents with file uploads
-  const [idDocuments, setIdDocuments] = useState<IdDocumentData[]>([{ ...DEFAULT_ID_DOCUMENT }])
-
-  const updateField = (field: keyof PersonFormData, value: unknown) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
-    }
-  }
-
-  const addEmergencyContact = () => {
-    setFormData((prev) => ({
-      ...prev,
-      emergency_contacts: [
-        ...(prev.emergency_contacts || []),
-        { name: "", phone: "", relation: "" },
-      ],
-    }))
-  }
-
-  const updateEmergencyContact = (index: number, field: keyof EmergencyContact, value: string) => {
-    setFormData((prev) => {
-      const contacts = [...(prev.emergency_contacts || [])]
-      contacts[index] = { ...contacts[index], [field]: value }
-      return { ...prev, emergency_contacts: contacts }
-    })
-  }
-
-  const removeEmergencyContact = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      emergency_contacts: (prev.emergency_contacts || []).filter((_, i) => i !== index),
-    }))
-  }
-
-  // ID Document handlers
-  const updateIdDocument = (index: number, field: keyof IdDocumentData, value: string | string[]) => {
-    const updated = [...idDocuments]
-    updated[index] = { ...updated[index], [field]: value }
-    setIdDocuments(updated)
-  }
-
-  const addIdDocument = () => {
-    setIdDocuments([...idDocuments, { ...DEFAULT_ID_DOCUMENT, type: "PAN Card" }])
-  }
-
-  const removeIdDocument = (index: number) => {
-    if (idDocuments.length > 1) {
-      setIdDocuments(idDocuments.filter((_, i) => i !== index))
-    }
-  }
-
-  const removeDocumentFile = (docIndex: number, fileIndex: number) => {
-    const updated = [...idDocuments]
-    updated[docIndex] = {
-      ...updated[docIndex],
-      file_urls: updated[docIndex].file_urls.filter((_, i) => i !== fileIndex)
-    }
-    setIdDocuments(updated)
-  }
-
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.name?.trim()) {
-      newErrors.name = "Name is required"
-    }
-
-    if (formData.phone && !validateIndianMobile(formData.phone)) {
-      newErrors.phone = "Enter a valid 10-digit mobile number"
-    }
-
-    // Validate ID documents
-    idDocuments.forEach((doc, index) => {
-      if (doc.number.trim()) {
-        if (doc.type === "Aadhaar Card" && !validateAadhaar(doc.number)) {
-          newErrors[`id_doc_${index}`] = "Enter a valid 12-digit Aadhaar number"
-        }
-        if (doc.type === "PAN Card" && !validatePAN(doc.number)) {
-          newErrors[`id_doc_${index}`] = "Enter a valid PAN (e.g., ABCDE1234F)"
-        }
-      }
-    })
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validate()) {
-      showError("Please fix the errors before submitting")
-      return
-    }
-
-    setLoading(true)
-
-    if (!user) {
-      showError("You must be logged in to add a person")
-      setLoading(false)
-      return
-    }
-
-    const supabase = createClient()
-
-    // Check for duplicate phone
-    if (formData.phone) {
-      const { data: existing } = await supabase
-        .from("people")
-        .select("id, name")
-        .eq("phone", formData.phone)
-        .single()
-
-      if (existing) {
-        showError(`A person with this phone already exists: ${existing.name}`)
-        setLoading(false)
-        return
-      }
-    }
-
-    // Extract Aadhaar and PAN from ID documents for quick lookup
-    const aadhaarDoc = idDocuments.find(d => d.type === "Aadhaar Card" && d.number.trim())
-    const panDoc = idDocuments.find(d => d.type === "PAN Card" && d.number.trim())
-
-    // Build ID documents array for JSONB storage
-    const validIdDocuments = idDocuments
-      .filter(d => d.number.trim() || d.file_urls.length > 0)
-      .map(d => ({
-        type: d.type.toLowerCase().replace(/ /g, "_"),
-        number: d.number,
-        file_url: d.file_urls[0] || null,
-        verified: false,
-      }))
-
-    const { data, error } = await supabase
-      .from("people")
-      .insert(withCreatedBy({
-        owner_id: user.id,
-        name: formData.name,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        photo_url: formData.photo_url || null,
-        date_of_birth: formData.date_of_birth || null,
-        gender: formData.gender || null,
-        // Quick lookup fields from ID documents
-        aadhaar_number: aadhaarDoc?.number || null,
-        pan_number: panDoc?.number || null,
-        // Full ID documents with file uploads
-        id_documents: validIdDocuments.length > 0 ? validIdDocuments : [],
-        permanent_address: formData.permanent_address || null,
-        permanent_city: formData.permanent_city || null,
-        permanent_state: formData.permanent_state || null,
-        permanent_pincode: formData.permanent_pincode || null,
-        current_address: formData.current_address || null,
-        current_city: formData.current_city || null,
-        occupation: formData.occupation || null,
-        company_name: formData.company_name || null,
-        designation: formData.designation || null,
-        blood_group: formData.blood_group || null,
-        emergency_contacts: formData.emergency_contacts || [],
-        tags: formData.tags || [],
-        notes: formData.notes || null,
-        source: "manual",
-      }, user.id))
-      .select()
-      .single()
-
-    if (error) {
-      logger.error("Error creating person:", { detail: error })
-      showError("Failed to create person")
-      setLoading(false)
-      return
-    }
-
-    showSuccess("Person added successfully")
-    router.push(`/people/${data.id}`)
-  }
+  const {
+    backHref,
+    backLabel,
+    loading,
+    formData,
+    errors,
+    idDocuments,
+    updateField,
+    addEmergencyContact,
+    updateEmergencyContact,
+    removeEmergencyContact,
+    updateIdDocument,
+    addIdDocument,
+    removeIdDocument,
+    removeDocumentFile,
+    handleSubmit,
+  } = usePeopleCreateForm()
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">

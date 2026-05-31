@@ -56,7 +56,7 @@ export function NotificationSettings({
   }
 
   return (
-    <div className="grid gap-6 max-w-2xl">
+    <div className="grid gap-6 max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

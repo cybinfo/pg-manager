@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/form-components"
@@ -100,10 +101,8 @@ export default function TenantPaymentsPage() {
       {/* Payments List */}
       {payments.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <CreditCard className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No payments yet</h3>
-            <p className="text-muted-foreground">Your payment history will appear here</p>
+          <CardContent className="py-2">
+            <EmptyState variant="minimal" icon={CreditCard} title="No payments yet" description="Your payment history will appear here" />
           </CardContent>
         </Card>
       ) : (

@@ -1,15 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { EmailVerificationCard } from "@/components/auth"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { Owner } from "@/types/settings.types"
+import { useProfileSettings } from "@/lib/hooks/useProfileSettings"
 
 interface ProfileSettingsProps {
   owner: Owner | null
@@ -23,42 +21,10 @@ interface ProfileSettingsProps {
 }
 
 export function ProfileSettings({ owner, setOwner, userId, profile }: ProfileSettingsProps) {
-  const [saving, setSaving] = useState(false)
-  const [profileForm, setProfileForm] = useState({
-    name: owner?.name || "",
-    phone: owner?.phone || "",
-    business_name: owner?.business_name || "",
-  })
-
-  const saveProfile = async () => {
-    if (!owner) return
-
-    setSaving(true)
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("owners")
-        .update({
-          name: profileForm.name,
-          phone: profileForm.phone || null,
-          business_name: profileForm.business_name || null,
-        })
-        .eq("id", owner.id)
-
-      if (error) throw error
-
-      setOwner({ ...owner, ...profileForm })
-      showSuccess("Profile updated successfully")
-    } catch (_error) {
-      showError("Failed to update profile")
-    } finally {
-      setSaving(false)
-    }
-  }
+  const { saving, profileForm, setProfileForm, saveProfile } = useProfileSettings({ owner, setOwner })
 
   return (
-    <div className="grid gap-6 max-w-2xl">
+    <div className="grid gap-6 max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle>Business Profile</CardTitle>

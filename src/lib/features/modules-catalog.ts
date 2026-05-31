@@ -258,6 +258,25 @@ export const MODULES_CATALOG: ModuleCatalog = [
       { key: 'inquiryConversion', name: 'One-Click Conversion', description: 'Convert a qualified inquiry directly into a tenant or member.', wired: true },
     ],
   },
+  {
+    key: 'businesses',
+    name: 'Businesses',
+    description: 'Manage your businesses, brands, and physical locations as a unified hierarchy.',
+    features: [
+      { key: 'gstTracking', name: 'GST & Legal Details', description: 'Store GST number, PAN, and legal registration details per business.', wired: true },
+      { key: 'locationManagement', name: 'Location Management', description: 'Manage multiple physical locations per business.', wired: true },
+      { key: 'businessProfile', name: 'Business Profile', description: 'Business profile with logo, contact, and operating details.', wired: true },
+    ],
+  },
+  {
+    key: 'locations',
+    name: 'Locations',
+    description: 'Physical premises where your business operations run.',
+    features: [
+      { key: 'gpsCoordinates', name: 'GPS Coordinates', description: 'Store latitude and longitude for map integration.', wired: true },
+      { key: 'operatingHours', name: 'Operating Hours', description: 'Define opening/closing times and operating days per location.', wired: true },
+    ],
+  },
 ]
 
 /** Map from module key to definition — O(1) lookup */

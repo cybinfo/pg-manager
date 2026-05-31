@@ -10,6 +10,7 @@ import {
   Bell,
   Search,
   User,
+  Users,
   Building2,
   Home,
   Phone,
@@ -21,7 +22,7 @@ import {
 import { showSuccess } from "@/lib/toast-helpers"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PageHeader } from "@/components/ui"
+import { DetailHero, EmptyState } from "@/components/ui"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
 import { formatDate } from "@/lib/format"
 import { FeatureGuard, PermissionGuard } from "@/components/auth"
@@ -60,9 +61,12 @@ export default function PaymentRemindersPage() {
     <FeatureGuard module="payments" feature="paymentReminders">
       <PermissionGuard permission="payments.view">
     <div className="space-y-6">
-      <PageHeader
+      <DetailHero
         title="Payment Reminders"
+        subtitle="Send WhatsApp reminders to tenants with pending dues"
+        icon={Bell}
         backHref="/payments"
+        backLabel="Back to Payments"
         breadcrumbs={[
           { label: "Payments", href: "/payments" },
           { label: "Payment Reminders" },
@@ -136,12 +140,8 @@ export default function PaymentRemindersPage() {
         </Card>
       ) : filteredTenants.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No tenants found</h3>
-            <p className="text-muted-foreground text-center">
-              Try a different search term
-            </p>
+          <CardContent>
+            <EmptyState icon={Users} title="No tenants found" description="No tenants with outstanding balances" />
           </CardContent>
         </Card>
       ) : (

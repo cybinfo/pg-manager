@@ -20,6 +20,7 @@ import { createTotalMetric, createCountMetric, createTodayCountMetric, MetricCon
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createDateFilter } from "@/lib/filter-presets"
 import { formatDate, formatTime } from "@/lib/format"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -157,9 +158,12 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
   if (checkedIn.length === 0) {
     return (
       <Card className="mb-6 border-dashed">
-        <CardContent className="py-8 text-center">
-          <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-muted-foreground">No members currently checked in</p>
+        <CardContent className="py-4">
+          <EmptyState
+            icon={Users}
+            title="No members checked in"
+            description="No members are currently checked in to the library"
+          />
         </CardContent>
       </Card>
     )

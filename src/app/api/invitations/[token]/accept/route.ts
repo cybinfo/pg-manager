@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { apiSuccess, notFound, apiError, ErrorCodes } from "@/lib/api-response"
 import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
+import { getNowISO } from "@/lib/date-helpers"
 
 export async function POST(
   request: NextRequest,
@@ -68,7 +69,7 @@ export async function POST(
       .from("invitations")
       .update({
         status: "accepted",
-        accepted_at: new Date().toISOString(),
+        accepted_at: getNowISO(),
         accepted_by: user.id,
       })
       .eq("id", invitation.id)

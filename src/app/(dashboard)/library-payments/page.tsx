@@ -7,7 +7,7 @@
 "use client"
 
 import { CreditCard, Users, Calendar, Receipt } from "lucide-react"
-import { Column } from "@/components/ui/data-table"
+import { Column, TableBadge } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -15,6 +15,7 @@ import { createTotalMetric, createStatusMetric, createSumMetric, createTodayCoun
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_PAYMENT_METHOD_FILTER, LIBRARY_PAYMENT_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { getTodayISO } from "@/lib/date-helpers"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
 import { LIBRARY_PAYMENT_STATUS_OPTIONS } from "@/lib/status"
@@ -103,14 +104,16 @@ const columns: Column<PaymentItem>[] = [
     render: (payment) => {
       const config = LIBRARY_PAYMENT_TYPE_CONFIG[payment.payment_type as keyof typeof LIBRARY_PAYMENT_TYPE_CONFIG]
       return (
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-          payment.payment_type === "subscription" ? "bg-info/10 text-info" :
-          payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
-          payment.payment_type === "locker_deposit" ? "bg-warning/10 text-warning" :
-          "bg-muted text-muted-foreground"
-        }`}>
+        <TableBadge
+          variant={
+            payment.payment_type === "subscription" ? "info" :
+            payment.payment_type === "locker_deposit" ? "warning" :
+            payment.payment_type === "locker_rent" ? "default" : "muted"
+          }
+          className={payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" : undefined}
+        >
           {config?.label || payment.payment_type}
-        </span>
+        </TableBadge>
       )
     },
   },
@@ -211,7 +214,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     label: "Today's Collection",
     icon: CreditCard,
     compute: (items) => {
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayISO()
       const sum = items
         .filter((p) => p.payment_date === today && p.status === "completed")
         .reduce((sum: number, p) => sum + (Number(p.amount) || 0), 0)

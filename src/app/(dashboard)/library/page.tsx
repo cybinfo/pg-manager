@@ -7,7 +7,7 @@
 "use client"
 
 import { Library, Users, Armchair, MapPin, Clock } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
@@ -168,18 +168,10 @@ const columns: Column<LibraryItem>[] = [
     defaultVisible: false,
     render: (library) => (
       <div className="flex gap-1 flex-wrap">
-        {library.has_ac && (
-          <span className="px-1.5 py-0.5 bg-info/10 text-info rounded text-xs">AC</span>
-        )}
-        {library.has_wifi && (
-          <span className="px-1.5 py-0.5 bg-success/10 text-success rounded text-xs">WiFi</span>
-        )}
-        {library.has_lockers && (
-          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Lockers</span>
-        )}
-        {library.has_parking && (
-          <span className="px-1.5 py-0.5 bg-warning/10 text-warning rounded text-xs">Parking</span>
-        )}
+        {library.has_ac && <TableBadge variant="info">AC</TableBadge>}
+        {library.has_wifi && <TableBadge variant="success">WiFi</TableBadge>}
+        {library.has_lockers && <TableBadge className="bg-purple-100 text-purple-700">Lockers</TableBadge>}
+        {library.has_parking && <TableBadge variant="warning">Parking</TableBadge>}
       </div>
     ),
   },

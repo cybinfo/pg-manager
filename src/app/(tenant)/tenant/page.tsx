@@ -17,6 +17,7 @@ import {
   User
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { EmptyState } from "@/components/ui"
 import { QuickActionLink, PaymentListItem } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
@@ -228,7 +229,7 @@ export default function TenantHomePage() {
           </CardHeader>
           <CardContent>
             {recentPayments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
+              <EmptyState variant="minimal" icon={CreditCard} title="No payments recorded yet" />
             ) : (
               <div className="space-y-3">
                 {recentPayments.map((payment) => (

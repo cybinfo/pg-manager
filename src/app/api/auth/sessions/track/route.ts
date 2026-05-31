@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { unauthorized } from "@/lib/api-response"
+import { unauthorized, badRequest, internalError, apiSuccess } from "@/lib/api-response"
 import { logger } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient()
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!fingerprint) {
-    return NextResponse.json({ error: "fingerprint required" }, { status: 400 })
+    return badRequest("fingerprint required")
   }
 
   // Get IP from headers
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ||
     null
 
-  const now = new Date().toISOString()
+  const now = getNowISO()
 
   const { error } = await supabase
     .from("user_sessions")
@@ -46,8 +47,8 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     logger.error("Error tracking session", { detail: error.message })
-    return NextResponse.json({ error: "Failed to track session" }, { status: 500 })
+    return internalError("Failed to track session")
   }
 
-  return NextResponse.json({ ok: true })
+  return apiSuccess({ ok: true })
 }

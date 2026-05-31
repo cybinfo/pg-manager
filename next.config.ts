@@ -36,14 +36,12 @@ const securityHeaders = [
   },
   {
     // Content Security Policy
-    // Note: 'unsafe-inline' is required in script-src for Next.js hydration scripts.
-    // 'unsafe-eval' has been removed as it is NOT needed by Next.js in production
-    // and significantly weakens XSS protection by allowing eval()/Function() calls.
-    // 'unsafe-inline' in style-src is needed for CSS-in-JS and Tailwind.
+    // 'unsafe-inline' required for Next.js hydration. 'unsafe-eval' required by
+    // React in dev mode (Turbopack stack trace reconstruction) but NOT in production.
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",

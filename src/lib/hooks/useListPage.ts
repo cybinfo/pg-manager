@@ -88,6 +88,8 @@ export {
   LIBRARY_WAITLIST_LIST_CONFIG,
   APPROVALS_LIST_CONFIG,
   AUDIT_EVENT_LIST_CONFIG,
+  BUSINESS_LIST_CONFIG,
+  LOCATION_LIST_CONFIG,
 } from "./list-page/configs"
 
 // Import types for use in this file

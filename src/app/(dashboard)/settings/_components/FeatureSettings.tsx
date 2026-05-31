@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Save, ChevronDown, ChevronRight, Building2, Plus } from "lucide-react"
+import { EmptyState } from "@/components/ui"
 import { useFeatureManagement } from "@/lib/features/use-features"
 import { MODULES_CATALOG } from "@/lib/features/modules-catalog"
 import { BUSINESS_TYPE_LABELS } from "@/lib/features/business-types"
@@ -76,7 +77,7 @@ export function FeatureSettings() {
   }
 
   return (
-    <div className="flex gap-6 min-h-[600px]">
+    <div className="flex gap-6 min-h-[600px] max-w-4xl mx-auto">
       {/* Left pane — workspace (business) list */}
       <div className="w-64 shrink-0 space-y-2">
         <div className="flex items-center justify-between mb-3">
@@ -87,7 +88,7 @@ export function FeatureSettings() {
         </div>
 
         {workspaces.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-8">No businesses found.</p>
+          <EmptyState icon={Building2} title="No businesses found" description="No business types have been configured" />
         )}
 
         {workspaces.map((ws) => {

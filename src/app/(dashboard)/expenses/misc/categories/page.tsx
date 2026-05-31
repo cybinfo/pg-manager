@@ -5,9 +5,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
 import {
-  ArrowLeft,
   Plus,
   Tag,
   ArrowDownLeft,
@@ -28,7 +26,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { PageHeader, TableBadge, EmptyState } from "@/components/ui"
+import { DetailHero, TableBadge, EmptyState } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Dialog,
@@ -243,18 +241,16 @@ export default function MiscCategoriesPage() {
       <PermissionGuard permission="expenses.view">
         <div className="space-y-6">
           {ConfirmDialogElement}
-          {/* Back Link */}
-          <Link
-            href="/expenses/misc"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Transactions
-          </Link>
-
-          <PageHeader
+          <DetailHero
             title="Transaction Categories"
-            description="Manage categories for miscellaneous transactions"
+            subtitle="Manage categories for miscellaneous transactions"
+            icon={Tag}
+            backHref="/expenses/misc"
+            backLabel="Back to Transactions"
+            breadcrumbs={[
+              { label: "Expenses", href: "/expenses/misc" },
+              { label: "Categories" },
+            ]}
             actions={
               <Button onClick={openAddDialog}>
                 <Plus className="h-4 w-4 mr-2" />

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { PageLoading } from "@/components/ui/loading"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, ClipboardCheck } from "lucide-react"
@@ -62,10 +63,10 @@ export function ApprovalSettings({ workspaceId: propWorkspaceId }: ApprovalSetti
     setSaving(false)
   }
 
-  if (loading) return null
+  if (loading) return <PageLoading />
 
   return (
-    <Card>
+    <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">

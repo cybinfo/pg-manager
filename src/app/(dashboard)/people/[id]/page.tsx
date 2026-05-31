@@ -21,6 +21,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { PageLoading } from "@/components/ui/loading"
 import { DetailHero, InfoCard, DetailSection, InfoRow, DetailListSection, DetailPageTemplate, NotFoundState } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import {
   User,
   Phone,
@@ -371,10 +372,10 @@ export default function PersonDetailPage() {
             <div className="flex items-center gap-2 flex-wrap mt-1">
               {person.tags?.map((tag) => <TagBadge key={tag} tag={tag} />)}
               {person.is_verified && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
-                  <BadgeCheck className="h-3 w-3" />
+                <TableBadge variant="success">
+                  <BadgeCheck className="h-3 w-3 mr-1" />
                   Verified
-                </span>
+                </TableBadge>
               )}
             </div>
           }
@@ -627,7 +628,7 @@ export default function PersonDetailPage() {
                         <span className="font-medium">Staff Member</span>
                         <StatusBadge status={staff.is_active ? "active" : "inactive"} label={staff.is_active ? "Active" : "Inactive"} />
                         {staff.user_id && (
-                          <span className="px-2 py-0.5 bg-info/10 text-info rounded-full text-xs font-medium">Can Login</span>
+                          <TableBadge variant="info">Can Login</TableBadge>
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">Added {formatDate(staff.created_at)}</div>
@@ -664,9 +665,9 @@ export default function PersonDetailPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{visit.property_name}</span>
-                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium capitalize">
+                        <TableBadge className="bg-purple-100 text-purple-700 capitalize">
                           {visit.visitor_type.replace("_", " ")}
-                        </span>
+                        </TableBadge>
                       </div>
                       <div className="text-sm text-muted-foreground">{visit.purpose || "No purpose specified"}</div>
                     </div>

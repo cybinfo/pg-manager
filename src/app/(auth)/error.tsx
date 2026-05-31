@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, LogIn } from "lucide-react"
 import Link from "next/link"
 import { logger } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 
 interface ErrorPageProps {
   error: Error & { digest?: string }
@@ -23,7 +24,7 @@ export default function AuthError({ error, reset }: ErrorPageProps) {
       message: error.message,
       digest: error.digest,
       stack: error.stack,
-      timestamp: new Date().toISOString(),
+      timestamp: getNowISO(),
     })
   }, [error])
 

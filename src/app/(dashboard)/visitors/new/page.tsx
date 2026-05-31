@@ -22,7 +22,7 @@ import {
   VisitDetailsCard,
   useVisitorForm,
 } from "./_components"
-import { DetailHero, DetailSection } from "@/components/ui"
+import { DetailHero, DetailSection, EmptyState } from "@/components/ui"
 
 export default function NewVisitorPage() {
   return (
@@ -75,16 +75,12 @@ function NewVisitorContent() {
         />
 
         <DetailSection title="No Properties Found" icon={Building2}>
-          <div className="flex flex-col items-center justify-center py-8">
-            <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No properties found</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              You need to create a property first
-            </p>
-            <Link href="/properties/new">
-              <Button>Add Property First</Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={Building2}
+            title="No properties found"
+            description="Add a property before logging visitors"
+            action={{ label: "Add Property First", href: "/properties/new" }}
+          />
         </DetailSection>
       </div>
     )

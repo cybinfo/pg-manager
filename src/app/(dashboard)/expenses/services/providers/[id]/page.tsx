@@ -31,6 +31,7 @@ import {
   DetailSection,
   InfoRow,
   NotFoundState,
+  EmptyState,
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
@@ -318,7 +319,7 @@ export default function ServiceProviderDetailPage({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground py-4">No services recorded yet</p>
+                <EmptyState variant="minimal" icon={Wrench} title="No services recorded yet" />
               )}
             </DetailSection>
 

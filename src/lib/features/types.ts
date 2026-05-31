@@ -41,6 +41,8 @@ export type ModuleKey =
   | 'exitClearance'
   | 'activityLog'
   | 'inquiries'
+  | 'businesses'
+  | 'locations'
 
 export interface ModuleState {
   enabled: boolean

@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { LIBRARY_WAITLIST_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { ListPageTemplate } from "@/components/shared"
-import { Column } from "@/components/ui/data-table"
+import { Column, TableBadge } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/columns"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter, TIME_SLOT_FILTER } from "@/lib/filter-presets"
@@ -125,9 +125,9 @@ export default function LibraryWaitlistPage() {
       defaultVisible: true,
       render: (item) => (
         item.preferred_slot ? (
-          <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+          <TableBadge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
             {item.preferred_slot}
-          </span>
+          </TableBadge>
         ) : "—"
       ),
     },

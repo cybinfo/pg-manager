@@ -43,7 +43,7 @@ import {
 } from "@/lib/services/reconciliation"
 import type { UnreconciledPayment, OutstandingBill, MatchProposal } from "@/lib/services/reconciliation"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PageHeader } from "@/components/ui/page-header"
+import { DetailHero, EmptyState } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { cn } from "@/lib/utils"
 
@@ -194,9 +194,9 @@ function ReconciliationView() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader
+      <DetailHero
         title="Reconcile Payments"
-        description="Match unreconciled payments to outstanding bills"
+        subtitle="Match unreconciled payments to outstanding bills"
         icon={Link2}
         backHref="/payments"
         backLabel="Back to Payments"
@@ -440,10 +440,7 @@ function ReconciliationView() {
             </CardHeader>
             <CardContent>
               {availablePayments.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>All payments have been matched</p>
-                </div>
+                <EmptyState variant="minimal" icon={CheckCircle2} title="All payments have been matched" />
               ) : (
                 <div className="space-y-2 max-h-[500px] overflow-y-auto">
                   {availablePayments.map((payment) => {
@@ -511,10 +508,7 @@ function ReconciliationView() {
             </CardHeader>
             <CardContent>
               {availableBills.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No outstanding bills available</p>
-                </div>
+                <EmptyState variant="minimal" icon={FileText} title="No outstanding bills available" />
               ) : (
                 <div className="space-y-2 max-h-[500px] overflow-y-auto">
                   {sortedBills.map((bill) => {

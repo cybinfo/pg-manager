@@ -17,6 +17,7 @@ import {
   InfoRow,
   DetailPageTemplate,
   NotFoundState,
+  EmptyState,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -42,6 +43,7 @@ import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PERMISSIONS } from "@/lib/auth/types"
@@ -512,10 +514,7 @@ export default function StaffDetailPage() {
         >
           {/* Current Roles */}
           {userRoles.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No roles assigned</p>
-            </div>
+            <EmptyState variant="minimal" icon={Shield} title="No roles assigned" />
           ) : (
             <div className="space-y-2">
               {userRoles.map((userRole) => (
@@ -524,9 +523,9 @@ export default function StaffDetailPage() {
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-sm font-medium">
+                    <TableBadge className="bg-purple-100 text-purple-700">
                       {userRole.role?.name}
-                    </span>
+                    </TableBadge>
                     {userRole.property ? (
                       <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Building2 className="h-3 w-3" />
@@ -607,10 +606,7 @@ export default function StaffDetailPage() {
             icon={Shield}
           >
             {deniedPermissions.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
-                <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No permission denials active</p>
-              </div>
+              <EmptyState variant="minimal" icon={Shield} title="No permission denials active" />
             ) : (
               <div className="space-y-2 mb-4">
                 {deniedPermissions.map((perm) => (

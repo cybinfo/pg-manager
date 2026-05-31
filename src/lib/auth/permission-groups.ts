@@ -116,4 +116,22 @@ export const PERMISSION_GROUPS: Record<string, PermissionGroup> = {
       { key: "settings.edit", label: "Edit settings" },
     ],
   },
+  businesses: {
+    label: "Businesses",
+    permissions: [
+      { key: "businesses.view", label: "View businesses" },
+      { key: "businesses.create", label: "Create businesses" },
+      { key: "businesses.edit", label: "Edit businesses" },
+      { key: "businesses.delete", label: "Delete businesses" },
+    ],
+  },
+  locations: {
+    label: "Locations",
+    permissions: [
+      { key: "locations.view", label: "View locations" },
+      { key: "locations.create", label: "Create locations" },
+      { key: "locations.edit", label: "Edit locations" },
+      { key: "locations.delete", label: "Delete locations" },
+    ],
+  },
 }

@@ -69,6 +69,7 @@ import { formatDate, formatTime } from "@/lib/format"
 import { softDelete } from "@/lib/audit"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { TableBadge } from "@/components/ui/data-table"
 import { LIBRARY_MEMBER_STATUS_CONFIG, LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -281,9 +282,9 @@ export default function LibraryMemberDetailPage() {
               </Link>
             )}
             {member.preferred_slot && (
-              <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+              <TableBadge className="bg-purple-100 text-purple-700">
                 {member.preferred_slot}
-              </span>
+              </TableBadge>
             )}
           </div>
         }
@@ -541,7 +542,7 @@ export default function LibraryMemberDetailPage() {
                     {pn.type?.charAt(0).toUpperCase() + pn.type?.slice(1) || "Phone"}
                   </span>
                   {pn.is_whatsapp && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">WA</span>
+                    <TableBadge variant="success" className="text-[10px] px-1.5 py-0.5">WA</TableBadge>
                   )}
                 </div>
                 <div className="flex items-center gap-2">

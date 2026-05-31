@@ -8,6 +8,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getOrCreateFingerprint } from "@/lib/auth/device"
 import { formatDate } from "@/lib/format"
 import { logger } from "@/lib/logger"
+import { EmptyState } from "@/components/ui"
 
 interface UserSession {
   id: string
@@ -74,7 +75,7 @@ export function SessionSettings() {
   const otherSessions = sessions.filter((s) => !s.is_current)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -95,9 +96,7 @@ export function SessionSettings() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : sessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              No active sessions found.
-            </p>
+            <EmptyState icon={Monitor} title="No active sessions" description="No other active sessions found" />
           ) : (
             <div className="space-y-3">
               {sessions.map((session) => (

@@ -49,6 +49,7 @@ import { applyExitClearanceCompletion } from "@/lib/workflows/exit.workflow"
 import Link from "next/link"
 import { Select } from "@/components/ui/form-components"
 import { DatePicker } from "@/components/ui/date-picker"
+import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 
 // ─── Step definitions ────────────────────────────────────────────────────────
 
@@ -58,13 +59,6 @@ const STEPS = [
   { id: 3, label: "Settlement", icon: IndianRupee },
   { id: 4, label: "Complete", icon: CheckCircle },
 ] as const
-
-const PAYMENT_MODES = [
-  { value: "cash", label: "Cash" },
-  { value: "upi", label: "UPI" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "cheque", label: "Cheque" },
-]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -748,7 +742,7 @@ export default function ExitClearanceDetailPage() {
               <Select
                 value={formData.settlement_mode}
                 onChange={(e) => setFormData({ ...formData, settlement_mode: e.target.value })}
-                options={PAYMENT_MODES}
+                options={PAYMENT_METHOD_OPTIONS}
                 placeholder="Select how payment was made"
               />
             </div>

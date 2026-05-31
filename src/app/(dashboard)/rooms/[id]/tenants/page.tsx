@@ -103,12 +103,7 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("name", "Tenant Name"),
-  statusFilterColumn([
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-    { value: "notice", label: "On Notice" },
-    { value: "exited", label: "Exited" },
-  ]),
+  statusFilterColumn(TENANT_HISTORY_STATUS_OPTIONS),
   numberFilterColumn("monthly_rent", "Monthly Rent"),
   dateFilterColumn("check_in_date", "Check-in Date"),
 ]

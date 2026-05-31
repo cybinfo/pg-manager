@@ -66,6 +66,8 @@ export {
   LIBRARY_LOCKER_DETAIL_CONFIG,
   LIBRARY_SUBSCRIPTION_DETAIL_CONFIG,
   LIBRARY_PAYMENT_DETAIL_CONFIG,
+  BUSINESS_DETAIL_CONFIG,
+  LOCATION_DETAIL_CONFIG,
 } from "./detail-page/types"
 
 // ============================================

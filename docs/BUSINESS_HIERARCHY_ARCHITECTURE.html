@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Hierarchy Architecture — ManageKar</title>
+  <style>
+    :root {
+      --brand:        #0d9488;
+      --brand-light:  #f0fdfa;
+      --brand-dark:   #0f766e;
+      --amber:        #f59e0b;
+      --amber-light:  #fffbeb;
+      --red:          #ef4444;
+      --red-light:    #fef2f2;
+      --blue:         #3b82f6;
+      --blue-light:   #eff6ff;
+      --purple:       #8b5cf6;
+      --purple-light: #f5f3ff;
+      --gray-50:      #f9fafb;
+      --gray-100:     #f3f4f6;
+      --gray-200:     #e5e7eb;
+      --gray-300:     #d1d5db;
+      --gray-500:     #6b7280;
+      --gray-700:     #374151;
+      --gray-900:     #111827;
+      --text:         #1f2937;
+      --border:       #e5e7eb;
+      --radius:       10px;
+      --shadow:       0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md:    0 4px 12px rgba(0,0,0,.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text);
+      background: #ffffff;
+      line-height: 1.65;
+    }
+
+    /* ── Layout ─────────────────────────────────────── */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--gray-50);
+      border-right: 1px solid var(--border);
+      padding: 32px 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav .logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 28px;
+    }
+    nav .logo-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: 700;
+    }
+    nav .logo-text { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+    nav .logo-sub  { font-size: 11px; color: var(--gray-500); }
+
+    nav ul { list-style: none; }
+    nav ul li { margin-bottom: 2px; }
+    nav ul li a {
+      display: block; padding: 7px 12px; border-radius: 7px;
+      text-decoration: none; font-size: 13px; color: var(--gray-700);
+      transition: background .15s, color .15s;
+    }
+    nav ul li a:hover { background: var(--gray-200); color: var(--gray-900); }
+    nav ul li a.active { background: var(--brand-light); color: var(--brand-dark); font-weight: 600; }
+    nav .nav-section {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--gray-500);
+      padding: 16px 12px 6px;
+    }
+
+    main {
+      flex: 1;
+      max-width: 860px;
+      padding: 48px 56px;
+      overflow: auto;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    .doc-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 28px;
+      margin-bottom: 44px;
+    }
+    .doc-header .badge {
+      display: inline-block;
+      background: var(--amber-light); color: var(--amber);
+      border: 1px solid #fde68a;
+      font-size: 11px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .doc-header h1 {
+      font-size: 32px; font-weight: 800; color: var(--gray-900);
+      letter-spacing: -.02em; line-height: 1.2; margin-bottom: 12px;
+    }
+    .doc-meta {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-size: 13px; color: var(--gray-500);
+    }
+    .doc-meta span { display: flex; align-items: center; gap: 5px; }
+
+    /* ── Typography ─────────────────────────────────── */
+    h2 {
+      font-size: 22px; font-weight: 700; color: var(--gray-900);
+      margin: 52px 0 18px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: -.01em;
+    }
+    h3 {
+      font-size: 16px; font-weight: 700; color: var(--gray-900);
+      margin: 28px 0 12px;
+    }
+    h4 {
+      font-size: 14px; font-weight: 600; color: var(--gray-700);
+      margin: 20px 0 8px;
+    }
+    p { margin-bottom: 14px; font-size: 15px; }
+    strong { font-weight: 700; }
+    em { color: var(--gray-500); font-style: italic; }
+
+    /* ── Section number badge ───────────────────────── */
+    .section-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--brand); color: white;
+      font-size: 13px; font-weight: 700;
+      margin-right: 10px; flex-shrink: 0; vertical-align: middle;
+    }
+    h2 .section-num { font-size: 12px; }
+
+    /* ── Code / Pre ─────────────────────────────────── */
+    pre {
+      background: var(--gray-900); color: #e2e8f0;
+      border-radius: var(--radius); padding: 20px 24px;
+      font-size: 13px; line-height: 1.7; overflow-x: auto;
+      margin: 16px 0 20px; font-family: 'SF Mono', 'Fira Code', monospace;
+      box-shadow: var(--shadow-md);
+    }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px; background: var(--gray-100);
+      padding: 2px 6px; border-radius: 4px; color: var(--brand-dark);
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+
+    .pre-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--gray-500);
+      margin-bottom: 6px;
+    }
+
+    /* ── Tables ─────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 18px 0 24px; border-radius: var(--radius); box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th {
+      background: var(--gray-900); color: #f9fafb;
+      padding: 11px 16px; text-align: left; font-weight: 600;
+      font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+    }
+    thead th:first-child { border-radius: var(--radius) 0 0 0; }
+    thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+    tbody tr:nth-child(even) { background: var(--gray-50); }
+    tbody td {
+      padding: 11px 16px; border-bottom: 1px solid var(--border);
+      vertical-align: top; line-height: 1.5;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    .check { color: var(--brand); font-weight: 700; font-size: 16px; }
+    .center { text-align: center; }
+
+    /* ── Cards ──────────────────────────────────────── */
+    .card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px 24px; margin: 16px 0; background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 14px; font-weight: 700; color: var(--gray-900);
+      margin-bottom: 10px;
+    }
+    .card p { font-size: 14px; margin-bottom: 6px; }
+    .card p:last-child { margin-bottom: 0; }
+
+    .callout {
+      border-left: 4px solid var(--brand);
+      background: var(--brand-light);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 16px 20px; margin: 20px 0; font-size: 14px;
+    }
+    .callout.warning {
+      border-color: var(--amber); background: var(--amber-light);
+    }
+    .callout.danger {
+      border-color: var(--red); background: var(--red-light);
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* ── Scenario cards ─────────────────────────────── */
+    .scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+    .scenario {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; background: #fff; box-shadow: var(--shadow);
+    }
+    .scenario-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--brand); margin-bottom: 6px;
+    }
+    .scenario blockquote {
+      font-size: 13px; color: var(--gray-700); font-style: italic;
+      border-left: 3px solid var(--brand-light);
+      padding-left: 12px; margin: 8px 0;
+    }
+    .scenario pre {
+      font-size: 12px; padding: 12px 14px; margin: 10px 0 0;
+    }
+
+    /* ── Hierarchy diagram ──────────────────────────── */
+    .hierarchy {
+      background: var(--gray-900); color: #e2e8f0;
+      border-radius: var(--radius); padding: 28px 32px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px; line-height: 1.85; overflow-x: auto;
+      margin: 20px 0; box-shadow: var(--shadow-md);
+    }
+    .h-workspace { color: #94a3b8; }
+    .h-business  { color: #34d399; font-weight: 700; }
+    .h-location  { color: #60a5fa; font-weight: 700; }
+    .h-op        { color: #f59e0b; }
+    .h-detail    { color: #a78bfa; }
+    .h-comment   { color: #64748b; font-style: italic; }
+    .h-connector { color: #475569; }
+
+    /* ── Decision cards ─────────────────────────────── */
+    .decision {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; margin: 20px 0; box-shadow: var(--shadow);
+    }
+    .decision-header {
+      background: var(--gray-900); color: white;
+      padding: 14px 20px; display: flex; gap: 12px; align-items: center;
+    }
+    .decision-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--brand); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .decision-title { font-size: 15px; font-weight: 700; }
+    .decision-body  { padding: 18px 20px; }
+    .decision-body p { font-size: 14px; margin-bottom: 12px; }
+
+    .options { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+    .option {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 16px; font-size: 14px;
+    }
+    .option.recommended {
+      border-color: var(--brand); background: var(--brand-light);
+    }
+    .option-label {
+      font-weight: 700; font-size: 13px; margin-bottom: 4px;
+    }
+    .option.recommended .option-label { color: var(--brand-dark); }
+    .option-pro  { color: #059669; font-size: 13px; }
+    .option-con  { color: var(--red);  font-size: 13px; }
+
+    .rec-badge {
+      display: inline-block; background: var(--brand); color: white;
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; margin-left: 8px; vertical-align: middle;
+    }
+
+    /* ── Open questions ─────────────────────────────── */
+    .questions { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+    .question {
+      display: flex; gap: 14px; align-items: flex-start;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px; background: #fff;
+    }
+    .q-num {
+      width: 28px; height: 28px; flex-shrink: 0;
+      border-radius: 50%; background: var(--amber);
+      color: white; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .q-body { flex: 1; }
+    .q-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .q-options { font-size: 13px; color: var(--gray-500); }
+    .q-impact {
+      font-size: 12px; color: var(--amber);
+      font-weight: 600; margin-top: 4px;
+    }
+
+    /* ── Analogy table ──────────────────────────────── */
+    .analogy {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 0; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      margin: 20px 0; box-shadow: var(--shadow);
+    }
+    .analogy-cell {
+      padding: 14px 18px; border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border); font-size: 14px;
+    }
+    .analogy-cell:nth-child(3n) { border-right: none; }
+    .analogy-cell.header {
+      background: var(--gray-900); color: white;
+      font-size: 12px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    /* ── Layers ─────────────────────────────────────── */
+    .layers { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 24px 0; }
+    .layer {
+      border-radius: var(--radius); padding: 18px 20px;
+      box-shadow: var(--shadow); position: relative;
+    }
+    .layer-1 { background: #f0fdf4; border: 2px solid #34d399; }
+    .layer-2 { background: #eff6ff; border: 2px solid #60a5fa; }
+    .layer-3 { background: #fffbeb; border: 2px solid #f59e0b; }
+    .layer-badge {
+      font-size: 10px; font-weight: 800; letter-spacing: .1em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .layer-1 .layer-badge { color: #059669; }
+    .layer-2 .layer-badge { color: #2563eb; }
+    .layer-3 .layer-badge { color: #d97706; }
+    .layer-name { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--gray-900); }
+    .layer p { font-size: 13px; color: var(--gray-600); line-height: 1.5; margin: 0; }
+
+    /* ── Unlocks ─────────────────────────────────────── */
+    .unlocks { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 20px 0; }
+    .unlock {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; box-shadow: var(--shadow);
+    }
+    .unlock-icon { font-size: 24px; margin-bottom: 8px; }
+    .unlock-phase {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; margin-bottom: 6px;
+    }
+    .unlock-phase.now    { color: var(--brand); }
+    .unlock-phase.soon   { color: var(--blue); }
+    .unlock-phase.future { color: var(--purple); }
+    .unlock-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .unlock ul { font-size: 13px; color: var(--gray-600); padding-left: 16px; }
+    .unlock ul li { margin-bottom: 4px; }
+
+    /* ── Footer ─────────────────────────────────────── */
+    .doc-footer {
+      margin-top: 60px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px; color: var(--gray-500);
+      text-align: center;
+    }
+
+    /* ── Schema column ──────────────────────────────── */
+    .comment { color: #64748b; }
+    .kw      { color: #f472b6; }
+    .type    { color: #34d399; }
+    .col     { color: #93c5fd; }
+    .ref     { color: #fbbf24; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar Navigation -->
+  <nav>
+    <div class="logo">
+      <div class="logo-icon">MK</div>
+      <div>
+        <div class="logo-text">ManageKar</div>
+        <div class="logo-sub">Architecture Docs</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Document</div>
+    <ul>
+      <li><a href="#why">1. Why This Exists</a></li>
+      <li><a href="#problem">2. The Problem</a></li>
+      <li><a href="#scenarios">3. Real-World Scenarios</a></li>
+      <li><a href="#three-layers">4. The Three Layers</a></li>
+      <li><a href="#hierarchy">5. Full Hierarchy</a></li>
+      <li><a href="#ownership">6. What Each Layer Owns</a></li>
+      <li><a href="#schema">7. Proposed Schema</a></li>
+      <li><a href="#naming">8. Naming Decisions</a></li>
+      <li><a href="#decisions">9. Hard Decisions</a></li>
+      <li><a href="#migration">10. Migration Plan</a></li>
+      <li><a href="#navigation">11. UI &amp; Navigation</a></li>
+      <li><a href="#unlocks">12. What This Unlocks</a></li>
+      <li><a href="#open">13. Open Questions</a></li>
+      <li><a href="#unchanged">14. What Stays the Same</a></li>
+      <li><a href="#analogy">15. Analogy Summary</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- Header -->
+    <div class="doc-header">
+      <div class="badge">⚠ Design / Pre-Implementation — For Review</div>
+      <h1>Business Hierarchy Architecture</h1>
+      <div class="doc-meta">
+        <span>📅 2026-05-31</span>
+        <span>✍ Rajat Seth</span>
+        <span>📁 ManageKar Platform</span>
+        <span>🔖 v1.0 Draft</span>
+      </div>
+    </div>
+
+
+    <!-- Section 1 -->
+    <h2 id="why"><span class="section-num">1</span>Why This Document Exists</h2>
+    <p>ManageKar currently has two operational modules — PG Manager and Library Manager. Each module was built with its own "root business entity":</p>
+    <ul style="font-size:15px; padding-left:22px; margin-bottom:14px;">
+      <li>PG Manager created <code>properties</code> (buildings with rooms and beds)</li>
+      <li>Library Manager created <code>libraries</code> (library locations with sections and seats)</li>
+    </ul>
+    <p>As we add Gym, Hospital, Hotel, Food, School, and other modules, each will follow the same pattern: create their own root entity with their own <code>name</code>, <code>address</code>, <code>phone</code>, <code>workspace_id</code>, and <code>owner_id</code> columns.</p>
+    <div class="callout">
+      <strong>The core problem</strong>
+      This is the same fragmentation that existed with identity data before the <code>people</code> table. The <code>people</code> table solved identity for persons. This document proposes solving it for <strong>businesses and their physical locations</strong>.
+    </div>
+
+
+    <!-- Section 2 -->
+    <h2 id="problem"><span class="section-num">2</span>The Problem in Concrete Terms</h2>
+
+    <h3>2.1 — Data Duplication</h3>
+    <p>Today, address and contact data is duplicated per module:</p>
+    <pre><code>properties.address  = "123 FC Road, Pune"
+properties.phone    = "9876543210"
+
+libraries.address   = "123 FC Road, Pune"   <span class="comment">← same building, copied</span>
+libraries.phone     = "9876543210"           <span class="comment">← same number, copied</span></code></pre>
+    <p>One update to the address requires touching every module table separately. With 6+ future modules, this is unmanageable.</p>
+
+    <h3>2.2 — No GST / Legal Identity Layer</h3>
+    <p>GST number, PAN, legal business name, and registration number have no home today. They logically belong to a <strong>legal entity</strong>, not to a PG property or a library. There is currently nowhere to store this data on the platform.</p>
+
+    <h3>2.3 — No Unified Business View</h3>
+    <p>An owner who runs 3 PGs, 1 library, and 1 tiffin service has no single dashboard view of "my businesses." They see a PG list and a library list — siloed module views with no parent concept unifying them.</p>
+
+    <h3>2.4 — The Module Explosion Problem</h3>
+    <p>Every new module added to ManageKar currently requires a new root entity table with duplicate address columns, duplicate contact columns, and no connection to existing entities at the same physical address. This is unsustainable at scale.</p>
+
+
+    <!-- Section 3 -->
+    <h2 id="scenarios"><span class="section-num">3</span>Real-World Scenarios</h2>
+    <p>These are real patterns observed among Indian SMB owners. Any architecture must handle all of them without special-casing.</p>
+
+    <div class="scenarios">
+      <div class="scenario">
+        <div class="scenario-label">Scenario A — Simple</div>
+        <blockquote>Rajesh runs ONE PG at one address. 20 rooms.</blockquote>
+        <pre><code>workspace
+  └─ business
+       └─ location
+            └─ PG (20 rooms)</code></pre>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-label">Scenario B — Multiple Locations, Same Type</div>
+        <blockquote>Sharma Ji runs PGs in Koregaon Park, Baner, and Kothrud. Same brand. Same GST.</blockquote>
+        <pre><code>workspace
+  └─ business "Sharma PG"
+       ├─ location "KP"   → PG
+       ├─ location "Baner" → PG
+       └─ location "Kothrud" → PG</code></pre>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-label">Scenario C — Multiple Types at the SAME Location ⚠</div>
+        <blockquote>Patel Ji's building: Ground floor PG, first floor Library, Kitchen Tiffin service.</blockquote>
+        <pre><code>workspace
+  └─ business
+       └─ location "FC Road"
+            ├─ PG (30 rooms)
+            ├─ Library (60 seats)
+            └─ Food (200 subscriptions)</code></pre>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-label">Scenario D — Multiple Types at DIFFERENT Locations</div>
+        <blockquote>Gupta Ji: PG at Viman Nagar, Library at Kalyani Nagar, Gym at Aundh.</blockquote>
+        <pre><code>workspace
+  └─ business
+       ├─ location "Viman Nagar" → PG
+       ├─ location "KP"          → Library
+       └─ location "Aundh"       → Gym</code></pre>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-label">Scenario E — Legally Separate Businesses</div>
+        <blockquote>Developer has "Green Valley Hospitality" (GST₁) and "StudyZone Education" (GST₂) under one ManageKar account.</blockquote>
+        <pre><code>workspace
+  ├─ business "Green Valley" (GST₁)
+  │    └─ location → PG
+  └─ business "StudyZone" (GST₂)
+       └─ location → Library</code></pre>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-label">Scenario F — Chain / Franchise</div>
+        <blockquote>"PG One" brand with branches in Pune, Mumbai, Bangalore. Uniform branding, separate financials per branch.</blockquote>
+        <pre><code>workspace
+  └─ business "PG One"
+       ├─ location "Pune"      → PG
+       ├─ location "Mumbai"    → PG
+       └─ location "Bangalore" → PG</code></pre>
+      </div>
+    </div>
+
+    <div class="callout warning">
+      <strong>Scenario C is the critical case.</strong>
+      Any design that puts address on the operation entity (property/library) breaks immediately when a single building hosts two different module types. This was the flaw in the first design attempt. The Location layer exists precisely to solve this.
+    </div>
+
+
+    <!-- Section 4 -->
+    <h2 id="three-layers"><span class="section-num">4</span>The Three Layers</h2>
+    <p>After mapping all scenarios, exactly <strong>three distinct conceptual layers</strong> exist between <code>workspace</code> and operational module data. My first design attempt collapsed all three into two — that was the core mistake.</p>
+
+    <div class="layers">
+      <div class="layer layer-1">
+        <div class="layer-badge">Layer 1</div>
+        <div class="layer-name">Business</div>
+        <p>The legal or brand entity. Has a name, GST number, PAN, legal registration. Completely <strong>operation-type agnostic</strong> — a business can run PGs and libraries and gyms. Owns the GST number.</p>
+      </div>
+      <div class="layer layer-2">
+        <div class="layer-badge">Layer 2</div>
+        <div class="layer-name">Location</div>
+        <p>A physical premises at a specific address. One Business can have many Locations (branches). One Location can host <strong>many operation types</strong> simultaneously. Canonical home for address data.</p>
+      </div>
+      <div class="layer layer-3">
+        <div class="layer-badge">Layer 3</div>
+        <div class="layer-name">Operation</div>
+        <p>The actual module entities: PG Property, Library, Gym, Hotel, Food Service, etc. Contains the module's internal hierarchy (rooms/beds, sections/seats). One Location can have multiple Operations of different types.</p>
+      </div>
+    </div>
+
+
+    <!-- Section 5 -->
+    <h2 id="hierarchy"><span class="section-num">5</span>Full Hierarchy Diagram</h2>
+    <div class="hierarchy">
+<span class="h-workspace">Workspace</span>  <span class="h-comment">(auth + billing boundary — UNCHANGED)</span>
+    │
+    ├── <span class="h-business">Business "Green Valley Hospitality"</span>
+    │   ├── legal_name: "Green Valley Properties Pvt Ltd"
+    │   ├── gst_number: "27XXXXX"
+    │   ├── pan: "AXXXXX"
+    │   │
+    │   ├── <span class="h-location">Location "FC Road Building"</span>
+    │   │   ├── address: "123 FC Road, Shivajinagar, Pune 411004"
+    │   │   │
+    │   │   ├── <span class="h-op">[PG]</span>      Property "FC Road PG"
+    │   │   │   <span class="h-detail">     └─ Rooms → Beds → Tenants</span>
+    │   │   │
+    │   │   ├── <span class="h-op">[Library]</span> Library "FC Road Study Hall"
+    │   │   │   <span class="h-detail">     └─ Sections → Seats → Members</span>
+    │   │   │
+    │   │   └── <span class="h-op">[Food]</span>    Tiffin "Green Valley Kitchen"  <span class="h-comment">← future module</span>
+    │   │       <span class="h-detail">     └─ Plans → Subscriptions</span>
+    │   │
+    │   └── <span class="h-location">Location "Baner Branch"</span>
+    │       ├── address: "456 Baner Road, Pune 411045"
+    │       │
+    │       └── <span class="h-op">[PG]</span>      Property "Baner PG"
+    │           <span class="h-detail">     └─ Rooms → Beds → Tenants</span>
+    │
+    └── <span class="h-business">Business "StudyZone Education"</span>
+        ├── legal_name: "StudyZone Pvt Ltd"
+        ├── gst_number: "27YYYYY"
+        │
+        └── <span class="h-location">Location "Koregaon Park"</span>
+            ├── address: "789 KP Road, Pune 411001"
+            │
+            └── <span class="h-op">[Library]</span> Library "StudyZone KP"
+                <span class="h-detail">     └─ Sections → Seats → Members</span>
+    </div>
+
+
+    <!-- Section 6 -->
+    <h2 id="ownership"><span class="section-num">6</span>What Each Layer Owns</h2>
+    <p>The rule for assigning any attribute: if it describes the legal entity → Business; if it describes a physical place → Location; if it describes operational specifics → Operation.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th class="center">Business</th>
+            <th class="center">Location</th>
+            <th class="center">Operation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Brand / display name</td><td class="center check">✓</td><td class="center" style="color:var(--gray-500);font-size:12px">✓ branch name</td><td class="center" style="color:var(--gray-500);font-size:12px">✓ op name</td></tr>
+          <tr><td>Legal / registered name</td><td class="center check">✓</td><td class="center">—</td><td class="center">—</td></tr>
+          <tr><td>GST number</td><td class="center check">✓</td><td class="center" style="color:var(--gray-500);font-size:12px">additional PoB</td><td class="center">—</td></tr>
+          <tr><td>PAN number</td><td class="center check">✓</td><td class="center">—</td><td class="center">—</td></tr>
+          <tr><td>Business registration no.</td><td class="center check">✓</td><td class="center">—</td><td class="center">—</td></tr>
+          <tr><td>Logo / brand assets</td><td class="center check">✓</td><td class="center">—</td><td class="center">—</td></tr>
+          <tr><td>Bank account (payments)</td><td class="center check">✓</td><td class="center">—</td><td class="center">—</td></tr>
+          <tr><td>Physical address</td><td class="center">—</td><td class="center check">✓</td><td class="center">—</td></tr>
+          <tr><td>GPS coordinates</td><td class="center">—</td><td class="center check">✓</td><td class="center">—</td></tr>
+          <tr><td>Working hours</td><td class="center">—</td><td class="center check">✓</td><td class="center">—</td></tr>
+          <tr><td>Phone number</td><td class="center check">✓</td><td class="center check">✓</td><td class="center">—</td></tr>
+          <tr><td>Email address</td><td class="center check">✓</td><td class="center check">✓</td><td class="center">—</td></tr>
+          <tr><td>Website / social</td><td class="center check">✓</td><td class="center">—</td><td class="center">—</td></tr>
+          <tr><td>Module-specific config</td><td class="center">—</td><td class="center">—</td><td class="center check">✓</td></tr>
+          <tr><td>Rooms / seats / units</td><td class="center">—</td><td class="center">—</td><td class="center check">✓</td></tr>
+          <tr><td>Staff assignments</td><td class="center">—</td><td class="center check">✓</td><td class="center check">✓</td></tr>
+          <tr><td>Revenue / P&amp;L</td><td class="center" style="color:var(--gray-500);font-size:12px">aggregated ↑</td><td class="center" style="color:var(--gray-500);font-size:12px">aggregated ↑</td><td class="center check">✓ source</td></tr>
+          <tr><td>Soft delete / audit trail</td><td class="center check">✓</td><td class="center check">✓</td><td class="center check">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <!-- Section 7 -->
+    <h2 id="schema"><span class="section-num">7</span>Proposed Schema</h2>
+
+    <h3>7.1 — <code>businesses</code> table</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> businesses (
+  <span class="col">id</span>                  <span class="type">UUID</span> <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="col">workspace_id</span>        <span class="type">UUID</span> <span class="kw">NOT NULL REFERENCES</span> <span class="ref">workspaces(id)</span>,
+  <span class="col">owner_id</span>            <span class="type">UUID</span> <span class="kw">NOT NULL REFERENCES</span> <span class="ref">auth.users(id)</span>,
+
+  <span class="comment">-- Identity</span>
+  <span class="col">name</span>                <span class="type">TEXT</span> <span class="kw">NOT NULL</span>,              <span class="comment">-- display / brand name</span>
+  <span class="col">legal_name</span>          <span class="type">TEXT</span>,                       <span class="comment">-- registered company name</span>
+  <span class="col">slug</span>                <span class="type">TEXT</span> <span class="kw">UNIQUE</span>,                <span class="comment">-- for public URLs /b/[slug]</span>
+  <span class="col">description</span>         <span class="type">TEXT</span>,
+  <span class="col">logo_url</span>            <span class="type">TEXT</span>,
+  <span class="col">cover_url</span>           <span class="type">TEXT</span>,
+
+  <span class="comment">-- Legal / Tax (India-first)</span>
+  <span class="col">gst_number</span>          <span class="type">TEXT</span>,
+  <span class="col">pan_number</span>          <span class="type">TEXT</span>,
+  <span class="col">registration_number</span> <span class="type">TEXT</span>,
+  <span class="col">business_type</span>       <span class="type">TEXT</span>,    <span class="comment">-- proprietorship | partnership | pvt_ltd | llp</span>
+
+  <span class="comment">-- Contact</span>
+  <span class="col">phone</span>               <span class="type">TEXT</span>,
+  <span class="col">email</span>               <span class="type">TEXT</span>,
+  <span class="col">website</span>             <span class="type">TEXT</span>,
+
+  <span class="comment">-- Meta</span>
+  <span class="col">is_active</span>           <span class="type">BOOLEAN</span> <span class="kw">NOT NULL DEFAULT</span> true,
+  <span class="col">tags</span>                <span class="type">TEXT[]</span> <span class="kw">DEFAULT</span> '{}',
+
+  <span class="comment">-- Audit</span>
+  <span class="col">created_at</span>          <span class="type">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT</span> now(),
+  <span class="col">created_by</span>          <span class="type">UUID</span> <span class="kw">REFERENCES</span> <span class="ref">auth.users(id)</span>,
+  <span class="col">deleted_at</span>          <span class="type">TIMESTAMPTZ</span>,
+  <span class="col">deleted_by</span>          <span class="type">UUID</span> <span class="kw">REFERENCES</span> <span class="ref">auth.users(id)</span>
+);</code></pre>
+
+    <h3>7.2 — <code>locations</code> table</h3>
+    <pre><code><span class="kw">CREATE TABLE</span> locations (
+  <span class="col">id</span>                  <span class="type">UUID</span> <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="col">business_id</span>         <span class="type">UUID</span> <span class="kw">NOT NULL REFERENCES</span> <span class="ref">businesses(id)</span>,
+  <span class="col">workspace_id</span>        <span class="type">UUID</span> <span class="kw">NOT NULL REFERENCES</span> <span class="ref">workspaces(id)</span>,
+  <span class="col">owner_id</span>            <span class="type">UUID</span> <span class="kw">NOT NULL REFERENCES</span> <span class="ref">auth.users(id)</span>,
+
+  <span class="comment">-- Identity</span>
+  <span class="col">name</span>                <span class="type">TEXT</span> <span class="kw">NOT NULL</span>,              <span class="comment">-- "Main Branch", "Koregaon Park"</span>
+  <span class="col">description</span>         <span class="type">TEXT</span>,
+
+  <span class="comment">-- Address</span>
+  <span class="col">address</span>             <span class="type">TEXT</span>,
+  <span class="col">city</span>                <span class="type">TEXT</span>,
+  <span class="col">state</span>               <span class="type">TEXT</span>,
+  <span class="col">pincode</span>             <span class="type">TEXT</span>,
+  <span class="col">country</span>             <span class="type">TEXT</span> <span class="kw">NOT NULL DEFAULT</span> 'India',
+  <span class="col">latitude</span>            <span class="type">DECIMAL(10, 8)</span>,
+  <span class="col">longitude</span>           <span class="type">DECIMAL(11, 8)</span>,
+
+  <span class="comment">-- Contact (can override business-level)</span>
+  <span class="col">phone</span>               <span class="type">TEXT</span>,
+  <span class="col">email</span>               <span class="type">TEXT</span>,
+
+  <span class="comment">-- Operations</span>
+  <span class="col">opening_time</span>        <span class="type">TIME</span>,
+  <span class="col">closing_time</span>        <span class="type">TIME</span>,
+  <span class="col">operating_days</span>      <span class="type">TEXT[]</span>,   <span class="comment">-- ['mon','tue','wed','thu','fri','sat']</span>
+
+  <span class="comment">-- Meta</span>
+  <span class="col">is_active</span>           <span class="type">BOOLEAN</span> <span class="kw">NOT NULL DEFAULT</span> true,
+  <span class="col">is_primary</span>          <span class="type">BOOLEAN</span> <span class="kw">NOT NULL DEFAULT</span> false, <span class="comment">-- marks head office</span>
+
+  <span class="comment">-- Audit</span>
+  <span class="col">created_at</span>          <span class="type">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT</span> now(),
+  <span class="col">created_by</span>          <span class="type">UUID</span> <span class="kw">REFERENCES</span> <span class="ref">auth.users(id)</span>,
+  <span class="col">deleted_at</span>          <span class="type">TIMESTAMPTZ</span>,
+  <span class="col">deleted_by</span>          <span class="type">UUID</span> <span class="kw">REFERENCES</span> <span class="ref">auth.users(id)</span>
+);</code></pre>
+
+    <h3>7.3 — Changes to existing module tables</h3>
+    <pre><code><span class="comment">-- PG Module</span>
+<span class="kw">ALTER TABLE</span> properties
+  <span class="kw">ADD COLUMN</span> <span class="col">location_id</span> <span class="type">UUID</span> <span class="kw">REFERENCES</span> <span class="ref">locations(id)</span>;  <span class="comment">-- nullable for migration</span>
+
+<span class="comment">-- Library Module</span>
+<span class="kw">ALTER TABLE</span> libraries
+  <span class="kw">ADD COLUMN</span> <span class="col">location_id</span> <span class="type">UUID</span> <span class="kw">REFERENCES</span> <span class="ref">locations(id)</span>;  <span class="comment">-- nullable for migration</span>
+
+<span class="comment">-- Future modules follow the same pattern automatically:</span>
+<span class="comment">-- gyms.location_id, hotels.location_id, food_services.location_id, etc.</span></code></pre>
+    <div class="callout warning">
+      <strong>Migration strategy</strong>
+      <code>location_id</code> is nullable initially to allow a non-breaking migration of existing data. The goal is to make it <code>NOT NULL</code> after all existing property and library records are linked to a Location via the migration script.
+    </div>
+
+
+    <!-- Section 8 -->
+    <h2 id="naming"><span class="section-num">8</span>Naming Decisions and Rationale</h2>
+
+    <h3>Why <code>businesses</code> and not something else</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Candidate</th><th>Problem</th></tr></thead>
+        <tbody>
+          <tr><td><code>organizations</code></td><td>Too corporate — alienates sole proprietors and street-level operators</td></tr>
+          <tr><td><code>brands</code></td><td>Misses the legal entity angle — no GST, no PAN, no registration</td></tr>
+          <tr><td><code>companies</code></td><td>Too formal — most users are proprietors, not company directors</td></tr>
+          <tr><td><code>ventures</code></td><td>Vague, no clear meaning to a PG/library owner</td></tr>
+          <tr><td><code>establishments</code></td><td>Correct (GST uses this term) but unfamiliar outside accountants</td></tr>
+          <tr><td><strong><code>businesses</code> ✓</strong></td><td>"Mera business" is natural Indian SMB language. Maps to GST concept. Unambiguous.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Why <code>locations</code> and not something else</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Candidate</th><th>Problem</th></tr></thead>
+        <tbody>
+          <tr><td><code>premises</code></td><td>Correct (GST "place of business") but formal and unfamiliar</td></tr>
+          <tr><td><code>branches</code></td><td>Implies a headquarters hierarchy that may not exist for simple owners</td></tr>
+          <tr><td><code>outlets</code></td><td>Retail connotation — wrong mental model for PG/library owners</td></tr>
+          <tr><td><code>sites</code></td><td>Construction / technical connotation</td></tr>
+          <tr><td><code>units</code></td><td>Abstract, no spatial meaning</td></tr>
+          <tr><td><code>properties</code></td><td><strong>CONFLICT</strong> — this name is taken in the PG module for a different concept</td></tr>
+          <tr><td><strong><code>locations</code> ✓</strong></td><td>Clear, universal, no connotation baggage. Universally understood.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warning">
+      <strong>The <code>properties</code> naming conflict</strong>
+      The current <code>properties</code> table means "a PG building." If we introduce <code>locations</code> as the physical address layer, the word "property" (which in English also means a physical place) creates conceptual confusion in code. Recommended resolution: keep <code>properties</code> as the PG-specific operation entity name for now. It is an internal table name visible only in code. A rename migration can be considered in a future phase once the hierarchy is stable.
+    </div>
+
+
+    <!-- Section 9 -->
+    <h2 id="decisions"><span class="section-num">9</span>The Hard Architectural Decisions</h2>
+    <p>These require explicit product/business decisions before any implementation begins. They cannot be resolved purely architecturally.</p>
+
+    <div class="decision">
+      <div class="decision-header">
+        <div class="decision-num">1</div>
+        <div class="decision-title">Is Location mandatory, or auto-created silently?</div>
+      </div>
+      <div class="decision-body">
+        <div class="options">
+          <div class="option">
+            <div class="option-label">Option A — Mandatory from day one</div>
+            <p>Every property and library must have a <code>location_id</code>. New records cannot be created without it. Forces the hierarchy from the start.</p>
+            <div class="option-pro">✓ Clean data model, no nullable FKs, no legacy debt</div>
+            <div class="option-con">✗ Creates friction for simple users who just want to add a PG quickly</div>
+          </div>
+          <div class="option recommended">
+            <div class="option-label">Option B — Auto-created silently <span class="rec-badge">Recommended</span></div>
+            <p>When a user creates a PG property without going through Business → Location flow, the system auto-creates both records with sensible defaults (business name = property name, location address = property address).</p>
+            <div class="option-pro">✓ Zero friction for simple users. Hierarchy exists in data even if user never saw it.</div>
+            <div class="option-con">✗ Auto-created Business records will have incomplete data (no GST, no logo). Creates enrichment debt.</div>
+          </div>
+          <div class="option">
+            <div class="option-label">Option C — Optional for existing, mandatory for new signups</div>
+            <p>Existing workspaces are migrated via script. All new workspaces must create a Business before anything else, enforced in the onboarding wizard.</p>
+            <div class="option-pro">✓ Clean going forward. Migration handles the past.</div>
+            <div class="option-con">✗ Two classes of users until migration is complete.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="decision-header">
+        <div class="decision-num">2</div>
+        <div class="decision-title">What data moves from <code>properties</code> / <code>libraries</code> to <code>locations</code>?</div>
+      </div>
+      <div class="decision-body">
+        <p>These columns exist on both tables today and become redundant once <code>location_id</code> is populated:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Column</th><th>Move to <code>locations</code>?</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>address</code></td><td class="center check">✓ Yes</td><td>Canonical address lives on Location</td></tr>
+              <tr><td><code>city</code></td><td class="center check">✓ Yes</td><td></td></tr>
+              <tr><td><code>state</code></td><td class="center check">✓ Yes</td><td></td></tr>
+              <tr><td><code>pincode</code></td><td class="center check">✓ Yes</td><td></td></tr>
+              <tr><td><code>phone</code></td><td class="center" style="color:var(--amber)">Partial</td><td>Keep on operation too — a library branch may have its own number</td></tr>
+              <tr><td><code>name</code></td><td class="center" style="color:var(--red)">✗ No</td><td>Operation keeps its own display name</td></tr>
+              <tr><td><code>owner_id</code></td><td class="center" style="color:var(--red)">✗ No</td><td>Keep on operations for RLS</td></tr>
+              <tr><td><code>workspace_id</code></td><td class="center" style="color:var(--red)">✗ No</td><td>Keep on operations for RLS</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Strategy:</strong> Do not delete columns from <code>properties</code>/<code>libraries</code> immediately. Add <code>location_id</code> FK first, populate via migration, then deprecate the old address columns in a later migration once all code is updated.</p>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="decision-header">
+        <div class="decision-num">3</div>
+        <div class="decision-title">Does <code>workspace</code> change?</div>
+      </div>
+      <div class="decision-body">
+        <p><strong>No. Workspace stays exactly as it is.</strong> It is the auth and billing boundary — one owner account, one workspace, one subscription tier.</p>
+        <p><code>businesses</code> sits inside a workspace. They are fundamentally different concepts:</p>
+        <div class="card">
+          <p><strong>workspace</strong> = "your ManageKar account"</p>
+          <p><strong>business</strong> = "a business you run on ManageKar"</p>
+        </div>
+        <p>A workspace can contain multiple businesses. This is a parallel concept, not a replacement.</p>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="decision-header">
+        <div class="decision-num">4</div>
+        <div class="decision-title">Module-specific config — workspace, business, or location level?</div>
+      </div>
+      <div class="decision-body">
+        <p>Currently all config (billing settings, feature flags, notification preferences) lives at the workspace level. With businesses and locations, the question arises: should config be configurable per-Business or per-Location?</p>
+        <p><strong>Decision for v1:</strong> All config stays at workspace level. No change.</p>
+        <p><em>Future consideration:</em> Per-business config for billing cycle, currency, GST settings. Per-location config for operating hours, notification recipients. This is explicitly deferred to avoid scope creep in v1.</p>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="decision-header">
+        <div class="decision-num">5</div>
+        <div class="decision-title">Public URLs — keep <code>/pg/[slug]</code> or move to <code>/b/[slug]</code>?</div>
+      </div>
+      <div class="decision-body">
+        <p>Today the PG public website is at <code>/pg/[slug]</code>. The slug belongs to a <code>property</code>. With the new hierarchy, the slug logically belongs to a <strong>Business</strong> (the brand) or a <strong>Location</strong> (the branch).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>URL pattern</th><th>What it shows</th></tr></thead>
+            <tbody>
+              <tr><td><code>/b/[business-slug]</code></td><td>Business profile with all locations and operations</td></tr>
+              <tr><td><code>/b/[business-slug]/[location-slug]</code></td><td>Specific branch/location</td></tr>
+              <tr><td>Keep <code>/pg/[slug]</code> unchanged</td><td>No change, fully backwards compatible</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Recommendation for v1:</strong> Keep <code>/pg/[slug]</code> unchanged. Add <code>/b/[slug]</code> as a new business profile page in a future phase. Both can coexist.</p>
+      </div>
+    </div>
+
+
+    <!-- Section 10 -->
+    <h2 id="migration"><span class="section-num">10</span>Migration Plan (High Level)</h2>
+    <p>For existing workspaces that already have <code>properties</code> and <code>libraries</code>:</p>
+    <pre><code><span class="comment">-- Step 1: For each workspace with existing properties/libraries</span>
+<span class="comment">-- → Create 1 Business record</span>
+<span class="comment">--   name = owner display name (or first property name as fallback)</span>
+<span class="comment">--   gst_number = NULL (owner fills in later via UI)</span>
+
+<span class="comment">-- Step 2: For each existing property</span>
+<span class="comment">-- → Create 1 Location record</span>
+<span class="comment">--   Copy address, city, state, pincode, phone FROM property TO location</span>
+<span class="comment">--   Set location.business_id = the business created in Step 1</span>
+<span class="comment">--   Set property.location_id = this new location's id</span>
+
+<span class="comment">-- Step 3: For each existing library</span>
+<span class="comment">-- → Create 1 Location record (or link to existing if same address)</span>
+<span class="comment">--   Copy address FROM library TO location</span>
+<span class="comment">--   Set library.location_id = this new location's id</span></code></pre>
+    <div class="callout warning">
+      <strong>Production data — use service role</strong>
+      This migration runs against production data. It must use the Supabase service role key to bypass RLS — same approach used in the Google Sheets → Supabase library data migration. Script lives in <code>scripts/</code> and is run once.
+    </div>
+    <div class="callout">
+      <strong>Post-migration enrichment</strong>
+      After migration, owners are prompted (not forced) to complete their Business profile: add GST number, logo, legal name. This is optional enrichment surfaced in the UI, not a blocker.
+    </div>
+
+
+    <!-- Section 11 -->
+    <h2 id="navigation"><span class="section-num">11</span>UI &amp; Navigation Impact</h2>
+
+    <h3>New top-level navigation entry</h3>
+    <pre><code>Dashboard
+──────────────────────
+Businesses          ← NEW
+  My Businesses
+──────────────────────
+PG Manager
+  Properties        ← unchanged
+  Rooms             ← unchanged
+  Tenants           ← unchanged
+  ...
+──────────────────────
+Library Manager
+  Library           ← unchanged
+  Members           ← unchanged
+  ...</code></pre>
+
+    <h3>Business detail page</h3>
+    <ul style="font-size:15px; padding-left:22px; margin:12px 0 18px;">
+      <li>Business profile card (name, logo, GST number, contact, legal details)</li>
+      <li>All Locations under this business with summary cards</li>
+      <li>For each Location: active operation types (PG / Library / Gym) with quick stats</li>
+      <li>Business-level revenue summary aggregated across all operations</li>
+    </ul>
+
+    <h3>Location detail page</h3>
+    <ul style="font-size:15px; padding-left:22px; margin:12px 0 18px;">
+      <li>Address card, working hours, contact (with Google Maps link)</li>
+      <li>All Operations at this location, linked to their respective module pages</li>
+      <li>Staff assigned to this location</li>
+      <li>Location-level metrics (occupancy, revenue)</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Existing module pages are unchanged in v1</strong>
+      The Properties list, Library list, and all existing module pages remain exactly as they are. The Business → Location → Operation hierarchy becomes a new layer of navigation that sits on top of them, not a replacement.
+    </div>
+
+
+    <!-- Section 12 -->
+    <h2 id="unlocks"><span class="section-num">12</span>What This Architecture Unlocks</h2>
+    <div class="unlocks">
+      <div class="unlock">
+        <div class="unlock-icon">🎯</div>
+        <div class="unlock-phase now">Immediately — v1</div>
+        <div class="unlock-title">Foundation</div>
+        <ul>
+          <li>GST number has a proper home</li>
+          <li>Address stored once per physical location</li>
+          <li>Unified "My Businesses" dashboard view</li>
+          <li>PG + Library at same address share one Location</li>
+          <li>Business logo usable across all module pages</li>
+        </ul>
+      </div>
+      <div class="unlock">
+        <div class="unlock-icon">🚀</div>
+        <div class="unlock-phase soon">Near term — v2</div>
+        <div class="unlock-title">Intelligence</div>
+        <ul>
+          <li>Staff assigned at Location level (serves all operations at that address)</li>
+          <li>Business-level P&amp;L (total revenue across all module types, one GST)</li>
+          <li>Location-level analytics (which branch performs better)</li>
+          <li>Business profile page for owners to share publicly</li>
+        </ul>
+      </div>
+      <div class="unlock">
+        <div class="unlock-icon">🌍</div>
+        <div class="unlock-phase future">Long term</div>
+        <div class="unlock-title">Scale</div>
+        <ul>
+          <li>Adding any new module = define schema + add <code>location_id</code>. Done.</li>
+          <li>Multi-owner business (partners)</li>
+          <li>Franchise model (one brand, many location franchisees)</li>
+          <li>Business acquisition / transfer (update <code>workspace_id</code>)</li>
+          <li>Multi-country expansion without schema rework</li>
+        </ul>
+      </div>
+    </div>
+
+
+    <!-- Section 13 -->
+    <h2 id="open"><span class="section-num">13</span>Open Questions — Require Owner Decision</h2>
+    <p>These cannot be resolved architecturally. They require product decisions before implementation begins.</p>
+    <div class="questions">
+      <div class="question">
+        <div class="q-num">1</div>
+        <div class="q-body">
+          <div class="q-title">Is Location mandatory or auto-created silently when a property is created?</div>
+          <div class="q-options">Options: Mandatory from day 1 / Auto-create silently / Optional with enrichment prompt</div>
+          <div class="q-impact">⚡ Impacts: Onboarding UX, migration complexity, data completeness</div>
+        </div>
+      </div>
+      <div class="question">
+        <div class="q-num">2</div>
+        <div class="q-body">
+          <div class="q-title">Does the new-user onboarding start with "Create a Business" or "Create a PG / Library"?</div>
+          <div class="q-options">Business-first (hierarchy visible from day 1) vs Module-first (familiar, hierarchy added later)</div>
+          <div class="q-impact">⚡ Impacts: First-run experience, mental model, perceived complexity</div>
+        </div>
+      </div>
+      <div class="question">
+        <div class="q-num">3</div>
+        <div class="q-body">
+          <div class="q-title">Keep <code>/pg/[slug]</code> as-is or migrate public pages to <code>/b/[slug]</code>?</div>
+          <div class="q-options">Keep both / Redirect old to new / Replace entirely</div>
+          <div class="q-impact">⚡ Impacts: SEO for existing public pages, business profile visibility</div>
+        </div>
+      </div>
+      <div class="question">
+        <div class="q-num">4</div>
+        <div class="q-body">
+          <div class="q-title">Can a Location have zero active operations (be a "placeholder")?</div>
+          <div class="q-options">Yes, valid to pre-create locations / No, must have at least one operation</div>
+          <div class="q-impact">⚡ Impacts: Data integrity rules, migration edge cases</div>
+        </div>
+      </div>
+      <div class="question">
+        <div class="q-num">5</div>
+        <div class="q-body">
+          <div class="q-title">Is Food a v1 module type or deferred to v2?</div>
+          <div class="q-options">Build Food as a first-class operation alongside PG + Library / Defer Food to after hierarchy is stable</div>
+          <div class="q-impact">⚡ Impacts: v1 scope, timeline, schema completeness</div>
+        </div>
+      </div>
+      <div class="question">
+        <div class="q-num">6</div>
+        <div class="q-body">
+          <div class="q-title">Are Businesses visible to staff members, or owner-only?</div>
+          <div class="q-options">Owner-only (staff only see their module) / All staff (staff see the business they're assigned to)</div>
+          <div class="q-impact">⚡ Impacts: Permission model, staff UX, RLS policies</div>
+        </div>
+      </div>
+      <div class="question">
+        <div class="q-num">7</div>
+        <div class="q-body">
+          <div class="q-title">Should <code>properties</code> eventually be renamed to avoid conflict with the "location" concept?</div>
+          <div class="q-options">Yes, rename to <code>pg_properties</code> in a future migration / No, keep as-is (internal name only)</div>
+          <div class="q-impact">⚡ Impacts: Code clarity, query readability, migration cost</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Section 14 -->
+    <h2 id="unchanged"><span class="section-num">14</span>What This Does NOT Change</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>What</th><th>Status</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><code>workspace</code> table and model</td><td style="color:var(--brand);font-weight:700">Unchanged</td><td>Auth and billing boundary — different concept from "business"</td></tr>
+          <tr><td><code>people</code> table</td><td style="color:var(--brand);font-weight:700">Unchanged</td><td>Identity source of truth — separate concern</td></tr>
+          <tr><td>RLS patterns (<code>owner_id</code>, <code>workspace_id</code>)</td><td style="color:var(--brand);font-weight:700">Unchanged</td><td>Keep on all module tables for security</td></tr>
+          <tr><td>Existing module UI and workflows</td><td style="color:var(--brand);font-weight:700">Unchanged in v1</td><td>New hierarchy is additive, not a replacement</td></tr>
+          <tr><td>Subscription and billing model</td><td style="color:var(--brand);font-weight:700">Unchanged</td><td>Stays workspace-level</td></tr>
+          <tr><td>Internal module hierarchies (rooms/beds, sections/seats)</td><td style="color:var(--brand);font-weight:700">Unchanged</td><td>These are operation-level details, untouched</td></tr>
+          <tr><td>Feature flags system</td><td style="color:var(--brand);font-weight:700">Unchanged in v1</td><td>Stays workspace-level; per-business flags are a v2 consideration</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <!-- Section 15 -->
+    <h2 id="analogy"><span class="section-num">15</span>Analogy Summary</h2>
+    <p>The clearest way to explain why this architecture is correct is through its parallel to the <code>people</code> table decision:</p>
+    <div class="analogy">
+      <div class="analogy-cell header">Concept</div>
+      <div class="analogy-cell header">People Module</div>
+      <div class="analogy-cell header">Business Module</div>
+
+      <div class="analogy-cell"><strong>The problem</strong></div>
+      <div class="analogy-cell">Name/phone duplicated across tenants, staff, members</div>
+      <div class="analogy-cell">Address/legal data duplicated across properties, libraries, gyms</div>
+
+      <div class="analogy-cell"><strong>The solution</strong></div>
+      <div class="analogy-cell"><code>people</code> as identity source of truth</div>
+      <div class="analogy-cell"><code>businesses</code> + <code>locations</code> as business identity source of truth</div>
+
+      <div class="analogy-cell"><strong>The relationship</strong></div>
+      <div class="analogy-cell"><code>tenants.person_id</code>, <code>staff.person_id</code></div>
+      <div class="analogy-cell"><code>properties.location_id</code>, <code>libraries.location_id</code></div>
+
+      <div class="analogy-cell"><strong>The 360° view</strong></div>
+      <div class="analogy-cell">People detail page: one person across all their roles</div>
+      <div class="analogy-cell">Business detail page: one business across all its operations</div>
+
+      <div class="analogy-cell"><strong>Principles served</strong></div>
+      <div class="analogy-cell">Centralization + Unification</div>
+      <div class="analogy-cell">Centralization + Unification + Modularization</div>
+    </div>
+
+    <div class="callout">
+      <strong>The core insight</strong>
+      Just as <code>people</code> answers "who is this person regardless of which module they appear in" — <code>businesses</code> + <code>locations</code> answers "what is this business and where does it operate, regardless of which modules are running there."
+    </div>
+
+
+    <!-- Footer -->
+    <div class="doc-footer">
+      <p>ManageKar Architecture Document &nbsp;·&nbsp; Status: <strong>Pre-implementation, awaiting review</strong></p>
+      <p style="margin-top:6px;">All decisions in Section 13 require owner input before any migration files or UI code is written.</p>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

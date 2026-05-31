@@ -17,12 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCircle } from "lucide-react"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
-import { getNowISO } from "@/lib/date-helpers"
+import { getNowISO, getTodayISO } from "@/lib/date-helpers"
 import { formatTime } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
 import { FeatureGuard } from "@/components/auth"
-import { PageHeader } from "@/components/ui"
+import { DetailHero, EmptyState } from "@/components/ui"
 import { parseTimeSlots } from "@/lib/time-slots"
 
 interface QRPayload {
@@ -126,7 +126,7 @@ export default function QRScannerPage() {
       }
 
       // Check if already checked in today (not historical records)
-      const todayDate = new Date().toISOString().split("T")[0]
+      const todayDate = getTodayISO()
       const { data: activeCheckIn } = await supabase
         .from("library_attendance")
         .select("id")
@@ -305,9 +305,12 @@ export default function QRScannerPage() {
   return (
     <FeatureGuard module="attendance" feature="qrCheckin">
     <div className="max-w-4xl mx-auto space-y-6">
-      <PageHeader
+      <DetailHero
         title="QR Check-in Scanner"
+        subtitle="Scan member QR codes to record instant check-ins"
+        icon={Camera}
         backHref="/library-attendance"
+        backLabel="Back to Attendance"
         breadcrumbs={[
           { label: "Attendance", href: "/library-attendance" },
           { label: "QR Scanner" },
@@ -393,11 +396,11 @@ export default function QRScannerPage() {
           </CardHeader>
           <CardContent>
             {recentCheckIns.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No check-ins yet</p>
-                <p className="text-sm">Scan a QR code to check in a member</p>
-              </div>
+              <EmptyState
+                icon={Clock}
+                title="No check-ins yet"
+                description="Scan a QR code to check in a member"
+              />
             ) : (
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {recentCheckIns.map((checkIn, index) => (

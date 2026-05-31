@@ -30,6 +30,7 @@ import {
   DetailSection,
   InfoRow,
   NotFoundState,
+  EmptyState,
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
@@ -287,7 +288,7 @@ export default function ProductDetailPage({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground py-4">No purchases recorded yet</p>
+                <EmptyState variant="minimal" icon={Package} title="No purchases recorded yet" />
               )}
             </DetailSection>
 

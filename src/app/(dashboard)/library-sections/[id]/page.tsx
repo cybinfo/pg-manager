@@ -26,6 +26,7 @@ import {
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -117,11 +118,9 @@ export default function LibrarySectionDetailPage() {
               </Link>
             )}
             {section.floor > 0 && <span>Floor {section.floor}</span>}
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              section.is_ac ? "bg-info/10 text-info" : "bg-muted text-muted-foreground"
-            }`}>
+            <TableBadge variant={section.is_ac ? "info" : "muted"}>
               {section.is_ac ? "AC" : "Non-AC"}
-            </span>
+            </TableBadge>
           </div>
         }
         backHref={backHref}

@@ -10,7 +10,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Users, Clock, CalendarClock, Upload, RefreshCw, Loader2, UserMinus } from "lucide-react"
-import { Column } from "@/components/ui/data-table"
+import { Column, TableBadge } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { ListPageTemplate, BulkActionConfig } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_MEMBER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -29,6 +29,7 @@ import { Select } from "@/components/ui/form-components"
 import { PermissionGate, ModuleGuard } from "@/components/auth"
 import { LIBRARY_MEMBER_STATUS_UPDATE_OPTIONS } from "@/lib/constants/form-options"
 import { createClient } from "@/lib/supabase/client"
+import { getNowISO } from "@/lib/date-helpers"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import {
   AlertDialog,
@@ -128,9 +129,9 @@ const columns: Column<LibraryMemberItem>[] = [
     canHide: true,
     defaultVisible: true,
     render: (member) => member.preferred_slot ? (
-      <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+      <TableBadge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
         {member.preferred_slot}
-      </span>
+      </TableBadge>
     ) : "\u2014",
   },
   statusColumn(LIBRARY_MEMBER_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
@@ -174,10 +175,10 @@ const columns: Column<LibraryMemberItem>[] = [
       if (!member.expiry_date) return "\u2014"
       // positive = overdue, negative = days until expiry
       const overdueDays = computeOverdueDays(member.expiry_date)
-      if (overdueDays > 30) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Severely Overdue</span>
-      if (overdueDays > 0) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning">Overdue</span>
-      if (overdueDays >= -7) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Expiring Soon</span>
-      return <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success">Current</span>
+      if (overdueDays > 30) return <TableBadge variant="error">Severely Overdue</TableBadge>
+      if (overdueDays > 0) return <TableBadge variant="warning">Overdue</TableBadge>
+      if (overdueDays >= -7) return <TableBadge variant="warning">Expiring Soon</TableBadge>
+      return <TableBadge variant="success">Current</TableBadge>
     },
   },
   {
@@ -310,7 +311,7 @@ function BulkStatusActions({
         .from("library_members")
         .update({
           status: targetStatus,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .in("id", selectedIds)
 

@@ -7,7 +7,7 @@
 "use client"
 
 import { Grid3X3, Armchair } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_SECTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
@@ -108,11 +108,9 @@ const columns: Column<LibrarySectionItem>[] = [
     canHide: true,
     defaultVisible: true,
     render: (section) => (
-      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-        section.is_ac ? "bg-info/10 text-info" : "bg-muted text-muted-foreground"
-      }`}>
+      <TableBadge variant={section.is_ac ? "info" : "muted"}>
         {section.is_ac ? "AC" : "Non-AC"}
-      </span>
+      </TableBadge>
     ),
   },
   {

@@ -40,6 +40,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { TableBadge } from "@/components/ui/data-table"
 import { PermissionGate } from "@/components/auth"
 import type {
   Library as LibraryType,
@@ -252,9 +253,9 @@ export default function LibraryDetailPage() {
               <div className="p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">{section.name}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${section.is_active ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                  <TableBadge variant={section.is_active ? "success" : "muted"}>
                     {section.is_active ? "Active" : "Inactive"}
-                  </span>
+                  </TableBadge>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">

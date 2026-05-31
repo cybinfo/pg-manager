@@ -1,10 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,22 +16,11 @@ import {
   X,
   CheckCircle,
 } from "lucide-react"
-import { showError } from "@/lib/toast-helpers"
-import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { EmailInput } from "@/components/ui/form-components"
-import { handleClientError } from "@/lib/error-handler"
-import { sendInvitationEmail } from "@/lib/email"
-import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageSkeleton } from "@/components/ui/loading"
-import { getNowISO } from "@/lib/date-helpers"
+import { EmptyState } from "@/components/ui"
 import { PermissionGuard } from "@/components/auth"
 import { PersonSelector } from "@/components/people"
-import { PersonSearchResult } from "@/types/people.types"
-import { validatePhone as validateIndianMobile } from "@/lib/phone"
-import { logger } from "@/lib/logger"
-import { useFeatures } from "@/lib/features/use-features"
-import type { PropertyOption } from "@/types/properties.types"
 import {
   WorkflowStepper,
   WorkflowStepCard,
@@ -42,18 +28,7 @@ import {
   WorkflowStepDef,
   WorkflowContinueButton,
 } from "@/components/ui/workflow"
-
-interface Role {
-  id: string
-  name: string
-  description: string | null
-  is_system_role: boolean
-}
-
-interface RoleAssignment {
-  role_id: string
-  property_id: string | null
-}
+import { useStaffCreateForm } from "@/lib/hooks/forms/useStaffCreateForm"
 
 const STEPS: WorkflowStepDef[] = [
   { id: 1, label: "Select Person", icon: Mail },
@@ -70,358 +45,35 @@ export default function NewStaffPage() {
 }
 
 function NewStaffContent() {
-  const { backHref } = useBackNavigation({ defaultHref: "/staff" })
-  const { isFeatureEnabled } = useFeatures()
-  const { user } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { handleSuccess } = useFormSubmit({
-    redirectTo: "/staff",
-  })
-  const personIdFromUrl = searchParams.get("person_id")
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [roles, setRoles] = useState<Role[]>([])
-  const [properties, setProperties] = useState<PropertyOption[]>([])
-  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([])
-  const [currentStep, setCurrentStep] = useState(1)
-
-  // Person-centric: Select person first
-  const [ownerId, setOwnerId] = useState<string>("")
-  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  })
-
-  useEffect(() => {
-    const fetchData = async () => {
-      // Set owner ID for PersonSelector
-      if (user) {
-        setOwnerId(user.id)
-      }
-
-      const supabase = createClient()
-      const [rolesRes, propertiesRes] = await Promise.all([
-        supabase
-          .from("roles")
-          .select("id, name, description, is_system_role")
-          .order("is_system_role", { ascending: false }) // System roles first
-          .order("name"),
-        supabase.from("properties").select("id, name").order("name"),
-      ])
-
-      if (!rolesRes.error) {
-        setRoles(rolesRes.data || [])
-      }
-
-      if (!propertiesRes.error) {
-        setProperties(propertiesRes.data || [])
-      }
-
-      setLoadingData(false)
-    }
-
-    fetchData()
-  }, [user])
-
-  // Load person from URL query param
-  useEffect(() => {
-    const loadPersonFromUrl = async () => {
-      if (!personIdFromUrl || selectedPerson) return
-
-      const supabase = createClient()
-      const { data } = await supabase
-        .from("people")
-        .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
-        .eq("id", personIdFromUrl)
-        .single()
-
-      if (data && !data.is_blocked) {
-        // eslint-disable-next-line react-hooks/immutability
-        handlePersonSelect(data)
-      } else if (data?.is_blocked) {
-        showError("This person is blocked and cannot be added as staff")
-      }
-    }
-
-    loadPersonFromUrl()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personIdFromUrl])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  // Handle person selection from PersonSelector
-  const handlePersonSelect = (person: PersonSearchResult | null) => {
-    setSelectedPerson(person)
-    if (person) {
-      setFormData({
-        name: person.name,
-        email: person.email || "",
-        phone: person.phone || "",
-      })
-    }
-  }
-
-  const addRoleAssignment = () => {
-    if (roles.length === 0) {
-      showError("No roles available. Create a role first.")
-      return
-    }
-    setRoleAssignments((prev) => [...prev, { role_id: roles[0].id, property_id: null }])
-  }
-
-  const updateRoleAssignment = (index: number, field: "role_id" | "property_id", value: string | null) => {
-    setRoleAssignments((prev) =>
-      prev.map((assignment, i) =>
-        i === index ? { ...assignment, [field]: value } : assignment
-      )
-    )
-  }
-
-  const removeRoleAssignment = (index: number) => {
-    setRoleAssignments((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const doSubmit = async () => {
-    // Get data from selected person or form
-    const staffName = selectedPerson?.name || formData.name
-    const staffEmail = selectedPerson?.email || formData.email
-    const staffPhone = selectedPerson?.phone || formData.phone
-
-    if (!staffName || !staffEmail) {
-      showError("Please select a person or fill in name and email")
-      return
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(staffEmail)) {
-      showError("Please enter a valid email address")
-      return
-    }
-
-    // Validate phone if provided
-    if (staffPhone && !validateIndianMobile(staffPhone)) {
-      showError("Please enter a valid Indian mobile number (10 digits)")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
-      const supabase = createClient()
-      // Step 1: Check if email already exists as a user
-      const { data: existingProfile } = await supabase
-        .from("user_profiles")
-        .select("user_id, name")
-        .eq("email", staffEmail.toLowerCase())
-        .single()
-
-      // Step 2: Get owner's workspace
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("id, name")
-        .eq("owner_user_id", user.id)
-        .single()
-
-      // Step 2.5: Create or link person record if person_id is provided
-      let personId = selectedPerson?.id || null
-      if (!personId && (staffName || staffPhone || staffEmail)) {
-        try {
-          const { data: newPersonId } = await supabase.rpc("upsert_person", {
-            p_owner_id: user.id,
-            p_name: staffName,
-            p_phone: staffPhone || null,
-            p_email: staffEmail || null,
-            p_tags: ["staff"],
-            p_source: "staff",
-          })
-          personId = newPersonId || null
-        } catch {
-          personId = null
-        }
-      } else if (personId) {
-        try {
-          await supabase.rpc("upsert_person", {
-            p_owner_id: user.id,
-            p_name: staffName,
-            p_phone: staffPhone || null,
-            p_email: staffEmail || null,
-            p_tags: ["staff"],
-          })
-        } catch {
-          // non-fatal: person tag update failure doesn't block staff creation
-        }
-      }
-
-      // Step 3: Create staff member (with user_id and person_id if exists)
-      const { data: staffData, error: staffError } = await supabase
-        .from("staff_members")
-        .insert(
-          withCreatedBy({
-            owner_id: user.id,
-            name: staffName,
-            email: staffEmail,
-            phone: staffPhone || null,
-            is_active: true,
-            user_id: existingProfile?.user_id || null, // Link if user exists
-            person_id: personId, // Link to person record
-          }, user.id)
-        )
-        .select()
-        .single()
-
-      if (staffError) {
-        logger.error("Error creating staff member:", { detail: staffError })
-        throw staffError
-      }
-
-      // Step 4: Assign roles if any
-      let primaryRoleId: string | null = null
-      if (roleAssignments.length > 0) {
-        primaryRoleId = roleAssignments[0].role_id
-        const roleInserts = roleAssignments.map((assignment) => ({
-          owner_id: user.id,
-          staff_member_id: staffData.id,
-          role_id: assignment.role_id,
-          property_id: assignment.property_id,
-        }))
-
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert(withCreatedByBatch(roleInserts, user.id))
-
-        if (roleError) {
-          logger.error("Error assigning roles:", { detail: roleError })
-          showError("Staff created but role assignment failed")
-        }
-      }
-
-      // Step 5: Handle user context or invitation
-      if (existingProfile?.user_id && workspace) {
-        // User exists - create user_context directly
-        const { error: contextError } = await supabase
-          .from("user_contexts")
-          .insert(
-            withCreatedBy({
-              user_id: existingProfile.user_id,
-              workspace_id: workspace.id,
-              context_type: "staff",
-              role_id: primaryRoleId,
-              entity_id: staffData.id,
-              is_active: true,
-              is_default: false,
-              invited_by: user.id,
-              invited_at: getNowISO(),
-              accepted_at: getNowISO(), // Auto-accepted since user exists
-            }, user.id)
-          )
-
-        if (contextError) {
-          logger.error("Error creating context:", { detail: contextError })
-        } else {
-          handleSuccess({ message: `Staff member added! ${existingProfile.name} can now login and switch to this staff account.` })
-          return
-        }
-      } else if (workspace && isFeatureEnabled("staff", "staffInvitations")) {
-        // User doesn't exist - create invitation (only if staffInvitations feature is enabled)
-        const { data: invitation, error: inviteError } = await supabase
-          .from("invitations")
-          .insert(
-            withCreatedBy({
-              workspace_id: workspace.id,
-              invited_by: user.id,
-              email: staffEmail,
-              phone: staffPhone || null,
-              name: staffName,
-              context_type: "staff",
-              role_id: primaryRoleId,
-              entity_id: staffData.id,
-              status: "pending",
-              message: `You've been invited to join ${workspace.name} as a staff member.`,
-            }, user.id)
-          )
-          .select("id, token")
-          .single()
-
-        if (inviteError) {
-          logger.error("Error creating invitation:", { detail: inviteError })
-          handleSuccess({ message: "Staff member added! (Invitation could not be created)" })
-          return
-        } else if (invitation) {
-          // Get role name for email
-          const selectedRole = roles.find(r => r.id === primaryRoleId)
-          const roleName = selectedRole?.name || "Staff Member"
-
-          // Get inviter's name
-          const { data: inviterProfile } = await supabase
-            .from("user_profiles")
-            .select("name")
-            .eq("user_id", user.id)
-            .single()
-
-          const inviterName = inviterProfile?.name || "Property Owner"
-
-          // Send invitation email
-          const signupUrl = `${window.location.origin}/register?invite=${invitation.token}&email=${encodeURIComponent(staffEmail)}`
-          const emailResult = await sendInvitationEmail({
-            to: staffEmail,
-            inviteeName: staffName,
-            inviterName: inviterName,
-            workspaceName: workspace.name,
-            contextType: "staff",
-            roleName: roleName,
-            signupUrl: signupUrl,
-            message: `You've been invited to join ${workspace.name} as a staff member. As ${roleName}, you'll be able to help manage the property through the ManageKar dashboard.`,
-          })
-
-          if (emailResult.success) {
-            handleSuccess({ message: "Staff member added! An invitation email has been sent." })
-          } else {
-            logger.warn("Failed to send invitation email", { error: String(emailResult.error) })
-            handleSuccess({ message: "Staff member added! Invitation created but email failed to send." })
-          }
-          return
-        }
-      } else {
-        handleSuccess({ message: "Staff member added successfully!" })
-        return
-      }
-
-      // Fallback redirect if none of the above branches returned
-      handleSuccess({ message: "Staff member added!" })
-    } catch (error) {
-      handleClientError(error, "Adding staff member")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Step completion checks
-  const step1Complete = !!selectedPerson && !!formData.email
-  const step2Complete = roleAssignments.length > 0
+  const {
+    backHref,
+    loading,
+    loadingData,
+    roles,
+    properties,
+    roleAssignments,
+    currentStep,
+    setCurrentStep,
+    ownerId,
+    selectedPerson,
+    formData,
+    handleChange,
+    handlePersonSelect,
+    addRoleAssignment,
+    updateRoleAssignment,
+    removeRoleAssignment,
+    doSubmit,
+    step1Complete,
+    step2Complete,
+    staffName,
+    staffEmail,
+    staffPhone,
+  } = useStaffCreateForm()
 
   if (loadingData) {
     return <PageSkeleton variant="form" />
   }
-
-  const staffName = selectedPerson?.name || formData.name
-  const staffEmail = formData.email
-  const staffPhone = formData.phone
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -535,23 +187,21 @@ function NewStaffContent() {
       >
         <div className="space-y-4">
           {roles.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No roles created yet</p>
-              <Link href="/staff/roles/new">
-                <Button variant="link" size="sm" className="mt-2">
-                  Create your first role
-                </Button>
-              </Link>
-            </div>
+            <EmptyState
+              variant="minimal"
+              icon={Shield}
+              title="No roles created yet"
+              action={{ label: "Create your first role", href: "/staff/roles/new" }}
+            />
           ) : (
             <>
               {roleAssignments.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground text-sm">
-                  <Shield className="h-7 w-7 mx-auto mb-2 opacity-40" />
-                  <p>No roles assigned yet</p>
-                  <p className="text-xs mt-0.5">Click &quot;Add Role&quot; to assign permissions</p>
-                </div>
+                <EmptyState
+                  variant="minimal"
+                  icon={Shield}
+                  title="No roles assigned yet"
+                  description='Click "Add Role" to assign permissions'
+                />
               ) : (
                 <div className="space-y-3">
                   {roleAssignments.map((assignment, index) => (
@@ -678,7 +328,7 @@ function NewStaffContent() {
 
           {/* Invitation info */}
           {staffEmail && (
-            <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+            <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/10 p-3 text-sm text-info">
               <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p>An invitation email will be sent to <strong>{staffEmail}</strong> with a signup link to access the dashboard.</p>
             </div>

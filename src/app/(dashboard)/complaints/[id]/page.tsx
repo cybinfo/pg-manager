@@ -20,6 +20,7 @@ import {
   InfoRow,
   DetailPageTemplate,
   NotFoundState,
+  EmptyState,
 } from "@/components/ui"
 import { Textarea } from "@/components/ui/textarea"
 import { PageLoading } from "@/components/ui/loading"
@@ -48,6 +49,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { useFeatures } from "@/lib/features/use-features"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
+import { TableBadge } from "@/components/ui/data-table"
 import { COMPLAINT_STATUS, COMPLAINT_CATEGORIES } from "@/lib/status"
 import { COMPLAINT_PRIORITY_OPTIONS } from "@/lib/constants/form-options"
 
@@ -208,10 +210,10 @@ export default function ComplaintDetailPage() {
             <StatusBadge status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"} />
             <FeatureGuard module="complaints" feature="complaintEscalation">
               {isEscalated && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
-                  <Clock className="h-3 w-3" />
+                <TableBadge variant="error">
+                  <Clock className="h-3 w-3 mr-1" />
                   {daysOpen}d open
-                </span>
+                </TableBadge>
               )}
             </FeatureGuard>
           </div>
@@ -374,7 +376,7 @@ export default function ComplaintDetailPage() {
             ) : complaint.resolution_notes ? (
               <p className="text-muted-foreground whitespace-pre-wrap">{complaint.resolution_notes}</p>
             ) : (
-              <p className="text-muted-foreground italic">No resolution notes yet</p>
+              <EmptyState variant="minimal" icon={FileText} title="No resolution notes yet" />
             )}
           </DetailSection>
           </FeatureGuard>

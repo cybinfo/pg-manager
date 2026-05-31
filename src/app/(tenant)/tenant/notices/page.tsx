@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Bell,
   Megaphone,
@@ -77,13 +78,11 @@ export default function TenantNoticesPage() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${config.bgColor} ${config.color}`}>
+                        <Badge className={`border-transparent ${config.bgColor} ${config.color}`}>
                           {config.label}
-                        </span>
+                        </Badge>
                         {isNew(notice.created_at) && (
-                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary text-primary-foreground">
-                            New
-                          </span>
+                          <Badge>New</Badge>
                         )}
                         {notice.expires_at && (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">

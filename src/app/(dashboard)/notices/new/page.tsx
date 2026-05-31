@@ -22,11 +22,13 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { withCreatedBy } from "@/lib/audit"
 import { useFeatures } from "@/lib/features/use-features"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { PropertyOption } from "@/types/properties.types"
-import { DetailHero, DetailSection } from "@/components/ui"
+import { DetailHero, DetailSection, EmptyState } from "@/components/ui"
+import { getNowISO } from "@/lib/date-helpers"
 
 interface LibraryItem {
   id: string
@@ -114,9 +116,8 @@ function NewNoticeContent() {
     },
     transform: (data, userId) => {
       const isScheduled = scheduleForLater && !!data.scheduled_at
-      return {
+      return withCreatedBy({
         owner_id: userId,
-        created_by: userId,
         property_id: data.entity_type === "property" ? data.property_id : null,
         library_id: data.entity_type === "library" ? data.library_id : null,
         type: data.type,
@@ -128,7 +129,7 @@ function NewNoticeContent() {
         scheduled_at: isScheduled ? new Date(data.scheduled_at as string).toISOString() : null,
         is_active: data.is_active,
         is_published: !isScheduled,
-      }
+      }, userId) as unknown as Record<string, unknown>
     },
   })
 
@@ -405,9 +406,7 @@ function NewNoticeContent() {
                 ))}
               </div>
               {filteredRooms.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No rooms found for this property
-                </p>
+                <EmptyState variant="minimal" icon={Building2} title="No rooms found for this property" />
               )}
             </div>
           )}
@@ -509,7 +508,7 @@ function NewNoticeContent() {
                     value={formData.scheduled_at as string}
                     onChange={handleChange}
                     disabled={saving}
-                    min={new Date().toISOString().slice(0, 16)}
+                    min={getNowISO().slice(0, 16)}
                   />
                 </FormField>
               )}

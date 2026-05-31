@@ -23,6 +23,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
+import { withCreatedBy } from "@/lib/audit"
 import { DatePicker } from "@/components/ui/date-picker"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
@@ -80,9 +81,8 @@ function NewExpenseContent() {
       amount: requiredAmount("Amount"),
       expense_date: requiredDate("Date"),
     },
-    transform: (data, userId) => ({
+    transform: (data, userId) => withCreatedBy({
       owner_id: userId,
-      created_by: userId,
       expense_type_id: data.expense_type_id,
       property_id: data.property_id || null,
       amount: Number(data.amount),
@@ -92,7 +92,7 @@ function NewExpenseContent() {
       payment_method: data.payment_method,
       description: data.description || null,
       notes: data.notes || null,
-    }),
+    }, userId) as unknown as Record<string, unknown>,
   })
 
   useEffect(() => {

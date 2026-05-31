@@ -8,7 +8,7 @@
 "use client"
 
 import { CreditCard, Users, AlertTriangle, Clock, Receipt } from "lucide-react"
-import { Column } from "@/components/ui/data-table"
+import { Column, TableBadge } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, currencyColumn, personNameWithAvatarColumn, countColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_MEMBERSHIP_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -93,7 +93,7 @@ const columns: Column<SubscriptionItem>[] = [
       if (!raw) return <span className="text-muted-foreground">Full Day</span>
       // Handle legacy preset names
       if (!raw.startsWith("[")) {
-        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">{raw}</span>
+        return <TableBadge className="bg-primary/10 text-primary">{raw}</TableBadge>
       }
       // Parse JSON time slots
       try {

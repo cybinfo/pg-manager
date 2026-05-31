@@ -849,3 +849,30 @@ export const AUDIT_EVENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = 
     }
   },
 }
+
+// ============================================
+// Business Hierarchy Configs
+// ============================================
+
+export const BUSINESS_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "businesses",
+  select: "*",
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["name", "legal_name", "gst_number", "phone", "email", "city"],
+  computedFields: (item: Record<string, unknown>) => ({
+    business_type_label: item.business_type as string || "",
+  }),
+}
+
+export const LOCATION_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "locations",
+  select: `
+    *,
+    business:businesses(id, name, logo_url)
+  `,
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["name", "address", "city", "state", "pincode", "phone"],
+  joinFields: ["business"],
+}

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, Home } from "lucide-react"
 import Link from "next/link"
 import { logger } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 
 export interface PortalErrorProps {
   /** The error caught by the Next.js error boundary */
@@ -34,7 +35,7 @@ export function PortalError({
       message: error.message,
       digest: error.digest,
       stack: error.stack,
-      timestamp: new Date().toISOString(),
+      timestamp: getNowISO(),
     })
   }, [error, portalName])
 

@@ -11,7 +11,6 @@ import {
   Cog,
   Bed,
   UtensilsCrossed,
-  ToggleLeft,
   ShieldCheck,
 } from "lucide-react"
 import { DetailHero } from "@/components/ui"
@@ -28,14 +27,13 @@ import {
   FoodSettings,
   ExpenseTypeSettings,
   NotificationSettings,
-  FeatureSettings,
   DefaultSettings,
   ApprovalSettings,
   SessionSettings,
 } from "./_components"
 import { FeatureGuard } from "@/components/auth"
 
-const VALID_TABS = ["profile", "room-types", "billing", "food", "expenses", "notifications", "features", "defaults", "security"] as const
+const VALID_TABS = ["profile", "room-types", "billing", "food", "expenses", "notifications", "defaults", "security"] as const
 type TabId = typeof VALID_TABS[number]
 
 const DEFAULT_TAB: TabId = "profile"
@@ -86,7 +84,6 @@ function SettingsContent() {
     { id: "food",          label: "Food & Meals",        icon: UtensilsCrossed },
     { id: "expenses",      label: "Expense Categories",  icon: IndianRupee },
     { id: "notifications", label: "Notifications",       icon: Bell },
-    { id: "features",      label: "Features",            icon: ToggleLeft },
     { id: "defaults",      label: "Default Settings",    icon: Settings },
     { id: "security",      label: "Security",            icon: ShieldCheck },
   ]
@@ -98,30 +95,34 @@ function SettingsContent() {
   return (
     <OwnerGuard>
       <div className="space-y-6">
-        <DetailHero
-          title="Settings"
-          subtitle="Manage your account and preferences"
-          backHref="/dashboard"
-          icon={Cog}
-          breadcrumbs={[{ label: "Settings" }]}
-        />
-
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="h-auto bg-transparent border-b rounded-none p-0 gap-0 w-full justify-start flex-wrap">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 gap-2 text-muted-foreground data-[state=active]:text-primary hover:text-foreground transition-colors"
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </TabsTrigger>
-              )
-            })}
-          </TabsList>
+          {/* Unified settings header panel */}
+          <div className="rounded-xl border bg-card shadow-sm">
+            <div className="px-6 pt-6 pb-4">
+              <DetailHero
+                title="Settings"
+                subtitle="Manage your account and preferences"
+                backHref="/dashboard"
+                icon={Cog}
+                breadcrumbs={[{ label: "Settings" }]}
+              />
+            </div>
+            <TabsList className="h-auto bg-transparent border-t rounded-none p-0 gap-1 px-4 w-full justify-start flex-wrap py-2">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="rounded-md px-3 py-1.5 gap-2 text-sm text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 hover:text-foreground transition-colors"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </TabsTrigger>
+                )
+              })}
+            </TabsList>
+          </div>
 
           <TabsContent value="profile">
             <ProfileSettings
@@ -182,10 +183,6 @@ function SettingsContent() {
             />
           </TabsContent>
 
-          <TabsContent value="features">
-            <FeatureSettings />
-          </TabsContent>
-
           <TabsContent value="defaults">
             <div className="space-y-6">
               <DefaultSettings
@@ -207,6 +204,7 @@ function SettingsContent() {
       </div>
     </OwnerGuard>
   )
+
 }
 
 export default function SettingsPage() {

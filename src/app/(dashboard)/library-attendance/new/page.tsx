@@ -25,6 +25,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import { checkInLibraryMember } from "@/lib/services/library-attendance"
+import { getNowISO } from "@/lib/date-helpers"
 
 interface MemberOption {
   id: string
@@ -87,7 +88,7 @@ function NewLibraryAttendanceContent() {
       member_id: "",
       library_id: "",
       seat_id: "",
-      check_in_time: new Date().toISOString().slice(0, 16),
+      check_in_time: getNowISO().slice(0, 16),
       notes: "",
     },
     redirectTo: "/library-attendance",

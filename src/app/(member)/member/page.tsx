@@ -17,6 +17,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { EmptyState } from "@/components/ui"
 import { QuickActionLink } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
@@ -168,9 +169,7 @@ export default function MemberHomePage() {
                 )}
               </>
             ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                <p>No active subscription</p>
-              </div>
+              <EmptyState variant="minimal" icon={BookOpen} title="No active subscription" />
             )}
           </CardContent>
         </Card>
@@ -233,7 +232,7 @@ export default function MemberHomePage() {
         </CardHeader>
         <CardContent>
           {extra.recentAttendance.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No attendance records yet</p>
+            <EmptyState variant="minimal" icon={Clock} title="No attendance records yet" />
           ) : (
             <div className="space-y-3">
               {extra.recentAttendance.map((att) => (

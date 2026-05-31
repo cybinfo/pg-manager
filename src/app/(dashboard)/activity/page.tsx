@@ -32,7 +32,7 @@ import {
   CreditCard,
   Clock,
 } from "lucide-react"
-import { formatDistanceToNow, format } from "date-fns"
+import { formatTimeAgo, formatDateTime } from "@/lib/format"
 import { getEntityName } from "@/lib/entity-names"
 import { brandGradient } from "@/lib/design-tokens"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -171,10 +171,10 @@ const columns: Column<AuditEvent>[] = [
     render: (event) => (
       <div className="text-sm">
         <div className="font-medium">
-          {formatDistanceToNow(new Date(event.occurred_at), { addSuffix: true })}
+          {formatTimeAgo(event.occurred_at)}
         </div>
         <div className="text-xs text-muted-foreground">
-          {format(new Date(event.occurred_at), "MMM d, h:mm a")}
+          {formatDateTime(event.occurred_at)}
         </div>
       </div>
     ),

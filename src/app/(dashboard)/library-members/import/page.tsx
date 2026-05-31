@@ -22,7 +22,8 @@ import {
   Loader2, Download, Users,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { PageHeader } from "@/components/ui"
+import { DetailHero } from "@/components/ui"
+import { TableBadge } from "@/components/ui/data-table"
 import { withCreatedBy } from "@/lib/audit/audit-utils"
 import { getTodayISO } from "@/lib/date-helpers"
 import { parseCSV, validateRow } from "@/lib/import/library-members"
@@ -352,9 +353,12 @@ function BulkImportContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <PageHeader
+      <DetailHero
         title="Bulk Import Members"
+        subtitle="Upload a CSV file to add multiple library members at once"
+        icon={Upload}
         backHref="/library-members"
+        backLabel="Back to Members"
         breadcrumbs={[
           { label: "Members", href: "/library-members" },
           { label: "Bulk Import" },
@@ -509,9 +513,9 @@ function BulkImportContent() {
                       <td className="p-2">{row.plan_name || "---"}</td>
                       <td className="p-2">
                         {row.slot && (
-                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                          <TableBadge className="bg-purple-100 text-purple-700">
                             {row.slot}
-                          </span>
+                          </TableBadge>
                         )}
                       </td>
                       <td className="p-2">

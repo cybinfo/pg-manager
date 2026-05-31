@@ -19,6 +19,7 @@ import { Loader2, AlertCircle, FileText } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { logger } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 import { useAuth } from "@/lib/auth"
 import { APPROVAL_TYPE_LABELS } from "@/lib/status"
 
@@ -180,7 +181,7 @@ export function ReportIssueDialog({
           if (autoTypes.includes(approvalType)) {
             await supabase
               .from("approvals")
-              .update({ status: "approved", decided_at: new Date().toISOString() })
+              .update({ status: "approved", decided_at: getNowISO() })
               .eq("id", newApproval.id)
           }
         }

@@ -71,6 +71,7 @@ import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist, LibraryWaitlistStatus } from "@/types/library.types"
 import type { DetailPageConfig } from "@/lib/hooks/useDetailPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { TableBadge } from "@/components/ui/data-table"
 
 // Detail page configuration
 const LIBRARY_WAITLIST_DETAIL_CONFIG: DetailPageConfig<LibraryWaitlist> = {
@@ -210,9 +211,9 @@ export default function WaitlistDetailPage({
               </Link>
             )}
             {entry.preferred_slot && (
-              <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+              <TableBadge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                 {entry.preferred_slot}
-              </span>
+              </TableBadge>
             )}
           </div>
         }

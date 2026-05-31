@@ -103,7 +103,7 @@ export async function baseCronHandler<T = Record<string, unknown>>(
     sendCronFailureAlert({
       cronName: config.name,
       error: error instanceof Error ? error.message : String(error),
-      timestamp: new Date().toISOString(),
+      timestamp: getNowISO(),
     }).catch(() => {})
     return internalError("Internal server error")
   }

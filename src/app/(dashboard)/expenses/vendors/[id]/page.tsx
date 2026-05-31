@@ -32,6 +32,7 @@ import {
   DetailSection,
   InfoRow,
   NotFoundState,
+  EmptyState,
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
@@ -311,7 +312,7 @@ export default function VendorDetailPage({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground py-4">No payments recorded yet</p>
+                <EmptyState variant="minimal" icon={Receipt} title="No payments recorded yet" />
               )}
             </DetailSection>
 

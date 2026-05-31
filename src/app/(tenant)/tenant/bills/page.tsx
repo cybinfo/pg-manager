@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/form-components"
@@ -112,10 +113,8 @@ export default function TenantBillsPage() {
       {/* Bills List */}
       {bills.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No bills yet</h3>
-            <p className="text-muted-foreground">Your bills will appear here</p>
+          <CardContent className="py-2">
+            <EmptyState variant="minimal" icon={FileText} title="No bills yet" description="Your bills will appear here" />
           </CardContent>
         </Card>
       ) : (

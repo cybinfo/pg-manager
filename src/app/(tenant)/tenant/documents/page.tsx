@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui"
 import { Button } from "@/components/ui/button"
 import {
   Loader2,
@@ -16,6 +17,7 @@ import {
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
+import { getNowISO } from "@/lib/date-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { DOCUMENT_STATUS } from "@/lib/status"
@@ -53,7 +55,7 @@ export default function TenantDocumentsPage() {
     // Soft delete — set deleted_at/deleted_by, never hard delete (E4 principle)
     const { error } = await supabase
       .from("tenant_documents")
-      .update({ deleted_at: new Date().toISOString(), deleted_by: user?.id ?? null })
+      .update({ deleted_at: getNowISO(), deleted_by: user?.id ?? null })
       .eq("id", documentToDelete.id)
 
     setDeleting(false)
@@ -155,14 +157,14 @@ export default function TenantDocumentsPage() {
       {/* Documents List */}
       {documents.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No documents yet</h3>
-            <p className="text-muted-foreground mb-4">Upload your first document to get started</p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Upload Document
-            </Button>
+          <CardContent className="py-2">
+            <EmptyState
+              variant="minimal"
+              icon={FileText}
+              title="No documents yet"
+              description="Upload your first document to get started"
+              action={{ label: "Upload Document", onClick: () => setDialogOpen(true), icon: Plus }}
+            />
           </CardContent>
         </Card>
       ) : (

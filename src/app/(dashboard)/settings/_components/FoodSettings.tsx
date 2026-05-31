@@ -27,7 +27,7 @@ export function FoodSettings({ foodSettings, setFoodSettings, configId }: FoodSe
   }
 
   return (
-    <div className="grid gap-6 max-w-2xl">
+    <div className="grid gap-6 max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">

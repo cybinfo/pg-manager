@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth, useCurrentContext } from "@/lib/auth"
-import { PageHeader } from "@/components/ui/page-header"
+import { DetailHero, EmptyState } from "@/components/ui"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Textarea } from "@/components/ui/textarea"
 import { useAdminsData, type AdminRow } from "@/lib/hooks/useAdminsData"
 import { grantPlatformAdmin } from "@/lib/services/admin.service"
@@ -29,7 +28,6 @@ import {
   UserPlus,
   Trash2,
   Search,
-  ArrowLeft,
 } from "lucide-react"
 
 interface FoundUser {
@@ -41,7 +39,6 @@ interface FoundUser {
 export default function PlatformAdminsPage() {
   const { user } = useAuth()
   const { isPlatformAdmin } = useCurrentContext()
-  const { backHref } = useBackNavigation({ defaultHref: "/admin" })
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   const { admins, loading: loadingAdmins, refetch: refetchAdmins } = useAdminsData()
@@ -195,22 +192,16 @@ export default function PlatformAdminsPage() {
     <div className="space-y-6">
       {ConfirmDialogElement}
 
-      <PageHeader
+      <DetailHero
         title="Platform Admins"
-        description="Manage who has platform-level administrator access"
+        subtitle="Manage who has platform-level administrator access"
         icon={Shield}
+        backHref="/admin"
+        backLabel="Back to Admin"
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
           { label: "Platform Admins" },
         ]}
-        actions={
-          <Link href={backHref}>
-            <Button variant="outline" size="sm" className="gap-1">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          </Link>
-        }
       />
 
       {/* ── Admin list ─────────────────────────────────────────── */}
@@ -230,10 +221,7 @@ export default function PlatformAdminsPage() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : admins.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-muted-foreground">
-              <Shield className="h-12 w-12 opacity-30 mb-4" />
-              <p>No platform admins found</p>
-            </div>
+            <EmptyState icon={Shield} title="No platform admins" description="No platform administrators have been added" />
           ) : (
             <div className="divide-y">
               {admins.map((admin) => {
