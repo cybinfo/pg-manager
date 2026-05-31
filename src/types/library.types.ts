@@ -74,6 +74,10 @@ export interface LibrarySettings {
   time_slots?: string[]
   default_hours_per_month?: number
   grace_period_minutes?: number
+  has_ac?: boolean
+  has_wifi?: boolean
+  has_lockers?: boolean
+  has_parking?: boolean
 }
 
 export interface Library extends AuditableEntity {

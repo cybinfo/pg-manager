@@ -67,6 +67,7 @@ export {
   LIBRARY_SUBSCRIPTION_DETAIL_CONFIG,
   LIBRARY_PAYMENT_DETAIL_CONFIG,
   BUSINESS_DETAIL_CONFIG,
+  ENTITY_DETAIL_CONFIG,
 } from "./detail-page/types"
 
 // ============================================

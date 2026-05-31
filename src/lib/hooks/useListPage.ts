@@ -89,6 +89,7 @@ export {
   APPROVALS_LIST_CONFIG,
   AUDIT_EVENT_LIST_CONFIG,
   BUSINESS_LIST_CONFIG,
+  ENTITY_LIST_CONFIG,
 } from "./list-page/configs"
 
 // Import types for use in this file

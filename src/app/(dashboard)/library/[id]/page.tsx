@@ -217,24 +217,24 @@ export default function LibraryDetailPage() {
             />
           )}
           <div className="flex gap-2 mt-3 flex-wrap">
-            {library.has_ac && (
+            {library.settings?.has_ac && (
               <span className="px-2 py-1 bg-info/10 text-info rounded text-sm font-medium">AC</span>
             )}
-            {library.has_wifi && (
+            {library.settings?.has_wifi && (
               <span className="px-2 py-1 bg-success/10 text-success rounded text-sm font-medium flex items-center gap-1">
                 <Wifi className="h-3 w-3" />
                 WiFi
               </span>
             )}
-            {library.has_lockers && (
+            {library.settings?.has_lockers && (
               <span className="px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-sm font-medium flex items-center gap-1">
                 <Lock className="h-3 w-3" />
                 Lockers
               </span>
             )}
-            {library.has_parking && (
+            {library.settings?.has_parking && (
               <span className="px-2 py-1 bg-warning/10 text-warning rounded text-sm font-medium flex items-center gap-1">
-                <Car className="h-3 w-3" />
+                <Car className="h-3 w-4" />
                 Parking
               </span>
             )}

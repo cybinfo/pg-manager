@@ -40,7 +40,7 @@ function NewLibraryContent() {
     errors,
     workspaceId,
   } = useFormPage({
-    table: "libraries",
+    table: "entities",
     initialData: {
       name: "",
       business_id: "",
@@ -68,6 +68,7 @@ function NewLibraryContent() {
     transform: (data, userId): Record<string, unknown> => ({
       owner_id: userId,
       workspace_id: workspaceId,
+      type: "library",
       business_id: (data.business_id as string) || null,
       name: data.name,
       code: data.code || null,
@@ -79,11 +80,11 @@ function NewLibraryContent() {
       email: data.email || null,
       opening_time: data.opening_time || null,
       closing_time: data.closing_time || null,
-      has_ac: data.has_ac,
-      has_wifi: data.has_wifi,
-      has_lockers: data.has_lockers,
-      has_parking: data.has_parking,
       settings: {
+        has_ac: data.has_ac,
+        has_wifi: data.has_wifi,
+        has_lockers: data.has_lockers,
+        has_parking: data.has_parking,
         time_slots: ["Morning", "Evening", "Night", "24 Hours"],
         default_hours_per_month: 9,
         grace_period_minutes: 15,

@@ -193,7 +193,8 @@ export const STAFF_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
 }
 
 export const PROPERTY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "properties",
+  table: "entities",
+  fixedFilters: [{ column: "type", operator: "eq", value: "pg" }],
   select: `
     *,
     rooms(id),
@@ -205,6 +206,22 @@ export const PROPERTY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => ({
     room_count: Array.isArray(item.rooms) ? item.rooms.length : 0,
     tenant_count: Array.isArray(item.tenants) ? item.tenants.length : 0,
+  }),
+}
+
+export const ENTITY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "entities",
+  select: `*`,
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "city", "code"],
+  computedFields: (item) => ({
+    available_seats: (item.total_seats as number || 0) - (item.occupied_seats as number || 0),
+    occupancy_percent: item.total_seats
+      ? Math.round(((item.occupied_seats as number) / (item.total_seats as number)) * 100)
+      : 0,
+    room_count: 0,
+    tenant_count: 0,
   }),
 }
 
@@ -593,18 +610,26 @@ export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown
 
 export const LIBRARY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "entities",
+  fixedFilters: [{ column: "type", operator: "eq", value: "library" }],
   select: `*`,
   defaultOrderBy: "name",
   defaultOrderDirection: "asc",
   searchFields: ["name", "code", "city", "phone"],
   joinFields: [],
-  computedFields: (item) => ({
-    available_seats: (item.total_seats as number) - (item.occupied_seats as number),
-    occupancy_percent: item.total_seats
-      ? Math.round(((item.occupied_seats as number) / (item.total_seats as number)) * 100)
-      : 0,
-    status_label: item.is_active ? "Active" : "Inactive",
-  }),
+  computedFields: (item) => {
+    const settings = (item.settings as Record<string, unknown>) || {}
+    return {
+      available_seats: (item.total_seats as number) - (item.occupied_seats as number),
+      occupancy_percent: item.total_seats
+        ? Math.round(((item.occupied_seats as number) / (item.total_seats as number)) * 100)
+        : 0,
+      status_label: item.is_active ? "Active" : "Inactive",
+      has_ac: settings.has_ac ?? false,
+      has_wifi: settings.has_wifi ?? false,
+      has_lockers: settings.has_lockers ?? false,
+      has_parking: settings.has_parking ?? false,
+    }
+  },
 }
 
 export const LIBRARY_SECTION_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {

@@ -77,7 +77,7 @@ export const STAFF_DETAIL_CONFIG: DetailPageConfig = {
         role_id,
         property_id,
         role:roles(id, name, description),
-        property:properties(id, name)
+        property:entities(id, name)
       `,
       foreignKey: "staff_member_id",
       joinFields: ["role", "property"],
@@ -90,7 +90,7 @@ export const VISITOR_DETAIL_CONFIG: DetailPageConfig = {
   table: "visitors",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     tenant:tenants!visitors_tenant_id_fkey(id, name, phone, person:people(id, photo_url)),
     person:people(id, name, phone, email, photo_url, company_name, occupation),
     visitor_contact:visitor_contacts(
@@ -110,7 +110,7 @@ export const TENANT_DETAIL_CONFIG: DetailPageConfig = {
   table: "tenants",
   select: `
     *,
-    property:properties(id, name, address),
+    property:entities(id, name, address),
     room:rooms(id, room_number, room_type),
     person:people(
       id, name, phone, email, photo_url, date_of_birth, gender,
@@ -146,7 +146,7 @@ export const TENANT_DETAIL_CONFIG: DetailPageConfig = {
     {
       key: "stays",
       table: "tenant_stays",
-      select: "id, join_date, exit_date, monthly_rent, status, stay_number, property:properties(name), room:rooms(room_number)",
+      select: "id, join_date, exit_date, monthly_rent, status, stay_number, property:entities(name), room:rooms(room_number)",
       foreignKey: "tenant_id",
       joinFields: ["property", "room"],
       orderBy: "stay_number",
@@ -157,9 +157,9 @@ export const TENANT_DETAIL_CONFIG: DetailPageConfig = {
       table: "room_transfers",
       select: `
         id, transfer_date, reason, old_rent, new_rent,
-        from_property:properties!room_transfers_from_property_id_fkey(name),
+        from_property:entities!room_transfers_from_entity_id_fkey(name),
         from_room:rooms!room_transfers_from_room_id_fkey(room_number),
-        to_property:properties!room_transfers_to_property_id_fkey(name),
+        to_property:entities!room_transfers_to_entity_id_fkey(name),
         to_room:rooms!room_transfers_to_room_id_fkey(room_number)
       `,
       foreignKey: "tenant_id",
@@ -185,7 +185,7 @@ export const BILL_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     tenant:tenants(id, name, phone, email, person_id, person:people(id, photo_url)),
-    property:properties(id, name, address)
+    property:entities(id, name, address)
   `,
   joinFields: ["tenant", "property"],
   redirectOnNotFound: "/bills",
@@ -208,7 +208,7 @@ export const PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     tenant:tenants(id, name, phone, person_id, person:people(id, photo_url)),
-    property:properties(id, name),
+    property:entities(id, name),
     bill:bills(id, bill_number, total_amount, balance_due),
     charge_type:charge_types(id, name)
   `,
@@ -222,7 +222,7 @@ export const EXPENSE_DETAIL_CONFIG: DetailPageConfig = {
   table: "expenses",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     expense_type:expense_types(id, name, code)
   `,
   joinFields: ["property", "expense_type"],
@@ -241,7 +241,7 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "rooms",
       table: "rooms",
       select: "id, room_number, room_type, floor, total_beds, occupied_beds, rent_amount, status, has_ac, has_attached_bathroom",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       orderBy: "room_number",
       orderDirection: "asc",
     },
@@ -249,7 +249,7 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "tenants",
       table: "tenants",
       select: "id, name, phone, photo_url, profile_photo, status, monthly_rent, check_in_date, room:rooms(id, room_number), person:people(id, photo_url)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["room", "person"],
       filter: { status: ["active", "notice_period"] },
       orderBy: "name",
@@ -259,14 +259,14 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "staff",
       table: "user_roles",
       select: "id, staff_member:staff_members(id, name, email, phone, is_active, person:people(id, photo_url)), role:roles(id, name)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["staff_member", "role"],
     },
     {
       key: "bills",
       table: "bills",
       select: "id, bill_number, bill_date, total_amount, balance_due, status, tenant:tenants(id, name)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["tenant"],
       orderBy: "bill_date",
       orderDirection: "desc",
@@ -276,7 +276,7 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "payments",
       table: "payments",
       select: "id, amount, payment_date, payment_method, tenant:tenants(id, name)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["tenant"],
       orderBy: "payment_date",
       orderDirection: "desc",
@@ -286,7 +286,7 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "expenses",
       table: "expenses",
       select: "id, amount, expense_date, description, expense_type:expense_types(name)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["expense_type"],
       orderBy: "expense_date",
       orderDirection: "desc",
@@ -296,7 +296,7 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "complaints",
       table: "complaints",
       select: "id, title, description, status, priority, created_at, tenant:tenants(id, name), room:rooms(id, room_number)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["tenant", "room"],
       orderBy: "created_at",
       orderDirection: "desc",
@@ -306,7 +306,7 @@ export const PROPERTY_DETAIL_CONFIG: DetailPageConfig = {
       key: "visitors",
       table: "visitors",
       select: "id, visitor_name, purpose, check_in_time, check_out_time, is_overnight, tenant:tenants(id, name)",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       joinFields: ["tenant"],
       orderBy: "check_in_time",
       orderDirection: "desc",
@@ -320,7 +320,7 @@ export const ROOM_DETAIL_CONFIG: DetailPageConfig = {
   table: "rooms",
   select: `
     *,
-    property:properties(id, name, address)
+    property:entities(id, name, address)
   `,
   joinFields: ["property"],
   redirectOnNotFound: "/rooms",
@@ -374,7 +374,7 @@ export const METER_READING_DETAIL_CONFIG: DetailPageConfig = {
   table: "meter_readings",
   select: `
     *,
-    property:properties(id, name, address),
+    property:entities(id, name, address),
     room:rooms(id, room_number),
     charge_type:charge_types(id, name, calculation_config)
   `,
@@ -388,7 +388,7 @@ export const METER_DETAIL_CONFIG: DetailPageConfig = {
   table: "meters",
   select: `
     *,
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   joinFields: ["property"],
   redirectOnNotFound: "/meters",
@@ -416,7 +416,7 @@ export const METER_DETAIL_CONFIG: DetailPageConfig = {
       key: "rooms",
       table: "rooms",
       select: "id, room_number",
-      foreignKey: "property_id",
+      foreignKey: "entity_id",
       foreignKeyValue: "field:property_id",
       orderBy: "room_number",
       orderDirection: "asc",
@@ -430,7 +430,7 @@ export const COMPLAINT_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     tenant:tenants(id, name, phone, person:people(id, photo_url)),
-    property:properties(id, name, address, city),
+    property:entities(id, name, address, city),
     room:rooms(id, room_number)
   `,
   joinFields: ["tenant", "property", "room"],
@@ -443,7 +443,7 @@ export const NOTICE_DETAIL_CONFIG: DetailPageConfig = {
   table: "notices",
   select: `
     *,
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   joinFields: ["property"],
   redirectOnNotFound: "/notices",
@@ -456,7 +456,7 @@ export const EXIT_CLEARANCE_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     tenant:tenants(id, name, phone, email, security_deposit, monthly_rent, person:people(id, photo_url)),
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number)
   `,
   joinFields: ["tenant", "property", "room"],
@@ -480,7 +480,7 @@ export const REFUND_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     tenant:tenants(id, name, phone, photo_url, profile_photo, person:people(id, photo_url)),
-    property:properties(id, name),
+    property:entities(id, name),
     exit_clearance:exit_clearance(id, expected_exit_date, actual_exit_date, settlement_status)
   `,
   joinFields: ["tenant", "property", "exit_clearance"],
@@ -498,7 +498,7 @@ export const PEOPLE_DETAIL_CONFIG: DetailPageConfig = {
     {
       key: "tenants",
       table: "tenants",
-      select: "id, check_in_date, check_out_date, status, monthly_rent, property:properties(name), room:rooms(room_number)",
+      select: "id, check_in_date, check_out_date, status, monthly_rent, property:entities(name), room:rooms(room_number)",
       foreignKey: "person_id",
       joinFields: ["property", "room"],
       orderBy: "check_in_date",
@@ -526,7 +526,7 @@ export const INQUIRY_DETAIL_CONFIG: DetailPageConfig = {
   table: "website_inquiries",
   select: `
     *,
-    property:properties(id, name, city)
+    property:entities(id, name, city)
   `,
   joinFields: ["property"],
   redirectOnNotFound: "/inquiries",
@@ -554,7 +554,7 @@ export const DAILY_SPEND_DETAIL_CONFIG: DetailPageConfig = {
   table: "daily_spend",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     product:products(id, name, name_hi, default_unit)
   `,
   joinFields: ["property", "product"],
@@ -590,7 +590,7 @@ export const BILL_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
   table: "bill_payments",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     vendor:vendors(id, name, upi_id, gstin),
     category:bill_categories(id, name, name_hi)
   `,
@@ -613,7 +613,7 @@ export const SERVICE_PROVIDER_DETAIL_CONFIG: DetailPageConfig = {
     {
       key: "recentServices",
       table: "service_payments",
-      select: "id, service_date, description, gross_amount, net_amount, warranty_expiry, property:properties(id, name)",
+      select: "id, service_date, description, gross_amount, net_amount, warranty_expiry, property:entities(id, name)",
       foreignKey: "provider_id",
       joinFields: ["property"],
       orderBy: "service_date",
@@ -628,7 +628,7 @@ export const SERVICE_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
   table: "service_payments",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number),
     provider:service_providers(id, name, phone, rating, upi_id),
     category:service_categories(id, name, name_hi),
@@ -644,7 +644,7 @@ export const KITCHEN_WASTAGE_DETAIL_CONFIG: DetailPageConfig = {
   table: "kitchen_wastage",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     product:products(id, name, name_hi)
   `,
   joinFields: ["property", "product"],
@@ -670,7 +670,7 @@ export const MISC_TRANSACTION_DETAIL_CONFIG: DetailPageConfig = {
 
 // Library Detail Config
 export const LIBRARY_DETAIL_CONFIG: DetailPageConfig = {
-  table: "libraries",
+  table: "entities",
   select: "*",
   redirectOnNotFound: "/library",
   notFoundMessage: "Library not found",
@@ -722,7 +722,7 @@ export const LIBRARY_SECTION_DETAIL_CONFIG: DetailPageConfig = {
   table: "entity_sections",
   select: `
     *,
-    library:libraries(id, name, code)
+    library:entities(id, name, code)
   `,
   joinFields: ["library"],
   redirectOnNotFound: "/library-sections",
@@ -745,7 +745,7 @@ export const LIBRARY_SEAT_DETAIL_CONFIG: DetailPageConfig = {
   table: "entity_seats",
   select: `
     *,
-    section:entity_sections(id, name, library:libraries(id, name)),
+    section:entity_sections(id, name, library:entities(id, name)),
     current_member:entity_members!fk_seats_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
   `,
   joinFields: ["section", "current_member"],
@@ -759,7 +759,7 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     person:people(id, name, phone, email, photo_url, aadhaar_number, pan_number, date_of_birth, gender, phone_numbers, emergency_contacts, id_documents, permanent_address, permanent_city, permanent_state, permanent_pincode, current_address, current_city, occupation, blood_group, company_name),
-    library:libraries(id, name, code),
+    library:entities(id, name, code),
     assigned_seat:entity_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:entity_sections(id, name)),
     locker:entity_lockers!library_members_locker_id_fkey(id, locker_number, size)
   `,
@@ -823,7 +823,7 @@ export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
   table: "entity_lockers",
   select: `
     *,
-    library:libraries(id, name),
+    library:entities(id, name),
     current_member:entity_members!fk_lockers_current_member(id, name, member_code, phone, person:people(id, name, photo_url, phone))
   `,
   joinFields: ["library", "current_member"],
@@ -894,21 +894,24 @@ export const BUSINESS_DETAIL_CONFIG: DetailPageConfig = {
   notFoundMessage: "Business not found",
   relatedQueries: [
     {
-      key: "properties",
+      key: "entities",
       table: "entities",
-      select: "id, name, city, is_active, created_at",
-      foreignKey: "business_id",
-      orderBy: "name",
-      orderDirection: "asc",
-    },
-    {
-      key: "libraries",
-      table: "libraries",
-      select: "id, name, city, is_active, created_at",
+      select: "id, name, type, city, is_active, created_at",
       foreignKey: "business_id",
       orderBy: "name",
       orderDirection: "asc",
     },
   ],
+}
+
+export const ENTITY_DETAIL_CONFIG: DetailPageConfig = {
+  table: "entities",
+  select: `
+    *,
+    business:businesses(id, name, legal_name)
+  `,
+  joinFields: ["business"],
+  redirectOnNotFound: "/entities",
+  notFoundMessage: "Entity not found",
 }
 

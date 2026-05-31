@@ -34,7 +34,7 @@ function NewPropertyContent() {
     errors,
     validateField,
   } = useFormPage({
-    table: "properties",
+    table: "entities",
     initialData: {
       name: "",
       business_id: "",
@@ -63,6 +63,7 @@ function NewPropertyContent() {
 
       return withCreatedBy({
         owner_id: userId,
+        type: "pg",
         business_id: (data.business_id as string) || null,
         name: data.name,
         address: fullAddress || null,
