@@ -146,11 +146,11 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
         attendanceRes,
       ] = await Promise.all([
         supabase.from("entities").eq("type", "library").select("id, name, total_seats, occupied_seats"),
-        fetchAllRows(supabase.from("entity_seats").select("id, section_id, status, section:entity_sections!entity_seats_section_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_seats").select("id, section_id, status, section:entity_sections!library_seats_section_id_fkey(entity_id)")),
         fetchAllRows(supabase.from("entity_members").select("id, entity_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at")),
-        fetchAllRows(supabase.from("entity_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:entity_members!entity_memberships_member_id_fkey(entity_id)")),
-        fetchAllRows(supabase.from("entity_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:entity_members!entity_payments_member_id_fkey(entity_id)")),
-        fetchAllRows(supabase.from("entity_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:entity_members!entity_attendance_member_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:entity_members!library_memberships_member_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:entity_members!library_payments_member_id_fkey(entity_id)")),
+        fetchAllRows(supabase.from("entity_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:entity_members!library_attendance_member_id_fkey(entity_id)")),
       ])
 
       const librariesData = librariesRes.data || []
@@ -360,11 +360,11 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
     try {
       const [paymentsRes, membersRes, membershipsRes] = await Promise.all([
         fetchAllRows(supabase.from("entity_payments").select(
-          "id, member_id, amount, payment_type, payment_method, payment_date, member:entity_members!entity_payments_member_id_fkey(id, entity_id, name, member_code)"
+          "id, member_id, amount, payment_type, payment_method, payment_date, member:entity_members!library_payments_member_id_fkey(id, entity_id, name, member_code)"
         )),
         fetchAllRows(supabase.from("entity_members").select("id, entity_id, status")),
         fetchAllRows(supabase.from("entity_memberships").select(
-          "id, member_id, final_amount, status, member:entity_members!entity_memberships_member_id_fkey(entity_id)"
+          "id, member_id, final_amount, status, member:entity_members!library_memberships_member_id_fkey(entity_id)"
         )),
       ])
 

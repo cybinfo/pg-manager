@@ -153,7 +153,7 @@ const MEMBER_PORTAL_CONFIG = {
     library:libraries(id, name, phone, address, city, opening_time, closing_time),
     assigned_seat:entity_seats(seat_number, section:entity_sections(name)),
     locker:entity_lockers(locker_number),
-    current_subscription:entity_memberships!entity_members_current_subscription_id_fkey(
+    current_subscription:entity_memberships!library_members_current_subscription_id_fkey(
       id, plan_name, hours_included, hours_remaining, start_date, end_date, status
     ),
     person:people(name, photo_url)

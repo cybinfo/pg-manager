@@ -54,7 +54,7 @@ export function useMemberPayments(
       const supabase = createClient()
 
       const { data: paymentsData } = await supabase
-        .from("library_payments")
+        .from("entity_payments")
         .select(
           "id, receipt_number, payment_date, amount, payment_type, payment_method, notes"
         )

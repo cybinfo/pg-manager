@@ -205,7 +205,7 @@ function NewLibraryAttendanceContent() {
           id,
           seat_number,
           has_power_outlet,
-          section:library_sections!library_seats_section_id_fkey(
+          section:entity_sections!library_seats_section_id_fkey(
             id,
             name,
             is_ac,

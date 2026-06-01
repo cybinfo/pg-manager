@@ -32,7 +32,7 @@ export default function MemberLayout({
   const handleAuthCheck = useCallback(async (userId: string): Promise<boolean> => {
 
     const { data: memberData, error } = await supabase
-      .from("library_members")
+      .from("entity_members")
       .select(`
         id,
         name,

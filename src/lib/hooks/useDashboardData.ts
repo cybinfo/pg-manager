@@ -134,9 +134,9 @@ export function useDashboardData(): UseDashboardDataReturn {
           .gte("payment_date", new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString())
           .order("payment_date"),
         supabase.from("entities").eq("type", "library").select("id", { count: "exact", head: true }).is("deleted_at", null),
-        supabase.from("library_members").select("id", { count: "exact", head: true }).is("deleted_at", null),
-        supabase.from("library_members").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
-        supabase.from("library_attendance").select("id", { count: "exact", head: true })
+        supabase.from("entity_members").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        supabase.from("entity_members").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
+        supabase.from("entity_attendance").select("id", { count: "exact", head: true })
           .eq("attendance_date", today)
           .is("check_out_time", null)
           .is("deleted_at", null),

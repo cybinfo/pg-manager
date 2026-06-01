@@ -174,7 +174,7 @@ function NewComplaintForm() {
           .is("deleted_at", null)
           .order("name"),
         supabase.from("entities").eq("type", "library").select("id, name").is("deleted_at", null).order("name"),
-        supabase.from("library_members").select("id, name, member_code").eq("status", "active").is("deleted_at", null).order("name"),
+        supabase.from("entity_members").select("id, name, member_code").eq("status", "active").is("deleted_at", null).order("name"),
       ])
 
       if (propertiesRes.data) setProperties(propertiesRes.data)

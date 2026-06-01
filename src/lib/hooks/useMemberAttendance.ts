@@ -55,7 +55,7 @@ export function useMemberAttendance(
       const supabase = createClient()
 
       const { data: attendanceData } = await supabase
-        .from("library_attendance")
+        .from("entity_attendance")
         .select("id, attendance_date, check_in_time, check_out_time, hours_spent, notes")
         .eq("member_id", member.id)
         .is("deleted_at", null)

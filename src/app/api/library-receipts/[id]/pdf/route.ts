@@ -8,7 +8,7 @@ import { PAYMENT_METHODS } from "@/lib/status"
 type AnyRecord = Record<string, any>
 
 const LIBRARY_PDF_CONFIG: PdfRouteConfig<LibraryReceiptData> = {
-  table: "library_payments",
+  table: "entity_payments",
   select: `
     *,
     member:library_members!library_payments_member_id_fkey(

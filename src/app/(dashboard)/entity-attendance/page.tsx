@@ -92,7 +92,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
         id,
         check_in_time,
         seat_id,
-        member:library_members!library_attendance_member_id_fkey(id, name, member_code, hours_balance, person:people(name, photo_url))
+        member:entity_members!library_attendance_member_id_fkey(id, name, member_code, hours_balance, person:people(name, photo_url))
       `)
       .eq("attendance_date", today)
       .is("check_out_time", null)

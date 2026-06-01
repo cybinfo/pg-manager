@@ -82,7 +82,7 @@ function BulkImportContent() {
       if (librariesData) setLibraries(librariesData)
 
       const { data: plansData } = await supabase
-        .from("library_plans")
+        .from("entity_plans")
         .select("id, name, hours_included, validity_days, base_price")
         .eq("is_active", true)
         .order("sort_order")

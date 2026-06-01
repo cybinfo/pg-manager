@@ -65,7 +65,7 @@ function useEnrollmentStats() {
 
     const query = supabase
       .from("entity_memberships")
-      .select("plan_id, status, end_date, member:entity_members!entity_memberships_member_id_fkey(status)")
+      .select("plan_id, status, end_date, member:entity_members!library_memberships_member_id_fkey(status)")
       .not("plan_id", "is", null)
       .is("deleted_at", null)
 

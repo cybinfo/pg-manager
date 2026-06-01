@@ -677,7 +677,7 @@ export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
     *,
     person:people(id, name, photo_url),
     library:entities(id, name),
-    assigned_seat:entity_seats!entity_members_assigned_seat_id_fkey(id, seat_number, section:entity_sections(id, name))
+    assigned_seat:entity_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:entity_sections(id, name))
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
@@ -699,7 +699,7 @@ export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unkno
   table: "entity_memberships",
   select: `
     *,
-    member:entity_members!entity_memberships_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
+    member:entity_members!library_memberships_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
     plan:entity_plans(id, name, hours_included)
   `,
   defaultOrderBy: "start_date",
@@ -727,7 +727,7 @@ export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unkno
   table: "entity_attendance",
   select: `
     *,
-    member:entity_members!entity_attendance_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
+    member:entity_members!library_attendance_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
     seat:entity_seats(id, seat_number)
   `,
   defaultOrderBy: "check_in_time",
