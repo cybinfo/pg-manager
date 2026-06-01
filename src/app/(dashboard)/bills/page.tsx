@@ -8,6 +8,8 @@
 "use client"
 
 import { FileText, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { ConfigureDialog } from "@/components/shared/ConfigureDialog"
+import { BillingPanel } from "@/components/settings-panels"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column } from "@/components/ui/data-table"
 import { statusColumn, currencyColumn, dateColumn, phoneColumn } from "@/lib/columns"
@@ -221,10 +223,15 @@ export default function BillsPage() {
       columns={columns}
       searchPlaceholder="Search by bill number, tenant, or month..."
       headerActions={
-        <HelpTooltip
-          content="Bills are auto-generated monthly via cron. You can also create them manually."
-          side="bottom"
-        />
+        <div className="flex items-center gap-2">
+          <ConfigureDialog title="Billing & Charges" description="Configure charge types, billing cycle, and utility rates">
+            <BillingPanel />
+          </ConfigureDialog>
+          <HelpTooltip
+            content="Bills are auto-generated monthly via cron. You can also create them manually."
+            side="bottom"
+          />
+        </div>
       }
       enableColumnManager={true}
       enableAdvancedFilters={true}

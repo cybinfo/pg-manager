@@ -8,6 +8,8 @@
 "use client"
 
 import { Home, Bed, CheckCircle, AlertCircle } from "lucide-react"
+import { ConfigureDialog } from "@/components/shared/ConfigureDialog"
+import { RoomTypePanel } from "@/components/settings-panels"
 import { Column } from "@/components/ui/data-table"
 import { statusColumn, currencyColumn, dateColumn, badgeColumn, booleanColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
@@ -267,6 +269,11 @@ export default function RoomsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by room number, property..."
+      headerActions={
+        <ConfigureDialog title="Room Types" description="Configure room types for this workspace">
+          <RoomTypePanel />
+        </ConfigureDialog>
+      }
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}

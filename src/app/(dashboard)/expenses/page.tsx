@@ -8,6 +8,8 @@
 "use client"
 
 import { Receipt, TrendingDown, Calendar, BarChart3, Wallet } from "lucide-react"
+import { ConfigureDialog } from "@/components/shared/ConfigureDialog"
+import { ExpensePanel } from "@/components/settings-panels"
 import { Column } from "@/components/ui/data-table"
 import { dateColumn, badgeColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
@@ -223,6 +225,11 @@ export default function ExpensesPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search vendor, description, reference..."
+      headerActions={
+        <ConfigureDialog title="Expense Configuration" description="Manage expense categories and food & meal settings">
+          <ExpensePanel />
+        </ConfigureDialog>
+      }
       enableColumnManager={true}
 enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
