@@ -68,7 +68,7 @@ const INITIAL_STATS: DashboardStats = {
 }
 
 const INITIAL_GETTING_STARTED: GettingStartedItem[] = [
-  { task: "Add your first property", href: "/properties/new", done: false },
+  { task: "Add your first property", href: "/entities/new", done: false },
   { task: "Create rooms in your property", href: "/rooms/new", done: false },
   { task: "Add your first tenant", href: "/tenants/new", done: false },
   { task: "Configure charge types", href: "/settings", done: false },
@@ -221,7 +221,7 @@ export function useDashboardData(): UseDashboardDataReturn {
       })
 
       setGettingStarted([
-        { task: "Add your first property", href: "/properties/new", done: (propertiesRes.count || 0) > 0 },
+        { task: "Add your first property", href: "/entities/new", done: (propertiesRes.count || 0) > 0 },
         { task: "Create rooms in your property", href: "/rooms/new", done: (roomsRes.data?.length || 0) > 0 },
         { task: "Add your first tenant", href: "/tenants/new", done: (tenantsRes.count || 0) > 0 },
         { task: "Configure charge types", href: "/settings", done: (chargeTypesRes.count || 0) > 0 },

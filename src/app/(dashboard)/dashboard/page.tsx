@@ -50,7 +50,7 @@ import { useDashboardData } from "@/lib/hooks/useDashboardData"
 import type { PaymentStatus } from "@/lib/hooks/useDashboardData"
 
 const quickActionsConfig = [
-  { name: "Add Property", href: "/properties/new", icon: Building2, permission: "properties.create" },
+  { name: "Add Entity", href: "/entities/new", icon: Building2, permission: "properties.create" },
   { name: "Add Room", href: "/rooms/new", icon: Home, permission: "rooms.create" },
   { name: "Add Tenant", href: "/tenants/new", icon: Users, permission: "tenants.create" },
   { name: "Record Payment", href: "/payments/new", icon: CreditCard, permission: "payments.create" },
@@ -516,7 +516,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground text-sm mb-4">
             Get started by adding your first property
           </p>
-          <Link href="/properties/new">
+          <Link href="/entities/new">
             <Button variant="gradient">
               <Plus className="mr-2 h-4 w-4" />
               Add Your First Property

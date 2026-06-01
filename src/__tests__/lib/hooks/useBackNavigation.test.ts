@@ -71,10 +71,10 @@ describe("useBackNavigation", () => {
     expect(result.current.isDynamic).toBe(true)
   })
 
-  it("resolves label for library-members path", () => {
-    mockGet.mockReturnValue("/library-members/abc")
+  it("resolves label for entity-members path", () => {
+    mockGet.mockReturnValue("/entity-members/abc")
     const { result } = renderHook(() =>
-      useBackNavigation({ defaultHref: "/library-members" })
+      useBackNavigation({ defaultHref: "/entity-members" })
     )
 
     expect(result.current.backLabel).toBe("Members")

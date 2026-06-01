@@ -46,7 +46,7 @@ describe('DASHBOARD_NAVIGATION', () => {
 
   it('contains core PG modules', () => {
     const expectedHrefs = [
-      '/properties',
+      '/entities',
       '/rooms',
       '/tenants',
       '/bills',
@@ -61,7 +61,6 @@ describe('DASHBOARD_NAVIGATION', () => {
 
   it('contains library module items', () => {
     const libraryHrefs = [
-      '/library',
       '/entity-sections',
       '/entity-seats',
       '/entity-members',
@@ -79,23 +78,23 @@ describe('DASHBOARD_NAVIGATION', () => {
   })
 
   it('has library items gated behind specific module keys', () => {
-    const libraryItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library')
-    expect(libraryItem?.module).toBe('members')
-
     const sectionsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-sections')
     expect(sectionsItem?.module).toBe('sections')
 
     const seatsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-seats')
     expect(seatsItem?.module).toBe('seats')
 
+    const membersItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-members')
+    expect(membersItem?.module).toBe('members')
+
     const attendanceItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/entity-attendance')
     expect(attendanceItem?.module).toBe('attendance')
   })
 
-  it('has dividerBefore on the first library item', () => {
-    const libraryItem = DASHBOARD_NAVIGATION.find((item) => item.href === '/library')
-    expect(libraryItem).toBeDefined()
-    expect(libraryItem!.dividerBefore).toBe(true)
+  it('has dividerBefore on the first library module item (sections)', () => {
+    const sectionsItem = DASHBOARD_NAVIGATION.find((item) => item.href === '/entity-sections')
+    expect(sectionsItem).toBeDefined()
+    expect(sectionsItem!.dividerBefore).toBe(true)
   })
 
   it('contains module-gated items', () => {
@@ -297,7 +296,7 @@ describe('getPathPermissions', () => {
     const result = getPathPermissions(DASHBOARD_NAVIGATION)
 
     expect(typeof result).toBe('object')
-    expect(result['/properties']).toBe('properties.view')
+    expect(result['/entities']).toBe('properties.view')
     expect(result['/tenants']).toBe('tenants.view')
     expect(result['/payments']).toBe('payments.view')
   })
@@ -311,7 +310,7 @@ describe('getPathPermissions', () => {
   it('includes library paths', () => {
     const result = getPathPermissions(DASHBOARD_NAVIGATION)
 
-    expect(result['/library']).toBe('library.view')
+    expect(result['/entity-sections']).toBe('library_sections.view')
     expect(result['/entity-members']).toBe('library_members.view')
     expect(result['/entity-attendance']).toBe('library_attendance.view')
   })
@@ -363,7 +362,6 @@ describe('getPathModules', () => {
   it('includes library module keys', () => {
     const result = getPathModules(DASHBOARD_NAVIGATION)
 
-    expect(result['/library']).toBe('members')
     expect(result['/entity-members']).toBe('members')
     expect(result['/entity-seats']).toBe('seats')
     expect(result['/entity-sections']).toBe('sections')

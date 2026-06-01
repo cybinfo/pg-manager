@@ -79,7 +79,7 @@ function NewVisitorContent() {
             icon={Building2}
             title="No properties found"
             description="Add a property before logging visitors"
-            action={{ label: "Add Property First", href: "/properties/new" }}
+            action={{ label: "Add Property First", href: "/entities/new" }}
           />
         </DetailSection>
       </div>

@@ -210,7 +210,7 @@ function NewRoomContent() {
             <p className="text-muted-foreground text-center mb-4">
               You need to create a property before adding rooms
             </p>
-            <Link href="/properties/new">
+            <Link href="/entities/new">
               <Button>Add Property First</Button>
             </Link>
           </CardContent>

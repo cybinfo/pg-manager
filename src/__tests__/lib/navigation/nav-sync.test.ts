@@ -74,7 +74,6 @@ describe("dashboard navigation single-source enforcement", () => {
   it("contains all core PG leaf routes", () => {
     const hrefs = collectHrefs(DASHBOARD_NAVIGATION_GROUPED)
     const coreRoutes = [
-      "/properties",
       "/rooms",
       "/tenants",
       "/bills",
@@ -96,7 +95,6 @@ describe("dashboard navigation single-source enforcement", () => {
   it("contains all library leaf routes", () => {
     const hrefs = collectHrefs(DASHBOARD_NAVIGATION_GROUPED)
     const libraryRoutes = [
-      "/library",
       "/entity-sections",
       "/entity-seats",
       "/entity-members",

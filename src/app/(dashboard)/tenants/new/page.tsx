@@ -90,7 +90,7 @@ function NewTenantContent() {
               icon={Building2}
               title="No properties found"
               description="You need to create a property and rooms before adding tenants"
-              action={{ label: "Add Property First", href: "/properties/new" }}
+              action={{ label: "Add Property First", href: "/entities/new" }}
             />
           </CardContent>
         </Card>

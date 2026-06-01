@@ -260,8 +260,8 @@ function NewComplaintForm() {
               icon={Building2}
               title="No properties or libraries found"
               description="You need to add a property or library before logging complaints"
-              action={{ label: "Add Property", href: "/properties/new" }}
-              secondaryAction={{ label: "Add Library", href: "/library/new" }}
+              action={{ label: "Add Property", href: "/entities/new" }}
+              secondaryAction={{ label: "Add Library", href: "/entities/new" }}
             />
           </CardContent>
         </Card>

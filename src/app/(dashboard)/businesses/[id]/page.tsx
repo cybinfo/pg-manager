@@ -223,7 +223,7 @@ export default function BusinessDetailPage() {
                 <DropdownMenuContent align="end">
                   <PermissionGate permission="properties.create" hide>
                     <DropdownMenuItem asChild>
-                      <Link href="/properties/new" className="flex items-center gap-2 cursor-pointer">
+                      <Link href="/entities/new" className="flex items-center gap-2 cursor-pointer">
                         <Building2 className="h-4 w-4" />
                         Add Property
                       </Link>
@@ -231,7 +231,7 @@ export default function BusinessDetailPage() {
                   </PermissionGate>
                   <PermissionGate permission="library.create" hide>
                     <DropdownMenuItem asChild>
-                      <Link href="/library/new" className="flex items-center gap-2 cursor-pointer">
+                      <Link href="/entities/new" className="flex items-center gap-2 cursor-pointer">
                         <Library className="h-4 w-4" />
                         Add Library
                       </Link>
