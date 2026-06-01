@@ -145,7 +145,7 @@ export function useLibraryReportsData(): UseLibraryReportsDataReturn {
         paymentsRes,
         attendanceRes,
       ] = await Promise.all([
-        supabase.from("entities").eq("type", "library").select("id, name, total_seats, occupied_seats"),
+        supabase.from("entities").select("id, name").eq("type", "library"),
         fetchAllRows(supabase.from("entity_seats").select("id, section_id, status, section:entity_sections!library_seats_section_id_fkey(entity_id)")),
         fetchAllRows(supabase.from("entity_members").select("id, entity_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at")),
         fetchAllRows(supabase.from("entity_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:entity_members!library_memberships_member_id_fkey(entity_id)")),
