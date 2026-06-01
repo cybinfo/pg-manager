@@ -103,7 +103,7 @@ export const TENANT_PORTAL_CONFIG = {
   table: "tenants" as const,
   select: `
     *,
-    property:properties(name, address, city, state, owner_id, tenant_features),
+    property:entities(name, address, city, state, owner_id, tenant_features),
     room:rooms(room_number, room_type, floor, amenities, has_ac, has_attached_bathroom)
   `,
   joinFields: ["property", "room"],

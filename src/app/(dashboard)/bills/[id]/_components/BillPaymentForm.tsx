@@ -71,7 +71,7 @@ export function BillPaymentForm({
         .insert(withCreatedBy({
           owner_id: user.id,
           tenant_id: tenantId,
-          property_id: propertyId,
+          entity_id: propertyId,
           bill_id: billId,
           amount: amount,
           payment_date: paymentData.payment_date,

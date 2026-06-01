@@ -69,7 +69,7 @@ export async function getTenantJourney(
         notice_date, expected_exit_date, monthly_rent,
         security_deposit, security_deposit_paid, advance_amount, advance_balance,
         agreement_signed, police_verification_status, phone_numbers,
-        property:properties(id, name, address),
+        property:entities(id, name, address),
         room:rooms(id, room_number, room_type)
       `)
       .eq("id", tenant_id)

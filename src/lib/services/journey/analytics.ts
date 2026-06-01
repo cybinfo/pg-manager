@@ -506,7 +506,7 @@ export async function findLinkedVisitors(
     .select(`
       id, visitor_name, visitor_phone, check_in_time, check_in_date,
       tenant:tenants(id, name),
-      property:properties(id, name)
+      property:entities(id, name)
     `)
     .lt("check_in_date", checkInDate)
     .order("check_in_time", { ascending: false })

@@ -35,8 +35,8 @@ export function useArchitectureData(): UseArchitectureDataResult {
       const [propertiesResult, roomsResult, tenantsResult] = await Promise.all([
         supabase
           .from("entities")
-          .eq("type", "pg")
           .select("id, name, address, rooms(id, total_beds, occupied_beds)")
+          .eq("type", "pg")
           .order("name"),
         supabase
           .from("rooms")

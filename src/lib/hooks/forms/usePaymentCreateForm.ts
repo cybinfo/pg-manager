@@ -94,7 +94,7 @@ export function usePaymentCreateForm() {
           .from("tenants")
           .select(`
             *,
-            property:properties(id, name),
+            property:entities(id, name),
             room:rooms(id, room_number)
           `)
           .eq("status", "active")

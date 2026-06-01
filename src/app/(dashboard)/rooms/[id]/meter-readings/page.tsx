@@ -253,7 +253,7 @@ export default function RoomMeterReadingsPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from("rooms")
-        .select(`id, room_number, room_type, property:properties(id, name)`)
+        .select(`id, room_number, room_type, property:entities(id, name)`)
         .eq("id", roomId)
         .single()
 

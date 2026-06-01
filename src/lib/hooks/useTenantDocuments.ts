@@ -48,7 +48,7 @@ export function useTenantDocuments(): UseTenantDocumentsReturn {
 
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("id, owner_id, property:properties(owner_id)")
+        .select("id, owner_id, property:entities(owner_id)")
         .eq("user_id", user.id)
         .eq("status", "active")
         .single()

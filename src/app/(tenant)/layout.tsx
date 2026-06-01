@@ -27,7 +27,7 @@ export default function TenantLayout({
         name,
         phone,
         owner_id,
-        property:properties(name),
+        property:entities(name),
         room:rooms(room_number)
       `)
       .eq("user_id", userId)

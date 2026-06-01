@@ -127,7 +127,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
 
         const { data: room, error } = await supabase
           .from("rooms")
-          .select("id, room_number, total_beds, occupied_beds, status, property:properties(id, name)")
+          .select("id, room_number, total_beds, occupied_beds, status, property:entities(id, name)")
           .eq("id", input.room_id)
           .single()
 

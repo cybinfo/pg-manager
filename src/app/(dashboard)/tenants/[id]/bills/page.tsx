@@ -191,7 +191,7 @@ export default function TenantBillsPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from("tenants")
-        .select(`id, name, property:properties(name), room:rooms(room_number)`)
+        .select(`id, name, property:entities(name), room:rooms(room_number)`)
         .eq("id", tenantId)
         .is("deleted_at", null)
         .single()

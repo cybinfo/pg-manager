@@ -48,7 +48,7 @@ export default function ArchitecturePage() {
 
   // Get rooms for selected property
   const propertyRooms = selectedProperty
-    ? rooms.filter(r => r.property_id === selectedProperty.id)
+    ? rooms.filter(r => r.entity_id === selectedProperty.id)
     : []
 
   // Filter based on availability

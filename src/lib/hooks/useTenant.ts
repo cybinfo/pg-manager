@@ -118,7 +118,7 @@ export function useTenant(): UseTenantReturn {
           person_id,
           rent_amount,
           security_deposit,
-          property:properties(id, name, address, owner_id),
+          property:entities(id, name, address, owner_id),
           room:rooms(id, room_number, floor)
         `)
         .eq("user_id", user.id)

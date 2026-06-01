@@ -43,7 +43,7 @@ function EditMeterReadingContent() {
   } = useFormEditPage({
     table: "meter_readings",
     id,
-    select: `*, meter:meters(id, meter_number, meter_type), property:properties(id, name), room:rooms(id, room_number)`,
+    select: `*, meter:meters(id, meter_number, meter_type), property:entities(id, name), room:rooms(id, room_number)`,
     initialData: {
       reading_date: "",
       reading_value: "",

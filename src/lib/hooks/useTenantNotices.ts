@@ -64,7 +64,7 @@ export function useTenantNotices(): UseTenantNoticesReturn {
             expires_at,
             target_audience,
             target_rooms,
-            property:properties(name)
+            property:entities(name)
           `)
           .eq("is_active", true)
           .or(`entity_id.is.null,entity_id.eq.${tenant.entity_id}`)

@@ -219,7 +219,7 @@ function NewMeterReadingContent() {
         supabase.from("tenants").select("id, name, room_id").eq("status", "active"),
         supabase.from("meters").select(`
           id, meter_number, meter_type, entity_id, status,
-          property:properties(id, name)
+          property:entities(id, name)
         `).eq("status", "active").order("meter_number"),
       ])
 

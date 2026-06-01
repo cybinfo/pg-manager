@@ -136,7 +136,7 @@ export default function RoomTenantsPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from("rooms")
-        .select(`id, room_number, room_type, total_beds, occupied_beds, property:properties(id, name)`)
+        .select(`id, room_number, room_type, total_beds, occupied_beds, property:entities(id, name)`)
         .eq("id", roomId)
         .single()
 

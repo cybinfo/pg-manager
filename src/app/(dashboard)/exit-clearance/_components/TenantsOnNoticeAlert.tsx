@@ -40,7 +40,7 @@ export function TenantsOnNoticeAlert() {
       const supabase = createClient()
       const { data } = await supabase
         .from("tenants")
-        .select(`id, name, phone, property:properties(id, name), room:rooms(room_number)`)
+        .select(`id, name, phone, property:entities(id, name), room:rooms(room_number)`)
         .eq("status", "notice_period")
         .order("name")
 

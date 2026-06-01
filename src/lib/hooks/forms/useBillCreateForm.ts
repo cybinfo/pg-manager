@@ -125,7 +125,7 @@ export function useBillCreateForm() {
             monthly_rent,
             entity_id,
             check_in_date,
-            property:properties(name),
+            property:entities(name),
             room:rooms(room_number)
           `)
           .eq("owner_id", user.id)

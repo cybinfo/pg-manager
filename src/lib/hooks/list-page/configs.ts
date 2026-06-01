@@ -36,7 +36,7 @@ export const TENANT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "tenants",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number),
     person:people(id, name, photo_url)
   `,
@@ -58,7 +58,7 @@ export const PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants(id, name, phone),
-    property:properties(id, name),
+    property:entities(id, name),
     bill:bills(id, bill_number),
     charge_type:charge_types(id, name)
   `,
@@ -80,7 +80,7 @@ export const BILL_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants(id, name, phone),
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   defaultOrderBy: "bill_date",
   defaultOrderDirection: "desc",
@@ -99,7 +99,7 @@ export const EXPENSE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "expenses",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     expense_type:expense_types(id, name, code)
   `,
   defaultOrderBy: "expense_date",
@@ -120,7 +120,7 @@ export const COMPLAINT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants(id, name, phone),
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number)
   `,
   defaultOrderBy: "created_at",
@@ -141,7 +141,7 @@ export const VISITOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants!tenant_id(id, name),
-    property:properties(id, name),
+    property:entities(id, name),
     visitor_contact:visitor_contacts(id, name, visit_count, is_frequent, is_blocked, person_id, person:people(id, name, photo_url))
   `,
   defaultOrderBy: "check_in_time",
@@ -170,7 +170,7 @@ export const STAFF_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     roles:user_roles(
       id,
       role:roles(id, name, description),
-      property:properties(id, name)
+      property:entities(id, name)
     ),
     person:people(id, name, photo_url)
   `,
@@ -229,7 +229,7 @@ export const ROOM_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "rooms",
   select: `
     *,
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   defaultOrderBy: "room_number",
   defaultOrderDirection: "asc",
@@ -248,7 +248,7 @@ export const EXIT_CLEARANCE_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
   select: `
     *,
     tenant:tenants(id, name, phone, photo_url, profile_photo),
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number)
   `,
   defaultOrderBy: "created_at",
@@ -270,7 +270,7 @@ export const NOTICE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "notices",
   select: `
     *,
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
@@ -293,7 +293,7 @@ export const METER_READING_LIST_CONFIG: ListPageConfig<Record<string, unknown>> 
   table: "meter_readings",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number),
     charge_type:charge_types(id, name),
     meter:meters(id, meter_number, meter_type)
@@ -318,7 +318,7 @@ export const APPROVAL_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants(id, name, phone),
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
@@ -331,7 +331,7 @@ export const REFUND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants(id, name, phone, photo_url),
-    property:properties(id, name),
+    property:entities(id, name),
     exit_clearance:exit_clearance(id, expected_exit_date)
   `,
   defaultOrderBy: "created_at",
@@ -374,7 +374,7 @@ export const METER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "meters",
   select: `
     *,
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   defaultOrderBy: "meter_number",
   defaultOrderDirection: "asc",
@@ -395,7 +395,7 @@ export const INQUIRY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "website_inquiries",
   select: `
     *,
-    property:properties(id, name)
+    property:entities(id, name)
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
@@ -437,7 +437,7 @@ export const DAILY_SPEND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = 
   table: "daily_spend",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     product:products(id, name, name_hi)
   `,
   defaultOrderBy: "spend_date",
@@ -476,7 +476,7 @@ export const BILL_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
   table: "bill_payments",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     vendor:vendors(id, name, upi_id),
     category:bill_categories(id, name, name_hi)
   `,
@@ -525,7 +525,7 @@ export const SERVICE_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   table: "service_payments",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     room:rooms(id, room_number),
     provider:service_providers(id, name, phone, rating),
     category:service_categories(id, name, name_hi),
@@ -561,7 +561,7 @@ export const KITCHEN_WASTAGE_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   table: "kitchen_wastage",
   select: `
     *,
-    property:properties(id, name),
+    property:entities(id, name),
     product:products(id, name, name_hi)
   `,
   defaultOrderBy: "wastage_date",
@@ -586,7 +586,7 @@ export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown
   select: `
     *,
     category:misc_transaction_categories(id, name, name_hi, default_type),
-    property:properties(id, name),
+    property:entities(id, name),
     tenant:tenants(id, name)
   `,
   defaultOrderBy: "transaction_date",

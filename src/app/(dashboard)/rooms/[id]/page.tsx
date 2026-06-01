@@ -526,9 +526,9 @@ export default function RoomDetailPage() {
             viewAllMode="auto"
             emptyIcon={Gauge}
             emptyText="No meters assigned to this room"
-            emptyAction={{ label: "Add First Meter", href: `/meters/new?property_id=${room.property?.id}&room_id=${room.id}` }}
+            emptyAction={{ label: "Add First Meter", href: `/meters/new?entity_id=${room.property?.id}&room_id=${room.id}` }}
             actions={
-              <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
+              <Link href={`/meters/new?entity_id=${room.property?.id}&room_id=${room.id}`}>
                 <Button size="sm">
                   <Plus className="mr-1 h-3 w-3" />
                   Add Meter

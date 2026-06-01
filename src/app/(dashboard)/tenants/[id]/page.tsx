@@ -223,7 +223,7 @@ export default function TenantDetailPage() {
     const supabase = createClient()
     const { data: roomsData } = await supabase
       .from("rooms")
-      .select("id, room_number, rent_amount, property_id, total_beds, occupied_beds")
+      .select("id, room_number, rent_amount, entity_id, total_beds, occupied_beds")
       .neq("id", tenant.room?.id)
       .order("room_number")
 

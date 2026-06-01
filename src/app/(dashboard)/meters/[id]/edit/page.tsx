@@ -65,7 +65,7 @@ function EditMeterContent() {
   } = useFormEditPage({
     table: "meters",
     id,
-    select: "*, property:properties(id, name)",
+    select: "*, property:entities(id, name)",
     initialData: {
       entity_id: "",
       meter_number: "",

@@ -40,7 +40,7 @@ export async function fetchTenantStays(supabase: ReturnType<typeof createClient>
     .select(`
       id, join_date, exit_date, monthly_rent, security_deposit, status,
       stay_number, exit_reason, created_at,
-      property:properties(id, name),
+      property:entities(id, name),
       room:rooms(id, room_number)
     `)
     .eq("tenant_id", tenant_id)
@@ -60,7 +60,7 @@ export async function fetchBills(supabase: ReturnType<typeof createClient>, tena
     .select(`
       id, bill_number, bill_date, due_date, total_amount, paid_amount,
       balance_due, status, for_month, line_items, created_at,
-      property:properties(id, name)
+      property:entities(id, name)
     `)
     .eq("tenant_id", tenant_id)
     .order("bill_date", { ascending: false })
@@ -136,9 +136,9 @@ export async function fetchRoomTransfers(supabase: ReturnType<typeof createClien
     .from("room_transfers")
     .select(`
       id, transfer_date, reason, old_rent, new_rent, created_at,
-      from_property:properties!room_transfers_from_property_id_fkey(id, name),
+      from_property:entities!room_transfers_from_entity_id_fkey(id, name),
       from_room:rooms!room_transfers_from_room_id_fkey(id, room_number),
-      to_property:properties!room_transfers_to_property_id_fkey(id, name),
+      to_property:entities!room_transfers_to_entity_id_fkey(id, name),
       to_room:rooms!room_transfers_to_room_id_fkey(id, room_number)
     `)
     .eq("tenant_id", tenant_id)
@@ -160,7 +160,7 @@ export async function fetchExitClearances(supabase: ReturnType<typeof createClie
       total_dues, total_refundable, final_amount, deductions,
       settlement_status, room_inspection_done, key_returned,
       created_at, completed_at,
-      property:properties(id, name),
+      property:entities(id, name),
       room:rooms(id, room_number)
     `)
     .eq("tenant_id", tenant_id)

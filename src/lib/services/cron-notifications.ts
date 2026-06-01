@@ -337,7 +337,7 @@ export async function sendPaymentReminders(
         phone,
         monthly_rent,
         check_in_date,
-        property:properties(name),
+        property:entities(name),
         room:rooms(room_number)
       `)
       .eq("owner_id", owner.id)
@@ -527,7 +527,7 @@ export async function generateAutoBills(
       .select(`
         id, name, phone, email, monthly_rent, security_deposit,
         entity_id, room_id,
-        property:properties(name),
+        property:entities(name),
         room:rooms(room_number)
       `)
       .eq("owner_id", ownerId)

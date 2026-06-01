@@ -173,7 +173,7 @@ export default function PersonDetailPage() {
           check_out_time,
           visitor_type,
           purpose,
-          property:properties(name)
+          property:entities(name)
         `)
         .eq("visitor_contact_id", visitorContacts[0].id)
         .order("check_in_time", { ascending: false })

@@ -69,7 +69,6 @@ export default function MemberComplaintsPage() {
         .insert(withCreatedBy({
           owner_id: library.owner_id,
           entity_id: member.entity_id,
-          property_id: null,
           category: formData.category,
           title: formData.title.trim(),
           description: formData.description.trim() || null,

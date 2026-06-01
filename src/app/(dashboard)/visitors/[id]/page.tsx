@@ -117,7 +117,7 @@ export default function VisitorDetailPage() {
           check_out_time,
           visitor_type,
           purpose,
-          property:properties(name)
+          property:entities(name)
         `)
         .eq("visitor_contact_id", visitor.visitor_contact_id)
         .neq("id", params.id)

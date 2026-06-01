@@ -79,7 +79,7 @@ export function useRefundCreateForm() {
       .from("tenants")
       .select(`
         id, name, phone, photo_url, entity_id,
-        property:properties(id, name),
+        property:entities(id, name),
         room:rooms(id, room_number)
       `)
       .in("status", ["active", "notice_period", "checked_out"])

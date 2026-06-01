@@ -39,7 +39,7 @@ export async function GET(
   if (invitation.entity_id && invitation.context_type === "tenant") {
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("name, property:properties(name), room:rooms(room_number)")
+      .select("name, property:entities(name), room:rooms(room_number)")
       .eq("id", invitation.entity_id)
       .single()
 

@@ -169,7 +169,7 @@ function NewComplaintForm() {
         supabase.from("rooms").select("id, room_number, entity_id").is("deleted_at", null).order("room_number"),
         supabase
           .from("tenants")
-          .select("id, name, entity_id, room_id, room:rooms(room_number), property:properties(name)")
+          .select("id, name, entity_id, room_id, room:rooms(room_number), property:entities(name)")
           .eq("status", "active")
           .is("deleted_at", null)
           .order("name"),

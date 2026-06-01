@@ -23,7 +23,7 @@ export function usePaymentReconcile() {
           .select(`
             id, amount, payment_method, payment_date, receipt_number, notes,
             tenant:tenants(id, name),
-            property:properties(id, name)
+            property:entities(id, name)
           `)
           .is("bill_id", null)
           .is("deleted_at", null)
@@ -34,7 +34,7 @@ export function usePaymentReconcile() {
             id, bill_number, bill_date, due_date, for_month,
             total_amount, paid_amount, balance_due, status,
             tenant:tenants(id, name),
-            property:properties(id, name)
+            property:entities(id, name)
           `)
           .gt("balance_due", 0)
           .in("status", [...OUTSTANDING_BILL_STATUSES])

@@ -106,7 +106,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
         try {
           // Fetch tenant with property and room
-          const tenantUrl = `${baseUrl}/rest/v1/tenants?id=eq.${input.tenant_id}&select=*,property:properties(id,name),room:rooms(id,room_number,total_beds)`
+          const tenantUrl = `${baseUrl}/rest/v1/tenants?id=eq.${input.tenant_id}&select=*,property:entities(id,name),room:rooms(id,room_number,total_beds)`
 
           const tenantResponse = await fetch(tenantUrl, {
             headers: {

@@ -9,7 +9,7 @@ export interface TransferRoomParams {
   tenant: Tenant
   stays: TenantStay[]
   toRoomId: string
-  toPropertyId: string
+  toEntityId: string
   oldRent: number
   newRent: number
   reason: string | null
@@ -21,14 +21,14 @@ export async function transferTenantRoom(
   params: TransferRoomParams,
   ownerId: string,
 ): Promise<void> {
-  const { tenant, stays, toRoomId, toPropertyId, oldRent, newRent, reason, notes } = params
+  const { tenant, stays, toRoomId, toEntityId, oldRent, newRent, reason, notes } = params
 
   await supabase.from("room_transfers").insert(withCreatedBy({
     owner_id: ownerId,
     tenant_id: tenant.id,
-    from_property_id: tenant.property?.id,
+    from_entity_id: tenant.property?.id,
     from_room_id: tenant.room?.id,
-    to_property_id: toPropertyId,
+    to_entity_id: toEntityId,
     to_room_id: toRoomId,
     transfer_date: getTodayISO(),
     reason,
@@ -47,7 +47,7 @@ export async function transferTenantRoom(
   await supabase.from("tenant_stays").insert({
     owner_id: ownerId,
     tenant_id: tenant.id,
-    entity_id: toPropertyId,
+    entity_id: toEntityId,
     room_id: toRoomId,
     join_date: getTodayISO(),
     monthly_rent: newRent,
@@ -58,6 +58,6 @@ export async function transferTenantRoom(
 
   await supabase
     .from("tenants")
-    .update({ entity_id: toPropertyId, room_id: toRoomId, monthly_rent: newRent })
+    .update({ entity_id: toEntityId, room_id: toRoomId, monthly_rent: newRent })
     .eq("id", tenant.id)
 }

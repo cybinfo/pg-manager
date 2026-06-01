@@ -122,7 +122,7 @@ export function useExitClearanceCreateForm() {
           status,
           entity_id,
           room_id,
-          property:properties(id, name),
+          property:entities(id, name),
           photo_url,
           room:rooms(id, room_number, deposit_amount)
         `)

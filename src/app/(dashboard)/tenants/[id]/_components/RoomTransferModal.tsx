@@ -21,7 +21,7 @@ export interface TransferRoom {
   id: string
   room_number: string
   rent_amount: number
-  property_id: string
+  entity_id: string
   total_beds: number
   occupied_beds: number
 }
@@ -64,7 +64,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
         tenant,
         stays,
         toRoomId: selectedRoom.id,
-        toPropertyId: selectedRoom.property_id,
+        toEntityId: selectedRoom.entity_id,
         oldRent: tenant.monthly_rent,
         newRent,
         reason: transferData.reason || null,

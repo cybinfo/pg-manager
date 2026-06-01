@@ -27,7 +27,7 @@ export async function generateMeterCharges(
       id,
       reading_date,
       units_consumed,
-      property:properties(id),
+      property:entities(id),
       room:rooms(id),
       charge_type:charge_types(id, calculation_config)
     `)

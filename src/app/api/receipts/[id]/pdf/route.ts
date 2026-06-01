@@ -20,7 +20,7 @@ const PG_PDF_CONFIG: PdfRouteConfig<ReceiptData> = {
       user_id,
       room:rooms(
         room_number,
-        property:properties(
+        property:entities(
           name,
           address
         )

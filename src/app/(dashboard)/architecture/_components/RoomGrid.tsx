@@ -15,7 +15,7 @@ export interface ArchRoom {
   occupied_beds: number
   rent_amount: number
   status: string
-  property_id: string
+  entity_id: string
 }
 
 interface RoomGridProps {

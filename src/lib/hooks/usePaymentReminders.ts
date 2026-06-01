@@ -44,7 +44,7 @@ export function usePaymentReminders() {
         email,
         monthly_rent,
         check_in_date,
-        property:properties(id, name),
+        property:entities(id, name),
         room:rooms(id, room_number)
       `)
       .eq("status", "active")

@@ -75,7 +75,7 @@ export const STAFF_DETAIL_CONFIG: DetailPageConfig = {
       select: `
         id,
         role_id,
-        property_id,
+        entity_id,
         role:roles(id, name, description),
         property:entities(id, name)
       `,
@@ -417,7 +417,7 @@ export const METER_DETAIL_CONFIG: DetailPageConfig = {
       table: "rooms",
       select: "id, room_number",
       foreignKey: "entity_id",
-      foreignKeyValue: "field:property_id",
+      foreignKeyValue: "field:entity_id",
       orderBy: "room_number",
       orderDirection: "asc",
     },
