@@ -147,18 +147,17 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
 export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
 
-  // Entities (unified hub)
-  { name: "Entities", href: "/entities", icon: Building2, permission: "properties.view", module: null },
-
-  // Businesses
+  // Business hub
   {
-    name: "Businesses",
-    href: "/businesses",
+    name: "Business",
+    href: "/entities",
     icon: Briefcase,
-    permission: "businesses.view",
-    module: "businesses",
+    permission: "properties.view",
+    module: null,
     children: [
-      { name: "My Businesses", href: "/businesses", icon: Briefcase, permission: "businesses.view", module: "businesses" },
+      { name: "My Workspace",  href: "/settings",    icon: LayoutDashboard, permission: null,               module: null },
+      { name: "My Businesses", href: "/businesses",  icon: Briefcase,       permission: "businesses.view",  module: "businesses" },
+      { name: "My Entities",   href: "/entities",    icon: Building2,       permission: "properties.view",  module: null },
     ],
   },
 
