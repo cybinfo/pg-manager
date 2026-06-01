@@ -33,6 +33,8 @@ interface EntityItem {
   occupied_seats: number
   is_active: boolean
   created_at: string
+  business: { id: string; name: string } | null
+  business_name: string
 }
 
 // ============================================
@@ -121,6 +123,18 @@ const columns: Column<EntityItem>[] = [
       </div>
     ) : <span className="text-muted-foreground">—</span>,
   },
+  {
+    key: "business_name",
+    header: "Business",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: true,
+    render: (entity) => entity.business ? (
+      <span className="text-sm">{entity.business.name}</span>
+    ) : (
+      <span className="text-muted-foreground text-sm">—</span>
+    ),
+  },
   dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
@@ -150,6 +164,7 @@ const filters: FilterConfig[] = [
 // ============================================
 
 const groupByOptions: GroupByOption[] = [
+  { value: "business_name", label: "Business" },
   { value: "type", label: "Type" },
   { value: "city", label: "City" },
   { value: "is_active", label: "Status" },
@@ -219,6 +234,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "name", header: "Name" },
+  { key: "business_name", header: "Business", format: (v) => String(v ?? "") },
   { key: "type", header: "Type", format: (v) => ENTITY_TYPE_LABELS[v as EntityType] || String(v ?? "") },
   { key: "code", header: "Code", format: (v) => String(v ?? "") },
   { key: "city", header: "City", format: (v) => String(v ?? "") },

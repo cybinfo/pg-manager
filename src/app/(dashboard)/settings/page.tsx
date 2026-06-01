@@ -3,14 +3,9 @@
 import { Suspense, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
-  Settings,
   User,
-  CreditCard,
   Bell,
-  IndianRupee,
   Cog,
-  Bed,
-  UtensilsCrossed,
   ShieldCheck,
 } from "lucide-react"
 import { DetailHero } from "@/components/ui"
@@ -22,18 +17,11 @@ import { useSettingsData } from "@/lib/hooks/useSettingsData"
 
 import {
   ProfileSettings,
-  RoomTypeSettings,
-  BillingSettings,
-  FoodSettings,
-  ExpenseTypeSettings,
   NotificationSettings,
-  DefaultSettings,
-  ApprovalSettings,
   SessionSettings,
 } from "./_components"
-import { FeatureGuard } from "@/components/auth"
 
-const VALID_TABS = ["profile", "room-types", "billing", "food", "expenses", "notifications", "defaults", "security"] as const
+const VALID_TABS = ["profile", "notifications", "security"] as const
 type TabId = typeof VALID_TABS[number]
 
 const DEFAULT_TAB: TabId = "profile"
@@ -64,28 +52,14 @@ function SettingsContent() {
   const {
     loading,
     owner, setOwner,
-    chargeTypes, setChargeTypes,
-    expenseTypes, setExpenseTypes,
-    config, setConfig,
-    configForm, setConfigForm,
+    config,
     notificationSettings, setNotificationSettings,
-    autoBillingSettings, setAutoBillingSettings,
-    propertyTypePricing,
-    foodSettings, setFoodSettings,
-    configurableRoomTypes, setConfigurableRoomTypes,
-    billingCycleMode, setBillingCycleMode,
-    utilityRates, setUtilityRates,
   } = useSettingsData()
 
   const tabs: { id: TabId; label: string; icon: typeof User }[] = [
-    { id: "profile",       label: "Profile",             icon: User },
-    { id: "room-types",    label: "Room Types",          icon: Bed },
-    { id: "billing",       label: "Billing & Charges",   icon: CreditCard },
-    { id: "food",          label: "Food & Meals",        icon: UtensilsCrossed },
-    { id: "expenses",      label: "Expense Categories",  icon: IndianRupee },
-    { id: "notifications", label: "Notifications",       icon: Bell },
-    { id: "defaults",      label: "Default Settings",    icon: Settings },
-    { id: "security",      label: "Security",            icon: ShieldCheck },
+    { id: "profile",       label: "Profile",       icon: User },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "security",      label: "Security",      icon: ShieldCheck },
   ]
 
   if (loading) {
@@ -133,47 +107,6 @@ function SettingsContent() {
             />
           </TabsContent>
 
-          <TabsContent value="room-types">
-            <RoomTypeSettings
-              configurableRoomTypes={configurableRoomTypes}
-              setConfigurableRoomTypes={setConfigurableRoomTypes}
-              config={config}
-              setConfig={(c) => setConfig(c)}
-            />
-          </TabsContent>
-
-          <TabsContent value="billing">
-            <BillingSettings
-              chargeTypes={chargeTypes}
-              setChargeTypes={setChargeTypes}
-              utilityRates={utilityRates}
-              setUtilityRates={setUtilityRates}
-              autoBillingSettings={autoBillingSettings}
-              setAutoBillingSettings={setAutoBillingSettings}
-              billingCycleMode={billingCycleMode}
-              setBillingCycleMode={setBillingCycleMode}
-              configForm={configForm}
-              config={config}
-              setConfig={(c) => setConfig(c)}
-              propertyTypePricing={propertyTypePricing}
-            />
-          </TabsContent>
-
-          <TabsContent value="food">
-            <FoodSettings
-              foodSettings={foodSettings}
-              setFoodSettings={setFoodSettings}
-              configId={config?.id}
-            />
-          </TabsContent>
-
-          <TabsContent value="expenses">
-            <ExpenseTypeSettings
-              expenseTypes={expenseTypes}
-              setExpenseTypes={setExpenseTypes}
-            />
-          </TabsContent>
-
           <TabsContent value="notifications">
             <NotificationSettings
               notificationSettings={notificationSettings}
@@ -181,20 +114,6 @@ function SettingsContent() {
               config={config}
               owner={owner}
             />
-          </TabsContent>
-
-          <TabsContent value="defaults">
-            <div className="space-y-6">
-              <DefaultSettings
-                configForm={configForm}
-                setConfigForm={setConfigForm}
-                config={config}
-                setConfig={(c) => setConfig(c)}
-              />
-              <FeatureGuard module="approvals" feature="autoApproval">
-                <ApprovalSettings />
-              </FeatureGuard>
-            </div>
           </TabsContent>
 
           <TabsContent value="security">

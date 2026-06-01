@@ -155,7 +155,7 @@ export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
     permission: "properties.view",
     module: null,
     children: [
-      { name: "My Workspace",  href: "/settings",    icon: LayoutDashboard, permission: null,               module: null },
+      { name: "My Workspace",  href: "/workspace",   icon: LayoutDashboard, permission: null,               module: null },
       { name: "My Businesses", href: "/businesses",  icon: Briefcase,       permission: "businesses.view",  module: "businesses" },
       { name: "My Entities",   href: "/entities",    icon: Building2,       permission: "properties.view",  module: null },
     ],

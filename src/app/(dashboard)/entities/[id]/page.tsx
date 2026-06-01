@@ -97,6 +97,7 @@ export default function EntityDetailPage() {
         backLabel={backLabel}
         breadcrumbs={[
           { label: "Entities", href: "/entities" },
+          ...(entity.business ? [{ label: entity.business.name, href: `/businesses/${entity.business.id}` }] : []),
           { label: entity.name || "Entity Detail" },
         ]}
         status={entity.is_active ? "active" : "inactive"}

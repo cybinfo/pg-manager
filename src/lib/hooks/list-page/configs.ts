@@ -211,10 +211,14 @@ export const PROPERTY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
 
 export const ENTITY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "entities",
-  select: `*`,
+  select: `
+    *,
+    business:businesses(id, name)
+  `,
   defaultOrderBy: "name",
   defaultOrderDirection: "asc",
   searchFields: ["name", "city", "code"],
+  joinFields: ["business"],
   computedFields: (item) => ({
     available_seats: (item.total_seats as number || 0) - (item.occupied_seats as number || 0),
     occupancy_percent: item.total_seats
@@ -222,6 +226,7 @@ export const ENTITY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
       : 0,
     room_count: 0,
     tenant_count: 0,
+    business_name: (item.business as { name: string } | null)?.name || "Unlinked",
   }),
 }
 
