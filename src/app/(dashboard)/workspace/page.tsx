@@ -1,18 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import {
-  LayoutDashboard,
-  Building2,
-  Briefcase,
-} from "lucide-react"
+import { LayoutDashboard, Building2, Briefcase } from "lucide-react"
 import { DetailHero, InfoCard } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { OwnerGuard } from "@/components/auth"
 import { useCurrentContext } from "@/lib/auth"
 import { createClient } from "@/lib/supabase/client"
-import { ConfigureDialog } from "@/components/shared/ConfigureDialog"
-import { WorkspacePanel } from "@/components/settings-panels"
 
 function WorkspacePageContent() {
   const { context, workspaceName } = useCurrentContext()
@@ -42,16 +36,7 @@ function WorkspacePageContent() {
           backHref="/dashboard"
           icon={LayoutDashboard}
           breadcrumbs={[{ label: "Workspace" }]}
-          actions={
-            <ConfigureDialog
-              title="Workspace Defaults"
-              description="Configure workspace-wide default settings"
-            >
-              <WorkspacePanel />
-            </ConfigureDialog>
-          }
         />
-
         <div className="grid grid-cols-2 gap-4">
           <InfoCard
             label="Businesses"
