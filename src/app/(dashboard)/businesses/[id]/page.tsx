@@ -189,30 +189,7 @@ export default function BusinessDetailPage() {
         <InfoCard label="Added" value={formatDate(business.created_at)} icon={Briefcase} />
       </div>
 
-      {/* Section 1: Workspace */}
-      {workspace && (
-        <DetailSection title="Workspace" icon={LayoutDashboard}>
-          <InfoRow label="Workspace Name" value={workspace.name} />
-          <InfoRow
-            label="Type"
-            value={
-              <TableBadge variant="info" className="capitalize">
-                {workspace.type?.replace("_", " ") ?? "—"}
-              </TableBadge>
-            }
-          />
-          <InfoRow
-            label="Status"
-            value={
-              workspace.is_active
-                ? <TableBadge variant="success">Active</TableBadge>
-                : <TableBadge variant="muted">Inactive</TableBadge>
-            }
-          />
-        </DetailSection>
-      )}
-
-      {/* Section 2: Business Details */}
+      {/* Section 1: Business Details */}
       <DetailSection title="Business Details" icon={Briefcase}>
         <InfoRow label="Business Name" value={business.name} />
         {business.legal_name && <InfoRow label="Legal Name" value={business.legal_name} />}
@@ -340,6 +317,29 @@ export default function BusinessDetailPage() {
           </div>
         )}
       </DetailSection>
+
+      {/* Section 3: Workspace */}
+      {workspace && (
+        <DetailSection title="Workspace" icon={LayoutDashboard}>
+          <InfoRow label="Workspace Name" value={workspace.name} />
+          <InfoRow
+            label="Type"
+            value={
+              <TableBadge variant="info" className="capitalize">
+                {workspace.type?.replace("_", " ") ?? "—"}
+              </TableBadge>
+            }
+          />
+          <InfoRow
+            label="Status"
+            value={
+              workspace.is_active
+                ? <TableBadge variant="success">Active</TableBadge>
+                : <TableBadge variant="muted">Inactive</TableBadge>
+            }
+          />
+        </DetailSection>
+      )}
     </DetailPageTemplate>
   )
 }
