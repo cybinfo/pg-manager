@@ -49,8 +49,7 @@ export interface Business {
     logo_url: string | null
     is_active: boolean
   }
-  properties?: Array<{ id: string; name: string; city: string | null; is_active: boolean; created_at: string }>
-  libraries?: Array<{ id: string; name: string; city: string | null; is_active: boolean; created_at: string }>
+  entities?: Array<{ id: string; name: string; type: string; city: string | null; is_active: boolean; created_at: string }>
 }
 
 export type BusinessEntityType =
