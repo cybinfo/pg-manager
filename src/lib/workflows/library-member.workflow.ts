@@ -55,8 +55,8 @@ export async function createLibraryMember(
 ): Promise<CreateLibraryMemberResult> {
   // Resolve library context
   const { data: library } = await supabase
-    .from("entities").eq("type", "library")
-    .select("owner_id, code, name")
+    .from("entities")
+    .select("owner_id, code, name").eq("type", "library")
     .eq("id", input.entity_id)
     .single()
 

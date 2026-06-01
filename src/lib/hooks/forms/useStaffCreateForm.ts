@@ -61,7 +61,7 @@ export function useStaffCreateForm() {
           .select("id, name, description, is_system_role")
           .order("is_system_role", { ascending: false })
           .order("name"),
-        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").order("name"),
       ])
 
       if (!rolesRes.error) setRoles(rolesRes.data || [])

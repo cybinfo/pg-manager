@@ -136,8 +136,8 @@ function NewExpenseContent() {
 
         // Fetch properties
         const { data: propertiesData } = await supabase
-          .from("entities").eq("type", "pg")
-          .select("id, name")
+          .from("entities")
+          .select("id, name").eq("type", "pg")
           .order("name")
 
         setProperties(propertiesData || [])

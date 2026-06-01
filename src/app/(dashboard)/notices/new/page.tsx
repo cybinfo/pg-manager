@@ -136,9 +136,9 @@ function NewNoticeContent() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes, librariesRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").is("deleted_at", null).order("name"),
         supabase.from("rooms").select("id, room_number, entity_id").is("deleted_at", null).order("room_number"),
-        supabase.from("entities").eq("type", "library").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("entities").select("id, name").eq("type", "library").is("deleted_at", null).order("name"),
       ])
 
       if (propertiesRes.data) setProperties(propertiesRes.data)

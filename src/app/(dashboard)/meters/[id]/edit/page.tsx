@@ -139,7 +139,7 @@ function EditMeterContent() {
   useEffect(() => {
     const fetchProperties = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from("entities").eq("type", "pg").select("id, name").order("name")
+      const { data } = await supabase.from("entities").select("id, name").eq("type", "pg").order("name")
       if (data) setProperties(data)
     }
     fetchProperties()

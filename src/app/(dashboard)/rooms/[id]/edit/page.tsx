@@ -128,7 +128,7 @@ function EditRoomContent() {
       const supabase = createClient()
 
       const [propertiesRes, configRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").order("name"),
         user ? supabase.from("owner_config").select("room_types").eq("owner_id", user.id).single() : null,
       ])
 

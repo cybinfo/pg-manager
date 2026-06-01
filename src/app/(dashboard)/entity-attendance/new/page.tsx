@@ -145,8 +145,8 @@ function NewLibraryAttendanceContent() {
 
       // Fetch libraries
       const { data: librariesData } = await supabase
-        .from("entities").eq("type", "library")
-        .select("id, name")
+        .from("entities")
+        .select("id, name").eq("type", "library")
         .eq("workspace_id", workspaceId)
         .eq("is_active", true)
         .is("deleted_at", null)

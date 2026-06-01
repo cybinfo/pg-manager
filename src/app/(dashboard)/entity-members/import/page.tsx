@@ -73,8 +73,8 @@ function BulkImportContent() {
       const supabase = createClient()
 
       const { data: librariesData } = await supabase
-        .from("entities").eq("type", "library")
-        .select("id, name, code, owner_id")
+        .from("entities")
+        .select("id, name, code, owner_id").eq("type", "library")
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("name")

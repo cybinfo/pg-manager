@@ -54,8 +54,8 @@ export default function MemberComplaintsPage() {
 
       // Get owner_id from library
       const { data: library } = await supabase
-        .from("entities").eq("type", "library")
-        .select("owner_id")
+        .from("entities")
+        .select("owner_id").eq("type", "library")
         .eq("id", member.entity_id)
         .single()
 

@@ -135,7 +135,7 @@ export function useVisitorForm() {
 
       const supabase = createClient()
       const [propertiesRes, tenantsRes, roomsRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").order("name"),
         supabase
           .from("tenants")
           .select("id, name, phone, entity_id, room:rooms(room_number)")

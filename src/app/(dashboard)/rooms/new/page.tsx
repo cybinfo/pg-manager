@@ -119,7 +119,7 @@ function NewRoomContent() {
 
       // Fetch properties and owner config (for room_types) in parallel
       const [propertiesRes, configRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name, website_config").order("name"),
+        supabase.from("entities").select("id, name, website_config").eq("type", "pg").order("name"),
         user ? supabase.from("owner_config").select("room_types").eq("owner_id", user.id).single() : null,
       ])
 

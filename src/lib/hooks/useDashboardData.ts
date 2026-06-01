@@ -116,7 +116,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         libraryActiveMembersRes,
         libraryCheckedInRes,
       ] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        supabase.from("entities").select("id", { count: "exact", head: true }).eq("type", "pg").is("deleted_at", null),
         supabase.from("rooms").select("total_beds, occupied_beds").is("deleted_at", null),
         supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
         supabase.from("charges").select("amount, paid_amount, status").in("status", [...OUTSTANDING_BILL_STATUSES]),
@@ -133,7 +133,7 @@ export function useDashboardData(): UseDashboardDataReturn {
           .select("amount, payment_date")
           .gte("payment_date", new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString())
           .order("payment_date"),
-        supabase.from("entities").eq("type", "library").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        supabase.from("entities").select("id", { count: "exact", head: true }).eq("type", "library").is("deleted_at", null),
         supabase.from("entity_members").select("id", { count: "exact", head: true }).is("deleted_at", null),
         supabase.from("entity_members").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
         supabase.from("entity_attendance").select("id", { count: "exact", head: true })

@@ -78,7 +78,7 @@ export function useTenantCreateForm() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").order("name"),
         supabase.from("rooms").select("*").order("room_number"),
       ])
 

@@ -197,7 +197,7 @@ function NewMeterContent() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name").order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").order("name"),
         supabase.from("rooms").select("id, room_number, entity_id").order("room_number"),
       ])
 

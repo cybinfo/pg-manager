@@ -64,8 +64,8 @@ function NewLibraryLockerContent() {
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       // Get library's owner_id
       const { data: library } = await supabase
-        .from("entities").eq("type", "library")
-        .select("owner_id")
+        .from("entities")
+        .select("owner_id").eq("type", "library")
         .eq("id", data.entity_id)
         .single()
 
@@ -117,8 +117,8 @@ function NewLibraryLockerContent() {
     async function fetchLibraries() {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from("entities").eq("type", "library")
-        .select("id, name, code")
+        .from("entities")
+        .select("id, name, code").eq("type", "library")
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("name")

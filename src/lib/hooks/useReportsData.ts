@@ -94,7 +94,7 @@ export function useReportsData(): UseReportsDataReturn {
         complaintsRes,
         expensesRes,
       ] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name"),
+        supabase.from("entities").select("id, name").eq("type", "pg"),
         supabase.from("rooms").select("id, entity_id, status, total_beds"),
         supabase.from("tenants").select("id, entity_id, status, monthly_rent, check_in_date, check_out_date, created_at"),
         supabase.from("payments").select("id, entity_id, amount, payment_method, payment_date, created_at"),

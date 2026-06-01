@@ -165,7 +165,7 @@ function NewComplaintForm() {
       const supabase = createClient()
 
       const [propertiesRes, roomsRes, tenantsRes, librariesRes, membersRes] = await Promise.all([
-        supabase.from("entities").eq("type", "pg").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("entities").select("id, name").eq("type", "pg").is("deleted_at", null).order("name"),
         supabase.from("rooms").select("id, room_number, entity_id").is("deleted_at", null).order("room_number"),
         supabase
           .from("tenants")
@@ -173,7 +173,7 @@ function NewComplaintForm() {
           .eq("status", "active")
           .is("deleted_at", null)
           .order("name"),
-        supabase.from("entities").eq("type", "library").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("entities").select("id, name").eq("type", "library").is("deleted_at", null).order("name"),
         supabase.from("entity_members").select("id, name, member_code").eq("status", "active").is("deleted_at", null).order("name"),
       ])
 

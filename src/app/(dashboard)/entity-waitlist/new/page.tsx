@@ -139,8 +139,8 @@ function AddToWaitlistContent() {
 
       // Fetch libraries
       const { data: librariesData } = await supabase
-        .from("entities").eq("type", "library")
-        .select("id, name, total_seats, occupied_seats")
+        .from("entities")
+        .select("id, name, total_seats, occupied_seats").eq("type", "library")
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("name")

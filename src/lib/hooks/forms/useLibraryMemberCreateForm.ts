@@ -50,8 +50,8 @@ export function useLibraryMemberCreateForm() {
       const supabase = createClient()
 
       const { data: librariesData } = await supabase
-        .from("entities").eq("type", "library")
-        .select("id, name, code")
+        .from("entities")
+        .select("id, name, code").eq("type", "library")
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("name")
